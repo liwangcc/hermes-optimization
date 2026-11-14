@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local model weights & caches (download yourself, do not commit)
+memory/sidecar/models/
+memory/sidecar/cache/
+*.npz
+*.npy
+
+# Personal data — NEVER commit your real fact store or credentials
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+memory_store*.db
+
+# Eval caches (regenerable); keep results.json + the synthetic set
+memory/eval/emb_*.npy
+memory/eval/qvecs.npz
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,31 @@
+# Attributions
+
+This repository is an integration / tuning layer. It builds on the following
+open-source projects, whose licenses are respected:
+
+## holographic memory provider
+- Project: https://github.com/itpartypattaya/hermes-plugin-holographic
+- License: MIT
+- Use: the `holographic-semantic` provider in `memory/plugin/` subclasses the
+  holographic `HolographicMemoryProvider` at load time. The original plugin is
+  NOT modified or vendored here; install it separately. The fact-store schema
+  (`facts(fact_id, content, tags, trust_score)`) and the lexical retriever come
+  from holographic.
+
+## bge-m3 embedding model
+- Project: https://github.com/FlagOpen/FlagEmbedding (BAAI/bge-m3)
+- Model:   https://huggingface.co/BAAI/bge-m3
+- License: MIT
+- Use: the local embedding sidecar in `memory/sidecar/` loads bge-m3 weights to
+  produce normalized sentence embeddings. Model weights are NOT redistributed
+  here; download them yourself (see memory/sidecar/README.md).
+
+## Hermes Agent
+- Project: https://github.com/NousResearch/hermes-agent
+- Use: the host agent framework. The memory provider plugin API
+  (`plugins.memory.import_provider_module`) and the skills format come from
+  Hermes Agent.
+
+The eval methodology, the hybrid fusion logic, the Chinese-oriented tuning, and
+the sidecar serving/caching/fallback code are original work in this repository,
+released under the MIT License (see LICENSE).

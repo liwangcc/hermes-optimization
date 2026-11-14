@@ -1,0 +1,51 @@
+{
+ "description": "Synthetic Chinese-heavy retrieval eval. Generic software-project knowledge, no personal data. Categories: direct / paraphrase / crosslingual / colloquial / negative.",
+ "queries": [
+  {"id": "D1", "category": "direct", "query": "后端用什么框架", "expected": [1]},
+  {"id": "D2", "category": "direct", "query": "数据库是什么", "expected": [2]},
+  {"id": "D3", "category": "direct", "query": "前端用什么构建", "expected": [3]},
+  {"id": "D4", "category": "direct", "query": "怎么部署的", "expected": [4]},
+  {"id": "D5", "category": "direct", "query": "缓存用什么", "expected": [5]},
+  {"id": "D6", "category": "direct", "query": "单元测试用什么", "expected": [8]},
+  {"id": "D7", "category": "direct", "query": "鉴权怎么做", "expected": [11]},
+  {"id": "D8", "category": "direct", "query": "容器化用什么", "expected": [15]},
+
+  {"id": "P1", "category": "paraphrase", "query": "服务端接口是哪个库写的", "expected": [1]},
+  {"id": "P2", "category": "paraphrase", "query": "数据存在哪里", "expected": [2]},
+  {"id": "P3", "category": "paraphrase", "query": "页面是怎么打包出来的", "expected": [3]},
+  {"id": "P4", "category": "paraphrase", "query": "线上服务怎么跑起来的", "expected": [4]},
+  {"id": "P5", "category": "paraphrase", "query": "怎么让重复查询快一点", "expected": [5]},
+  {"id": "P6", "category": "paraphrase", "query": "后台异步任务怎么排队", "expected": [6]},
+  {"id": "P7", "category": "paraphrase", "query": "怎么保证代码质量", "expected": [8]},
+  {"id": "P8", "category": "paraphrase", "query": "怎么防止接口被刷", "expected": [18]},
+  {"id": "P9", "category": "paraphrase", "query": "上线怎么不停机", "expected": [21]},
+  {"id": "P10", "category": "paraphrase", "query": "怎么知道服务挂没挂", "expected": [29]},
+
+  {"id": "X1", "category": "crosslingual", "query": "what web framework is the backend", "expected": [1]},
+  {"id": "X2", "category": "crosslingual", "query": "which database is used", "expected": [2]},
+  {"id": "X3", "category": "crosslingual", "query": "how is authentication done", "expected": [11]},
+  {"id": "X4", "category": "crosslingual", "query": "what is used for caching", "expected": [5]},
+  {"id": "X5", "category": "crosslingual", "query": "how are containers orchestrated", "expected": [15]},
+  {"id": "X6", "category": "crosslingual", "query": "how is rate limiting implemented", "expected": [18]},
+  {"id": "X7", "category": "crosslingual", "query": "how are passwords stored", "expected": [27]},
+  {"id": "X8", "category": "crosslingual", "query": "what is the health check endpoint", "expected": [29]},
+
+  {"id": "C1", "category": "colloquial", "query": "后端那套是拿啥写的", "expected": [1]},
+  {"id": "C2", "category": "colloquial", "query": "数据搁哪儿存着", "expected": [2]},
+  {"id": "C3", "category": "colloquial", "query": "前端咋打包的", "expected": [3]},
+  {"id": "C4", "category": "colloquial", "query": "服务咋上线的", "expected": [4]},
+  {"id": "C5", "category": "colloquial", "query": "咋让查询别那么慢", "expected": [5]},
+  {"id": "C6", "category": "colloquial", "query": "咋知道接口被人猛刷", "expected": [18]},
+  {"id": "C7", "category": "colloquial", "query": "上线咋能不中断", "expected": [21]},
+  {"id": "C8", "category": "colloquial", "query": "密码咋存的不会泄露吧", "expected": [27]},
+  {"id": "C9", "category": "colloquial", "query": "咋看服务还活着没", "expected": [29]},
+  {"id": "C10", "category": "colloquial", "query": "出错返回长啥样", "expected": [19]},
+
+  {"id": "N1", "category": "negative", "query": "今天天气怎么样", "expected": []},
+  {"id": "N2", "category": "negative", "query": "推荐一家附近的火锅店", "expected": []},
+  {"id": "N3", "category": "negative", "query": "帮我写一首关于春天的诗", "expected": []},
+  {"id": "N4", "category": "negative", "query": "股票明天会涨吗", "expected": []},
+  {"id": "N5", "category": "negative", "query": "怎么做红烧肉", "expected": []},
+  {"id": "N6", "category": "negative", "query": "hello how are you", "expected": []}
+ ]
+}
