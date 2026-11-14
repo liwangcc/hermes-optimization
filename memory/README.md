@@ -5,6 +5,10 @@ memory provider, tuned for a **Chinese-heavy** personal fact store. It is an
 *enhancement*, not a replacement: holographic still owns the fact store, the lexical
 retriever, and trust/feedback; this layer adds a local embedding channel on top.
 
+> Design rationale — why a tiny always-on layer coexists with a retrieved store, what
+> pointers point at, and how each layer is kept clean — is in
+> [`../docs/memory-architecture.md`](../docs/memory-architecture.md).
+
 ## Why
 
 Lexical recall (FTS5 + stemming) misses queries that share *meaning* but not *words* —

@@ -38,6 +38,7 @@
 | [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现 |
 | [`skills/`](skills/README.md) | 精简工作流 skill（确认决策，而非复核事实） |
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |
+| [`docs/memory-architecture.md`](docs/memory-architecture.md) | 记忆架构：两层分工、指针、满了怎么办、清理规程 |
 | [`docs/methodology.md`](docs/methodology.md) | 方法论与踩坑：先评测、wrap 不 fork、fail-open、抗更新 |
 
 ## 快速开始（语义记忆）
