@@ -96,3 +96,11 @@ Pointer integrity:
 > floor tiny yet able to reach the whole store. The floor stays small by a hard budget; the
 > store stays useful by supersede / archive / trust decay. SQLite never "fills up" — the
 > thing to fight is dirt, not size.
+
+## Related: keeping the store *worth* recalling
+
+Cleanup removes dirt; it does not address **density** — many *legitimate* facts on the
+same topic, which makes top-k structurally unable to cover the acceptable set. A
+proposed storage-side counterpart (compress redundancy into gists, in similarity tiers,
+triggered by density) is sketched in [`tiered-compression.md`](tiered-compression.md).
+It is a design proposal, not implemented.

@@ -40,6 +40,7 @@
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |
 | [`docs/memory-architecture.md`](docs/memory-architecture.md) | 记忆架构：两层分工、指针、满了怎么办、清理规程 |
 | [`docs/methodology.md`](docs/methodology.md) | 方法论与踩坑：先评测、wrap 不 fork、fail-open、抗更新 |
+| [`docs/tiered-compression.md`](docs/tiered-compression.md) | **提案（未实施）**：高密度按相似度分档压缩成 gist，降低分母让 top-k 重新够用 |
 
 ## 快速开始（语义记忆）
 
