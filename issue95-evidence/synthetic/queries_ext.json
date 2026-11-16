@@ -1,0 +1,11 @@
+{
+  "description": "KG-1 no-answer extension to queries.json (which stays as it is). Six in-domain questions about topics none of the 30 facts covers: a real question with no target, which the upstream noise definition counts next to chit-chat. Each of the six candidate topics is used once (4 zh + 2 en). `absent` lists the topic's terms; a test checks none of them occurs in facts.json. Written after the blind keywords were frozen; the keywords were written from the facts only.",
+  "queries": [
+    {"qid": "NA1", "kind": "real", "category": "no_answer", "lang": "zh", "q": "gRPC 流式调用是怎么做的", "targets": [], "absent": ["gRPC", "流式"]},
+    {"qid": "NA2", "kind": "real", "category": "no_answer", "lang": "zh", "q": "WebSocket 长连接怎么保持", "targets": [], "absent": ["WebSocket", "长连接"]},
+    {"qid": "NA3", "kind": "real", "category": "no_answer", "lang": "zh", "q": "前端状态管理用什么", "targets": [], "absent": ["状态管理"]},
+    {"qid": "NA4", "kind": "real", "category": "no_answer", "lang": "zh", "q": "移动端适配怎么处理", "targets": [], "absent": ["移动端", "适配"]},
+    {"qid": "NA5", "kind": "real", "category": "no_answer", "lang": "en", "q": "how is the GraphQL gateway configured", "targets": [], "absent": ["GraphQL"]},
+    {"qid": "NA6", "kind": "real", "category": "no_answer", "lang": "en", "q": "which service mesh is used", "targets": [], "absent": ["service mesh", "服务网格", "Istio"]}
+  ]
+}
