@@ -1,0 +1,2 @@
+# Reproduced byte for byte by the tests: git must not rewrite line endings here.
+dryrun/** -text

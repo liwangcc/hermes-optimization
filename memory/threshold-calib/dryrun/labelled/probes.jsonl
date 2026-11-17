@@ -1,0 +1,42 @@
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "后端用什么框架", "qid": "D1", "targets": [1]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "数据库是什么", "qid": "D2", "targets": [2]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "前端用什么构建", "qid": "D3", "targets": [3]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "怎么部署的", "qid": "D4", "targets": [4]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "缓存用什么", "qid": "D5", "targets": [5]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "单元测试用什么", "qid": "D6", "targets": [8]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "鉴权怎么做", "qid": "D7", "targets": [11]}
+{"category": "direct", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "容器化用什么", "qid": "D8", "targets": [15]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "服务端接口是哪个库写的", "qid": "P1", "targets": [1]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "数据存在哪里", "qid": "P2", "targets": [2]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "页面是怎么打包出来的", "qid": "P3", "targets": [3]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "线上服务怎么跑起来的", "qid": "P4", "targets": [4]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "怎么让重复查询快一点", "qid": "P5", "targets": [5]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "后台异步任务怎么排队", "qid": "P6", "targets": [6]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "怎么保证代码质量", "qid": "P7", "targets": [8]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "怎么防止接口被刷", "qid": "P8", "targets": [18]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "上线怎么不停机", "qid": "P9", "targets": [21]}
+{"category": "paraphrase", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "怎么知道服务挂没挂", "qid": "P10", "targets": [29]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "what web framework is the backend", "qid": "X1", "targets": [1]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "which database is used", "qid": "X2", "targets": [2]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "how is authentication done", "qid": "X3", "targets": [11]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "what is used for caching", "qid": "X4", "targets": [5]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "how are containers orchestrated", "qid": "X5", "targets": [15]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "how is rate limiting implemented", "qid": "X6", "targets": [18]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "how are passwords stored", "qid": "X7", "targets": [27]}
+{"category": "crosslingual", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "what is the health check endpoint", "qid": "X8", "targets": [29]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "后端那套是拿啥写的", "qid": "C1", "targets": [1]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "数据搁哪儿存着", "qid": "C2", "targets": [2]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "前端咋打包的", "qid": "C3", "targets": [3]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "服务咋上线的", "qid": "C4", "targets": [4]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "咋让查询别那么慢", "qid": "C5", "targets": [5]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "咋知道接口被人猛刷", "qid": "C6", "targets": [18]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "上线咋能不中断", "qid": "C7", "targets": [21]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "密码咋存的不会泄露吧", "qid": "C8", "targets": [27]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "咋看服务还活着没", "qid": "C9", "targets": [29]}
+{"category": "colloquial", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "出错返回长啥样", "qid": "C10", "targets": [19]}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "今天天气怎么样", "qid": "N1", "targets": []}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "推荐一家附近的火锅店", "qid": "N2", "targets": []}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "帮我写一首关于春天的诗", "qid": "N3", "targets": []}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "股票明天会涨吗", "qid": "N4", "targets": []}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "怎么做红烧肉", "qid": "N5", "targets": []}
+{"category": "negative", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "skipped", "q": "hello how are you", "qid": "N6", "targets": []}

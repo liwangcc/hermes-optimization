@@ -1,0 +1,34 @@
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "本放在 URL 路径里", "qid": "frag-28", "targets": [28]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "做缓存和会话", "qid": "frag-5", "targets": [5]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "FastAPI 框架，异步处", "qid": "frag-1", "targets": [1]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "用 pytest，覆盖率要求八", "qid": "frag-8", "targets": [8]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "一输出 JSON 格式，便", "qid": "frag-7", "targets": [7]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "权用 JWT，令牌一小", "qid": "frag-11", "targets": [11]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "境变量管理，密钥不", "qid": "frag-10", "targets": [10]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "走对象存储，本地只留", "qid": "frag-12", "targets": [12]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "库是 PostgreSQL，用 SQLAlchemy", "qid": "frag-2", "targets": [2]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "任务在低峰期凌", "qid": "frag-30", "targets": [30]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "uses a blue-green strategy to", "qid": "frag-21", "targets": [21]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "段在入库前做加", "qid": "frag-23", "targets": [23]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "哈希用 argon2，不存", "qid": "frag-27", "targets": [27]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "求在网关层统一", "qid": "frag-17", "targets": [17]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "应统一 RFC 7807 problem details", "qid": "frag-19", "targets": [19]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "Actions，推 main 自动跑", "qid": "frag-9", "targets": [9]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "en", "meaning_call": "ok", "q": "run nightly and are", "qid": "frag-22", "targets": [22]}
+{"category": "fragment", "holdout": null, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "用 Prometheus 加 Grafana 看", "qid": "frag-14", "targets": [14]}
+{"category": "holdout", "holdout": 3, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "Vue 3 单页应用，Vite", "qid": "hold-3", "targets": []}
+{"category": "holdout", "holdout": 24, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "布先放百分之五", "qid": "hold-24", "targets": []}
+{"category": "holdout", "holdout": 20, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "OpenAPI 自动生成 Swagger", "qid": "hold-20", "targets": []}
+{"category": "holdout", "holdout": 16, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "迁移用 Alembic 管理", "qid": "hold-16", "targets": []}
+{"category": "holdout", "holdout": 18, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "令牌桶算法，每秒", "qid": "hold-18", "targets": []}
+{"category": "holdout", "holdout": 4, "kind": "real", "lang": "zh", "meaning_call": "ok", "q": "nginx 反向代理后面，gunicorn", "qid": "hold-4", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "今天天气怎么样，要不要带伞", "qid": "chit-1", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "推荐一部最近好看的电影", "qid": "chit-2", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "帮我写一首关于春天的短诗", "qid": "chit-3", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "周末去哪里爬山比较好", "qid": "chit-4", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "zh", "meaning_call": "ok", "q": "红烧肉怎么做才好吃", "qid": "chit-5", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "ok", "q": "what should I cook for dinner tonight", "qid": "chit-6", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "ok", "q": "tell me a joke about cats", "qid": "chit-7", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "ok", "q": "how tall is the highest mountain in the world", "qid": "chit-8", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "ok", "q": "recommend a good science fiction novel", "qid": "chit-9", "targets": []}
+{"category": "chit", "holdout": null, "kind": "chit", "lang": "en", "meaning_call": "ok", "q": "who won the football match last night", "qid": "chit-10", "targets": []}

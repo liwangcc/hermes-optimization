@@ -1,0 +1,1602 @@
+{
+ "default": {
+  "rule": "zbar",
+  "value": 1.0
+ },
+ "passing": {
+  "floor": [],
+  "zbar": [],
+  "zbar_floor": []
+ },
+ "probes_by_category": {
+  "chit": 10,
+  "fragment": 18,
+  "holdout": 6
+ },
+ "rules": {
+  "floor": [
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-1",
+      "chit-10",
+      "chit-2",
+      "chit-3",
+      "chit-4",
+      "chit-5",
+      "chit-6",
+      "chit-7",
+      "chit-8",
+      "chit-9",
+      "hold-16",
+      "hold-18",
+      "hold-20",
+      "hold-24",
+      "hold-3",
+      "hold-4"
+     ],
+     "base": 0,
+     "net": 16,
+     "point": 16,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.083
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-10",
+      "chit-3",
+      "chit-4",
+      "chit-6",
+      "chit-7",
+      "chit-8",
+      "chit-9",
+      "hold-16",
+      "hold-18",
+      "hold-20",
+      "hold-24",
+      "hold-4"
+     ],
+     "base": 0,
+     "net": 12,
+     "point": 12,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.107
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-10",
+      "chit-3",
+      "chit-6",
+      "chit-7",
+      "chit-8",
+      "chit-9",
+      "hold-16",
+      "hold-18",
+      "hold-20"
+     ],
+     "base": 0,
+     "net": 9,
+     "point": 9,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.14
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-10",
+      "chit-6",
+      "chit-7",
+      "chit-8",
+      "chit-9",
+      "hold-16"
+     ],
+     "base": 0,
+     "net": 6,
+     "point": 6,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.216
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-8",
+      "chit-9"
+     ],
+     "base": 0,
+     "net": 2,
+     "point": 2,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.277
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "17/18"
+    },
+    "c_lost": 1,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 17,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-5:5"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": -5.6,
+    "recall5": 0.9444,
+    "value": 0.576
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "14/18"
+    },
+    "c_lost": 4,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 14,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-5:5",
+     "frag-12:12",
+     "frag-23:23",
+     "frag-17:17"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.125,
+    "passes": false,
+    "points_vs_default": -22.2,
+    "recall5": 0.7778,
+    "value": 0.675
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "10/18"
+    },
+    "c_lost": 8,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 10,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.007812,
+    "passes": false,
+    "points_vs_default": -44.4,
+    "recall5": 0.5556,
+    "value": 0.709
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "7/18"
+    },
+    "c_lost": 11,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 7,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.000977,
+    "passes": false,
+    "points_vs_default": -61.1,
+    "recall5": 0.3889,
+    "value": 0.783
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "4/18"
+    },
+    "c_lost": 14,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 4,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-1:1",
+     "frag-8:8",
+     "frag-7:7",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.000122,
+    "passes": false,
+    "points_vs_default": -77.8,
+    "recall5": 0.2222,
+    "value": 0.833
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "1/18"
+    },
+    "c_lost": 17,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 1,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-1:1",
+     "frag-8:8",
+     "frag-7:7",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-2:2",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-27:27",
+     "frag-17:17",
+     "frag-19:19",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.5e-05,
+    "passes": false,
+    "points_vs_default": -94.4,
+    "recall5": 0.0556,
+    "value": 0.922
+   }
+  ],
+  "zbar": [
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-3",
+      "chit-6",
+      "chit-7",
+      "chit-8",
+      "chit-9",
+      "hold-16",
+      "hold-3"
+     ],
+     "base": 0,
+     "net": 7,
+     "point": 7,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": -0.5
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-3",
+      "chit-7",
+      "chit-8",
+      "hold-16"
+     ],
+     "base": 0,
+     "net": 4,
+     "point": 4,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": -0.25
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-3"
+     ],
+     "base": 0,
+     "net": 1,
+     "point": 1,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.0
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": false
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [
+      "chit-3"
+     ],
+     "base": 0,
+     "net": 1,
+     "point": 1,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.25
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.5
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.75
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 1.0
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 1.25
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 1.5
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 1.75
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "13/18"
+    },
+    "c_lost": 5,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 13,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-8:8",
+     "frag-21:21",
+     "frag-17:17",
+     "frag-22:22",
+     "frag-14:14"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.0625,
+    "passes": false,
+    "points_vs_default": -27.8,
+    "recall5": 0.7222,
+    "value": 2.0
+   }
+  ],
+  "zbar_floor": [
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.083
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.107
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.14
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.216
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "18/18"
+    },
+    "c_lost": 0,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": true,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 18,
+    "labelled": 18,
+    "lost_targets": [],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": 0.0,
+    "recall5": 1.0,
+    "value": 0.277
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "17/18"
+    },
+    "c_lost": 1,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 17,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-5:5"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.0,
+    "passes": false,
+    "points_vs_default": -5.6,
+    "recall5": 0.9444,
+    "value": 0.576
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "14/18"
+    },
+    "c_lost": 4,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": false,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 14,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-5:5",
+     "frag-12:12",
+     "frag-23:23",
+     "frag-17:17"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.125,
+    "passes": false,
+    "points_vs_default": -22.2,
+    "recall5": 0.7778,
+    "value": 0.675
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "10/18"
+    },
+    "c_lost": 8,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 10,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.007812,
+    "passes": false,
+    "points_vs_default": -44.4,
+    "recall5": 0.5556,
+    "value": 0.709
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "7/18"
+    },
+    "c_lost": 11,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 7,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.000977,
+    "passes": false,
+    "points_vs_default": -61.1,
+    "recall5": 0.3889,
+    "value": 0.783
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "4/18"
+    },
+    "c_lost": 14,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 4,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-1:1",
+     "frag-8:8",
+     "frag-7:7",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-17:17",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 0.000122,
+    "passes": false,
+    "points_vs_default": -77.8,
+    "recall5": 0.2222,
+    "value": 0.833
+   },
+   {
+    "b_rescued": 0,
+    "by_category": {
+     "fragment": "1/18"
+    },
+    "c_lost": 17,
+    "conditions": {
+     "confusion_not_higher": true,
+     "mcnemar_p_below_0.05": true,
+     "no_target_lost": false,
+     "noise_not_higher": true
+    },
+    "confusion": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "extra_admitted": {
+     "base": 0,
+     "point": 0
+    },
+    "gained_targets": [],
+    "hit5": 1,
+    "labelled": 18,
+    "lost_targets": [
+     "frag-28:28",
+     "frag-5:5",
+     "frag-1:1",
+     "frag-8:8",
+     "frag-7:7",
+     "frag-11:11",
+     "frag-10:10",
+     "frag-12:12",
+     "frag-2:2",
+     "frag-30:30",
+     "frag-21:21",
+     "frag-23:23",
+     "frag-27:27",
+     "frag-17:17",
+     "frag-19:19",
+     "frag-9:9",
+     "frag-22:22"
+    ],
+    "noise": {
+     "added": [],
+     "base": 0,
+     "net": 0,
+     "point": 0,
+     "removed": []
+    },
+    "p": 1.5e-05,
+    "passes": false,
+    "points_vs_default": -94.4,
+    "recall5": 0.0556,
+    "value": 0.922
+   }
+  ]
+ },
+ "run": {
+  "auto_n": 40,
+  "below_trust_n": 0,
+  "emb": "stub-charbigram-256",
+  "endpoint": "stub",
+  "est_texts": 64,
+  "est_tokens": 703,
+  "est_usd": 0.0,
+  "fact_n": 30,
+  "grid_floor": [
+   0.083,
+   0.107,
+   0.14,
+   0.216,
+   0.277,
+   0.576,
+   0.675,
+   0.709,
+   0.783,
+   0.833,
+   0.922
+  ],
+  "grid_zbar": [
+   -0.5,
+   -0.25,
+   0.0,
+   0.25,
+   0.5,
+   0.75,
+   1.0,
+   1.25,
+   1.5,
+   1.75,
+   2.0
+  ],
+  "grid_zbar_floor": [
+   0.083,
+   0.107,
+   0.14,
+   0.216,
+   0.277,
+   0.576,
+   0.675,
+   0.709,
+   0.783,
+   0.833,
+   0.922
+  ],
+  "harness_version": "tc-1",
+  "keep": 1,
+  "min_trust": 0.3,
+  "min_vectors_for_z": 20,
+  "plugin_version": "0.27.0",
+  "probe_source": "auto",
+  "probes_n": 34,
+  "probes_skipped_n": 0,
+  "recall_margin": 1.0,
+  "role_prompt_n": 0,
+  "seed": 20261117,
+  "tool": "threshold-calib",
+  "unsendable_n": 0,
+  "vec_n": 30
+ }
+}
