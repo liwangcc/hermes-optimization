@@ -88,6 +88,8 @@ Pointer integrity:
 - Deleting a fact **must** update or remove its pointer in the always-on layer, or the
   pointer dangles. A periodic reference check (every `fact#N` in the resident layer still
   resolves to a live row) keeps the map honest.
+- The plugin's opt-in **fact catalog** removes this chore: it generates the pointers from the
+  store instead of keeping them by hand. See [`../memory/plugin/README.md`](../memory/plugin/README.md).
 
 ## Bottom line
 
