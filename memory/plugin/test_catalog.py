@@ -136,7 +136,8 @@ def test_write_routing_is_the_same_with_the_catalog_on_or_off():
     assert on.count(routing) == 1
     for place in ("fact_store (the default)", "USER.md", "MEMORY.md"):
         assert place in routing
-    assert "If USER.md or MEMORY.md is turned off, use fact_store" in routing  # each is switched on its own
+    assert "→ MEMORY.md" not in routing  # nothing is routed there: the design has it off
+    assert "If USER.md is turned off, use fact_store" in routing  # each built-in store is switched on its own
     # a write policy that leans on nothing the catalog switch adds, and carries no fact id of its own
     assert "catalog" not in routing.lower() and "fact_ids" not in routing and not re.search(r"#\d", routing)
     assert "update" not in routing  # the base's update edits keywords only: a fact's text is revised

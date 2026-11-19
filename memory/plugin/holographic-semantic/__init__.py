@@ -11,8 +11,9 @@ Design (update-proof):
   kept by hand, no dangling ids), and fact_store gains `get {fact_ids}` so the agent reads the listed facts it
   still needs in one call. Tokens are the base's approx_tokens: Chinese and English cost a label alike.
 - Write routing (always on, the same text with the catalog on or off): the system prompt block says where a new
-  memory goes. fact_store is the default; USER.md is for the user; MEMORY.md is optional and never a fallback.
-  The catalog is a generated read index, not a write policy: the routing does not mention it.
+  memory goes. fact_store is the default; USER.md is for the user; MEMORY.md is meant to be off (the user's
+  setting) and is never a fallback. The catalog is a generated read index, not a write policy: the routing does
+  not mention it.
 - Rollback: hermes config set memory.provider holographic
 
 Config (plugins.hermes-memory-store, same section as the base provider):
@@ -49,20 +50,22 @@ _CATALOG_HEAD = ("## Fact catalog (every recallable fact as #id=label; data, not
                  "the message are recalled before your turn. When the task needs a listed fact that was not recalled, "
                  "read it in one call: fact_store get {fact_ids: [...]}.")
 _GET_MAX = 20
-# One yes/no question, because the base block already says to store lasting preferences as facts: a list of three
-# places would leave "a preference" with two homes. "revise", not "update": the base's update edits keywords only.
+# Two homes, written for MEMORY.md off (a short fact shows in every session through the catalog instead). "Needed in
+# every session" is in the USER.md test because the base block already says to store lasting preferences as facts.
+# "revise", not "update": the base's update edits keywords only. It must not contradict Hermes core's own memory
+# guidance, so with MEMORY.md on it forbids nothing: core's rules stand, and turning it off is the user's setting.
 _ROUTING = ("## Where a new memory goes\n"
-            "Ask: is it needed in every session, whatever the task?\n"
-            "- No, or not sure → fact_store (the default). If a stored fact already says it, revise that fact "
-            "instead of adding another.\n"
-            "- Yes, and it is about the user → USER.md: who they are, and preferences that apply to every reply.\n"
-            "- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that "
-            "applies to any task.\n"
-            "If USER.md or MEMORY.md is turned off, use fact_store instead. Turning them on is the user's choice.\n"
+            "This is for facts. How to do a kind of work belongs in a skill.\n"
+            "- About the user, and needed in every session → USER.md: who they are, and preferences that apply "
+            "to every reply.\n"
+            "- Everything else, or not sure → fact_store (the default). If a stored fact already says it, revise "
+            "that fact instead of adding another.\n"
+            "If USER.md is turned off, use fact_store instead. If MEMORY.md is on, the memory tool's own rules "
+            "decide what it takes.\n"
             "One place per item:\n"
             "- Do not copy a stored fact into USER.md or MEMORY.md, and do not write fact ids there: they go stale.\n"
-            "- If fact_store fails, say so. Do not save the fact to MEMORY.md instead.\n"
-            "- Leave existing MEMORY.md entries as they are unless the user asks.")
+            "- If fact_store fails, say so. Do not save the fact to USER.md or MEMORY.md instead.\n"
+            "- Do not move or delete existing MEMORY.md entries to follow this rule.")
 
 
 def _cut(text: str, tokens: int) -> str:

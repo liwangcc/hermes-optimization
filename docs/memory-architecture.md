@@ -8,11 +8,12 @@ getting better means the always-on layer should get *smaller*, not disappear.**
 
 ## A mental model
 
-- **Always-on layer** (`USER.md`, and optionally `MEMORY.md`) = what is *always* in mind:
-  who the user is, their standing preferences, and the few notes that must hold in any session.
+- **Always-on layer** (`USER.md`; the built-in `MEMORY.md` is off in this design) = what is
+  *always* in mind: who the user is and their standing preferences.
 - **Fact store** (SQLite) = the filing cabinet: all the detail, opened only when needed.
 - **Fact catalog** (`#42=label`) = the cabinet's table of contents, printed from the drawers
-  themselves and never written by hand.
+  themselves and never written by hand. A short fact that makes the catalog is printed in
+  full; the catalog is optional and budgeted.
 - **Vector retrieval** = a smart clerk who fetches drawers based on what you ask.
 
 You cannot rely on the clerk to *volunteer* "the user prefers Chinese" on every task —
@@ -23,7 +24,7 @@ that has to live in your head, not behind a query.
 | | always-on layer | fact store + retrieval |
 |---|---|---|
 | trigger | **query-independent**, present every turn | **query-dependent**, recalled when relevant |
-| content | identity / standing preferences / must-see notes | every other durable fact (the default) |
+| content | identity / standing preferences | every other durable fact (the default) |
 | size | tiny (a few KB) | large (hundreds+ of facts) |
 | guarantee | **never missed** | bounded recall |
 
@@ -45,26 +46,41 @@ The conclusion is *trim*, not *remove*.
 
 ## Where a new memory goes
 
-One question decides it: **is it needed in every session, whatever the task?**
+Two homes, and one test: **is it about the user, and needed in every session?**
 
 | answer | home | what it holds |
 |---|---|---|
-| no, or not sure | `fact_store` (**the default**) | durable facts needed on demand |
-| yes, and about the user | `USER.md` | identity and standing preferences |
-| yes, and not about the user | `MEMORY.md` (optional) | short notes that must be visible even in unrelated sessions |
+| yes | `USER.md` | identity, and preferences that apply to every reply |
+| no, or not sure | `fact_store` (**the default**) | every other durable fact |
 
-- **One home per memory.** A fact is not repeated in the always-on layer. When the store
-  already holds it, the existing fact is revised instead of a second one being added.
-- **What `MEMORY.md` is still for.** Facts live in the store, the user lives in `USER.md`,
-  and the map of the store is generated (next section), so little is left: notes that hold
-  for any task and are not about the user, such as "edit config via the CLI, not by patching
-  the file". Retrieval fires on the query and cannot promise those. With no such notes,
-  `MEMORY.md` can stay off, which is why it is optional. Whether it is on is the user's
-  decision, and the entries already in it are left as they are.
-- **`MEMORY.md` is not a fallback.** A failed `fact_store` write is reported. A fact parked
-  in `MEMORY.md` instead would be a second copy that nothing reconciles, paid for on every turn.
-- **Either built-in store can be off.** `USER.md` and `MEMORY.md` are switched separately in
-  Hermes. What would go to one that is off goes to the store.
+How to do a kind of work is not a memory at all: it belongs in a skill. Hermes core draws
+the same lines for its built-in stores ("facts that apply to EVERY session regardless of
+task", procedures to skills), so the two do not disagree.
+
+- **One home per memory.** A fact is not repeated in `USER.md`. When the store already holds
+  it, the existing fact is revised instead of a second one being added.
+- **The built-in `MEMORY.md` is off.** Which store a memory belongs in is a judgment the
+  model makes per item; a prompt lowers the miss rate and never removes it. Turning
+  `MEMORY.md` off removes one of the choices: core drops the `memory` target from its
+  guidance and from the tool, so that tool cannot write there. That is a configuration core
+  supports. Forbidding `MEMORY.md` by prompt while it is on would contradict core, so the
+  plugin does not: the switch is the user's, in Hermes.
+- **What took over its job.** `MEMORY.md` held short notes needed in every session and not
+  about the user. A standing requirement of the user ("config is changed through the CLI,
+  never by patching the file") fits `USER.md`. Other short notes can be stored as facts.
+  A fact no longer than `catalog_label_tokens` appears in full if it passes recall screening
+  and fits the total catalog budget. That makes the catalog useful with `MEMORY.md` off, but
+  it is not a guarantee that a note always appears. Without the catalog, facts surface on demand.
+- **Moving the old entries is the user's step.** Before `MEMORY.md` is turned off, its
+  entries are split by hand: what is about the user to `USER.md`, the rest into facts.
+  Neither the plugin nor the agent moves or deletes them.
+- **Not a fallback.** A failed `fact_store` write is reported. A fact parked in `USER.md` or
+  `MEMORY.md` instead would be a second copy that nothing reconciles, paid for on every turn.
+- **`USER.md` can be off as well.** The two built-in stores are switched separately in
+  Hermes. With `USER.md` off, what would go there goes to the store.
+
+Not measured in a controlled run: behavior with `MEMORY.md` off. In the author's own use,
+with the old entries split as above, turning it off showed no noticeable loss.
 
 The `holographic-semantic` wrapper puts this rule in the system prompt as a fixed block, the
 same with its fact catalog on or off. See [`../memory/plugin/README.md`](../memory/plugin/README.md).
@@ -93,8 +109,7 @@ it on or off. Fact ids are never written by hand into `USER.md` or `MEMORY.md`: 
 new entry would overflow, the write is *rejected* — you must **consolidate**: remove or
 shorten stale entries and add the new one in a single atomic batch, checked against the
 final budget. Fullness is not a bug; it is the signal to curate. The hard cap is what
-forces "only what is needed every turn" to stay. In `MEMORY.md` that curation is the user's
-call: the agent does not rewrite existing entries on its own initiative.
+forces "only what is needed every turn" to stay.
 
 **Fact store (SQLite).** Capacity is essentially never the problem — SQLite holds hundreds
 of thousands of facts; a few dozen is nothing. The real problem is **bloat hurting
@@ -120,16 +135,17 @@ No hand-kept pointers:
 - `fact#N` is not written into the always-on layer. The plugin's opt-in **fact catalog**
   generates the list from the store, so there is nothing to keep in step. See
   [`../memory/plugin/README.md`](../memory/plugin/README.md).
-- Pointers already in `MEMORY.md` are existing entries: they stay until the user removes
-  them. Until then one dangles when its fact is merged or forgotten, so a periodic reference
-  check (every `fact#N` there still resolves to a live row) is worth running.
+- Pointers already in `MEMORY.md` are the user's to drop when its entries are split. While
+  `MEMORY.md` stays on, one dangles when its fact is merged or forgotten, so a periodic
+  reference check (every `fact#N` there still resolves to a live row) is worth running.
 
 ## Bottom line
 
 > The always-on layer is the query-independent, never-miss floor; vector retrieval is the
 > query-dependent long tail. They divide labor — they are not redundant. Every memory has
-> one home: the store by default, `USER.md` for the user, `MEMORY.md` only for the few notes
-> that must show in any session. A catalog generated from the store, never hand-kept
-> pointers, lets the floor stay tiny yet reach the whole store. The floor stays small by a
-> hard budget; the store stays useful by supersede / archive / trust decay. SQLite never
-> "fills up" — the thing to fight is dirt, not size.
+> one home: `USER.md` for the user, the store for everything else. The built-in `MEMORY.md`
+> is off in this setup, and the catalog can show eligible short facts in full. A catalog
+> generated from the store, never hand-kept pointers, keeps the floor small while giving
+> the agent a way to find more. The floor stays small by a hard budget; the store stays
+> useful by supersede / archive / trust decay. SQLite never "fills up" — the thing to fight
+> is dirt, not size.

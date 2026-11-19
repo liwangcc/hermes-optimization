@@ -49,49 +49,72 @@ block says where a **new** memory goes. The text is the same with the catalog on
 
 ```
 ## Where a new memory goes
-Ask: is it needed in every session, whatever the task?
-- No, or not sure → fact_store (the default). If a stored fact already says it, revise that fact instead of adding another.
-- Yes, and it is about the user → USER.md: who they are, and preferences that apply to every reply.
-- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that applies to any task.
-If USER.md or MEMORY.md is turned off, use fact_store instead. Turning them on is the user's choice.
+This is for facts. How to do a kind of work belongs in a skill.
+- About the user, and needed in every session → USER.md: who they are, and preferences that apply to every reply.
+- Everything else, or not sure → fact_store (the default). If a stored fact already says it, revise that fact instead of adding another.
+If USER.md is turned off, use fact_store instead. If MEMORY.md is on, the memory tool's own rules decide what it takes.
 One place per item:
 - Do not copy a stored fact into USER.md or MEMORY.md, and do not write fact ids there: they go stale.
-- If fact_store fails, say so. Do not save the fact to MEMORY.md instead.
-- Leave existing MEMORY.md entries as they are unless the user asks.
+- If fact_store fails, say so. Do not save the fact to USER.md or MEMORY.md instead.
+- Do not move or delete existing MEMORY.md entries to follow this rule.
 ```
 
-- **One question, not three descriptions.** The base block already tells the agent to store
-  lasting preferences as facts, so "preferences go to `USER.md`" on its own would give a
-  preference two homes. "Needed in every session?" gives it one: a reply language is, a
-  preferred package manager is not.
+The setup it is written for. All three are settings the user makes; the plugin changes none:
+
+| setting | value | why |
+|---|---|---|
+| built-in `MEMORY.md` | off | one store fewer to choose between: core then removes the `memory` target from the tool |
+| built-in `USER.md` | on | who the user is, and preferences that apply to every reply |
+| `catalog_enabled` | `true` | eligible facts of up to `catalog_label_tokens` can show in full, subject to the total catalog budget |
+
+- **Two homes, one test.** "About the user, and needed in every session" is `USER.md`;
+  everything else is a fact. The second half of the test matters: the base block already
+  tells the agent to store lasting preferences as facts, so "preferences go to `USER.md`" on
+  its own would give a preference two homes. A reply language applies to every reply, a
+  preferred package manager does not.
+- **`MEMORY.md` off, by setting and not by prompt.** A prompt only lowers how often a memory
+  lands in the wrong store; with `MEMORY.md` off, core drops the `memory` target from its
+  guidance and from the tool, so that tool cannot write there. With it on, core's own rules
+  decide what it takes; the routing does not use it as a fallback. The
+  trade-off is in
+  [`docs/memory-architecture.md`](../../docs/memory-architecture.md#where-a-new-memory-goes).
+- **Short notes can appear in the catalog.** They are subject to the same trust cutoff and
+  recall screening as other facts (checked against holographic 0.27.0). The catalog also has
+  a total budget, `catalog_max_tokens`; it is not a guaranteed always-on notes layer.
+- **It follows Hermes core and must not contradict it.** Core's memory guidance keeps the
+  built-in stores for "facts that apply to EVERY session regardless of task" and sends how-to
+  knowledge to skills (its `main`, checked 2026-11-19). The routing adds only what core cannot
+  know: every other durable fact has a home in `fact_store`. Core's handling of a full store
+  (consolidate stale entries) still applies.
 - **`fact_store` is the default**, and where anything doubtful goes. "Revise", not "update":
   the base's `update` action edits keywords, tags and category only. A fact's text changes with
   `change` / `correct`, and duplicates fold with `merge`.
-- **`MEMORY.md` is optional and never a fallback.** With facts in the store and the user in
-  `USER.md`, what is left for it is small: notes that hold for any task and are not about the
-  user. With none of those it can stay off. A failed `fact_store` write is reported, not parked
-  in `MEMORY.md`: a parked fact is a second copy that nothing reconciles. Whether `MEMORY.md`
-  is on is a setting of Hermes itself and the user's decision. The plugin never changes it and
-  never touches the entries already there, and the prompt tells the agent the same.
+- **Never a fallback.** A failed `fact_store` write is reported, not parked in `USER.md` or
+  `MEMORY.md`: a parked fact is a second copy that nothing reconciles.
+- **Existing entries are the user's to move.** The plugin never touches what is already in
+  `MEMORY.md`, and the prompt's last line stops the agent moving or deleting it on its own.
+  Before turning `MEMORY.md` off, split its entries by hand: what is about the user goes to
+  `USER.md`, the rest becomes facts.
 - **No copies, no hand-written fact ids.** A fact lives in the store only: `USER.md` and
   `MEMORY.md` neither repeat it nor point at it by id, since an id that is merged or forgotten
   would dangle. For the same reason keep the base's `mirror_memory_writes` at its default
   (off): it copies every built-in memory `add` into the store.
 - **The catalog is a generated read index, not a write policy.** It lists what the store holds
   so the agent can read it by id. It decides nothing about where a memory is written, and the
-  routing text does not mention it: `catalog_enabled` changes what the agent can look up, not
-  where it writes.
-- **Either built-in store can be off.** Hermes core then shrinks its own memory guidance and
-  the `memory` tool's targets to the stores that are on (checked on its `main`, 2026-11-19).
-  Core does not tell a provider which stores are on, so the routing text is a constant and
-  covers that case in words: what would go to a store that is off goes to `fact_store`.
+  routing text does not mention it: `catalog_enabled` changes what the agent sees and can look
+  up, not where it writes.
+- **`USER.md` can be off too.** Core does not tell a provider which built-in stores are on,
+  so the routing text is a constant and covers that case in words: what would go to `USER.md`
+  goes to `fact_store`.
 - The routing also goes out when the base block reports the store unavailable, or is empty:
-  that is when a fact would otherwise drift into `MEMORY.md`.
+  that is when a fact would otherwise drift into the built-in stores.
 - No switch: the text is a constant of about 190 tokens by the base's estimate. Rolling back
   to the base provider removes it.
 
 Not measured yet: whether models follow the routing. Only the composition of the block is
-self-checked, with the catalog on and off.
+self-checked, with the catalog on and off. In the author's own use, turning `MEMORY.md` off
+after splitting its entries between `USER.md` and the store showed no noticeable loss; that
+is an impression, not a controlled run.
 
 ## Fact catalog (opt-in, experimental)
 
