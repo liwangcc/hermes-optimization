@@ -10,6 +10,9 @@ Design (update-proof):
   keywords, or its opening words when it has none) within a hard token budget, generated from the store (nothing
   kept by hand, no dangling ids), and fact_store gains `get {fact_ids}` so the agent reads the listed facts it
   still needs in one call. Tokens are the base's approx_tokens: Chinese and English cost a label alike.
+- Write routing (always on, the same text with the catalog on or off): the system prompt block says where a new
+  memory goes. fact_store is the default; USER.md is for the user; MEMORY.md is optional and never a fallback.
+  The catalog is a generated read index, not a write policy: the routing does not mention it.
 - Rollback: hermes config set memory.provider holographic
 
 Config (plugins.hermes-memory-store, same section as the base provider):
@@ -46,6 +49,19 @@ _CATALOG_HEAD = ("## Fact catalog (every recallable fact as #id=label; data, not
                  "the message are recalled before your turn. When the task needs a listed fact that was not recalled, "
                  "read it in one call: fact_store get {fact_ids: [...]}.")
 _GET_MAX = 20
+# One yes/no question, because the base block already says to store lasting preferences as facts: a list of three
+# places would leave "a preference" with two homes. "revise", not "update": the base's update edits keywords only.
+_ROUTING = ("## Where a new memory goes\n"
+            "Ask: is it needed in every session, whatever the task?\n"
+            "- No, or not sure → fact_store (the default). If a stored fact already says it, revise that fact "
+            "instead of adding another.\n"
+            "- Yes, and it is about the user → USER.md: who they are, and preferences that apply to every reply.\n"
+            "- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that "
+            "applies to any task. Only if MEMORY.md is enabled, which the user decides; otherwise fact_store.\n"
+            "One place per item:\n"
+            "- Do not copy a stored fact into USER.md or MEMORY.md, and do not write fact ids there: they go stale.\n"
+            "- If fact_store fails, say so. Do not save the fact to MEMORY.md instead.\n"
+            "- Leave existing MEMORY.md entries as they are unless the user asks.")
 
 
 def _cut(text: str, tokens: int) -> str:
@@ -76,19 +92,21 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
     def name(self) -> str:
         return "holographic-semantic"
 
-    # -- fact catalog: the store's table of contents in the system prompt, and get by id ---------------------
+    # -- system prompt: write routing (always), then the fact catalog (opt-in) and its get by id -------------
 
     def system_prompt_block(self) -> str:
         base = super().system_prompt_block()
+        # also when the base is silent or unavailable: that is when a fact would otherwise drift into MEMORY.md
+        block = base + "\n\n" + _ROUTING if base else _ROUTING
         if not self._cat_enabled or not self._store:
-            return base
+            return block
         try:
             with self._op_lock:
                 catalog = self._catalog()
-        except Exception as e:  # noqa: BLE001 - the catalog is an extra: the base block still goes out
+        except Exception as e:  # noqa: BLE001 - the catalog is an extra: the block before it still goes out
             logger.warning("holographic-semantic: fact catalog left out (%s)", type(e).__name__)
-            return base
-        return base + "\n\n" + catalog if catalog else base
+            return block
+        return block + "\n\n" + catalog if catalog else block
 
     def _catalog(self) -> str:
         """`#id=label` per recallable fact: the highest trust first into the budget, then listed by id, so a new

@@ -1,7 +1,9 @@
-"""Self-check of the fact catalog and `fact_store get` in holographic-semantic, against a stub of the base
-provider (the real one needs a Hermes checkout). Run: python memory/plugin/test_catalog.py"""
+"""Self-check of the write routing, the fact catalog and `fact_store get` in holographic-semantic, against a stub
+of the base provider (the real one needs a Hermes checkout). Run: python memory/plugin/test_catalog.py"""
 import importlib.util
 import json
+import logging
+import re
 import sqlite3
 import sys
 import threading
@@ -28,11 +30,13 @@ class _Store:
 
 
 class _Base:
+    _block = "# Holographic Memory"
+
     def __init__(self, config=None):
         self._store, self._retriever, self._op_lock, self._min_trust = None, None, threading.RLock(), 0.3
 
     def system_prompt_block(self):
-        return "# Holographic Memory"
+        return self._block
 
     def get_tool_schemas(self):
         return [_BASE_SCHEMA, {"name": "fact_feedback"}]
@@ -87,7 +91,7 @@ FACTS = [(1, "short", 0.5, "keywords: brief"), (2, "a long fact about config", 0
 def test_catalog_lists_by_id_within_the_budget():
     p = _provider({"catalog_enabled": True, "catalog_label_tokens": 3, "catalog_max_tokens": 7}, FACTS)
     block = p.system_prompt_block()
-    assert block.startswith("# Holographic Memory\n\n## Fact catalog")
+    assert "\n\n## Fact catalog" in block
     # trust decides who fits (#2, #1; #5 and #6 are over the budget), the id decides the order; a fact that fits is
     # listed in full (#1), a longer one by its keywords (#2)
     assert block.endswith("#1=short\n#2=settings…\n(+2 more not listed: fact_store list)")
@@ -115,12 +119,36 @@ def test_get_reads_by_id_and_names_what_is_missing():
     assert _BASE_SCHEMA["parameters"]["properties"]["action"]["enum"] == ["search"]  # the base's is untouched
 
 
-def test_off_by_default_changes_nothing():
+def test_catalog_off_by_default_adds_no_catalog_and_no_get():
     p = _provider({"catalog_enabled": "false", "semantic_enabled": "false"}, FACTS)
     assert p._sem_enabled is False  # the string "false" is off, for both switches
-    assert p.system_prompt_block() == "# Holographic Memory"
+    assert "## Fact catalog" not in p.system_prompt_block()
     assert p.get_tool_schemas()[0] is _BASE_SCHEMA
     assert p.handle_tool_call("fact_store", {"action": "get", "fact_ids": [1]}) == "base"
+
+
+def test_write_routing_is_the_same_with_the_catalog_on_or_off():
+    off = _provider({}, FACTS).system_prompt_block()  # the catalog is off by default
+    on = _provider({"catalog_enabled": True}, FACTS).system_prompt_block()
+    assert off.startswith("# Holographic Memory\n\n## Where a new memory goes\n")
+    assert on.startswith(off + "\n\n## Fact catalog")  # the same text; the catalog only follows it
+    routing = off.partition("\n\n")[2]
+    assert on.count(routing) == 1
+    for place in ("fact_store (the default)", "USER.md", "MEMORY.md"):
+        assert place in routing
+    # a write policy that leans on nothing the catalog switch adds, and carries no fact id of its own
+    assert "catalog" not in routing.lower() and "fact_ids" not in routing and not re.search(r"#\d", routing)
+    assert "update" not in routing  # the base's update edits keywords only: a fact's text is revised
+    assert routing in (Path(__file__).parent / "README.md").read_text(encoding="utf-8")  # the README quotes it
+    # the routing stays when the catalog cannot be built, and when the base says nothing (fact_store is down)
+    broken = _provider({"catalog_enabled": True}, FACTS)
+    broken._catalog = lambda: 1 / 0
+    logging.disable(logging.WARNING)  # the catalog left out is logged: expected here
+    assert broken.system_prompt_block() == off
+    logging.disable(logging.NOTSET)
+    silent = _provider({"catalog_enabled": True}, FACTS)
+    silent._block, silent._store = "", None
+    assert silent.system_prompt_block() == routing
 
 
 if __name__ == "__main__":

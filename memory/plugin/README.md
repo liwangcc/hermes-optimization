@@ -1,7 +1,8 @@
 # holographic-semantic plugin
 
 A memory provider that **subclasses the holographic provider unchanged** and adds a
-semantic recall channel backed by the local sidecar. The original holographic plugin
+semantic recall channel backed by the local sidecar, a short write-routing rule in the
+system prompt, and an opt-in fact catalog. The original holographic plugin
 is never modified, so upstream updates flow through automatically.
 
 ## Install
@@ -41,6 +42,52 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 - **fail-open**: any sidecar error/timeout returns the base result unchanged. Recall
   never blocks on the semantic channel.
 
+## Write routing (always on)
+
+After the base block, and before the catalog when that is on, the provider's system prompt
+block says where a **new** memory goes. The text is the same with the catalog on or off:
+
+```
+## Where a new memory goes
+Ask: is it needed in every session, whatever the task?
+- No, or not sure → fact_store (the default). If a stored fact already says it, revise that fact instead of adding another.
+- Yes, and it is about the user → USER.md: who they are, and preferences that apply to every reply.
+- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that applies to any task. Only if MEMORY.md is enabled, which the user decides; otherwise fact_store.
+One place per item:
+- Do not copy a stored fact into USER.md or MEMORY.md, and do not write fact ids there: they go stale.
+- If fact_store fails, say so. Do not save the fact to MEMORY.md instead.
+- Leave existing MEMORY.md entries as they are unless the user asks.
+```
+
+- **One question, not three descriptions.** The base block already tells the agent to store
+  lasting preferences as facts, so "preferences go to `USER.md`" on its own would give a
+  preference two homes. "Needed in every session?" gives it one: a reply language is, a
+  preferred package manager is not.
+- **`fact_store` is the default**, and where anything doubtful goes. "Revise", not "update":
+  the base's `update` action edits keywords, tags and category only. A fact's text changes with
+  `change` / `correct`, and duplicates fold with `merge`.
+- **`MEMORY.md` is optional and never a fallback.** With facts in the store and the user in
+  `USER.md`, what is left for it is small: notes that hold for any task and are not about the
+  user. With none of those it can stay off. A failed `fact_store` write is reported, not parked
+  in `MEMORY.md`: a parked fact is a second copy that nothing reconciles. Whether `MEMORY.md`
+  is on is a setting of Hermes itself and the user's decision. The plugin never changes it and
+  never touches the entries already there, and the prompt tells the agent the same.
+- **No copies, no hand-written fact ids.** A fact lives in the store only: `USER.md` and
+  `MEMORY.md` neither repeat it nor point at it by id, since an id that is merged or forgotten
+  would dangle. For the same reason keep the base's `mirror_memory_writes` at its default
+  (off): it copies every built-in memory `add` into the store.
+- **The catalog is a generated read index, not a write policy.** It lists what the store holds
+  so the agent can read it by id. It decides nothing about where a memory is written, and the
+  routing text does not mention it: `catalog_enabled` changes what the agent can look up, not
+  where it writes.
+- The routing also goes out when the base block reports the store unavailable, or is empty:
+  that is when a fact would otherwise drift into `MEMORY.md`.
+- No switch: the text is a constant of about 190 tokens by the base's estimate. Rolling back
+  to the base provider removes it.
+
+Not measured yet: whether models follow the routing. Only the composition of the block is
+self-checked, with the catalog on and off.
+
 ## Fact catalog (opt-in, experimental)
 
 `catalog_enabled: true` appends the store's table of contents to the provider's system prompt block:
@@ -75,12 +122,13 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 - `get` counts as a recall, as `search` and `probe` do: `retrieval_count` holds these explicit
   reads together with automatic recall. Keep that in mind when ranking facts by it for maintenance.
 
-The catalog is meant to replace hand-written pointers in `MEMORY.md`; turning the built-in
-`MEMORY.md` off (and keeping `USER.md`) is a setting of Hermes itself. Not measured yet: whether
-keywords label a long fact well enough (they are search phrasings, not a title), and how often
-the agent fetches the right ids.
+The catalog replaces hand-written `fact#N` pointers in `MEMORY.md` with a generated list. It is
+a read index only: where a memory is written is the [write routing](#write-routing-always-on),
+the same with the catalog on or off. Not measured yet: whether keywords label a long fact well
+enough (they are search phrasings, not a title), and how often the agent fetches the right ids.
 
-Self-check (no Hermes checkout needed): `python memory/plugin/test_catalog.py`.
+Self-check of the routing (catalog on and off), the catalog and `get`, with no Hermes checkout
+needed: `python memory/plugin/test_catalog.py`.
 
 ## Rollback
 

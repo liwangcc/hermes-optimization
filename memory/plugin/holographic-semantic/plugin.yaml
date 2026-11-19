@@ -1,3 +1,3 @@
 name: holographic-semantic
-version: 0.2.0
-description: "Holographic memory + local semantic recall: wraps the holographic provider unchanged and adds a bge-m3 embedding sidecar channel to prefetch (fail-open to lexical recall), plus an opt-in fact catalog in the system prompt with fact_store get by id."
+version: 0.3.0
+description: "Holographic memory + local semantic recall: wraps the holographic provider unchanged and adds a bge-m3 embedding sidecar channel to prefetch (fail-open to lexical recall), a write-routing rule in the system prompt (fact_store by default, USER.md, optional MEMORY.md), plus an opt-in fact catalog in the system prompt with fact_store get by id."
