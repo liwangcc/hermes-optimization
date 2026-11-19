@@ -52,7 +52,8 @@ block says where a **new** memory goes. The text is the same with the catalog on
 Ask: is it needed in every session, whatever the task?
 - No, or not sure → fact_store (the default). If a stored fact already says it, revise that fact instead of adding another.
 - Yes, and it is about the user → USER.md: who they are, and preferences that apply to every reply.
-- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that applies to any task. Only if MEMORY.md is enabled, which the user decides; otherwise fact_store.
+- Yes, and it is not about the user → MEMORY.md: one short note, such as a rule of this machine that applies to any task.
+If USER.md or MEMORY.md is turned off, use fact_store instead. Turning them on is the user's choice.
 One place per item:
 - Do not copy a stored fact into USER.md or MEMORY.md, and do not write fact ids there: they go stale.
 - If fact_store fails, say so. Do not save the fact to MEMORY.md instead.
@@ -80,6 +81,10 @@ One place per item:
   so the agent can read it by id. It decides nothing about where a memory is written, and the
   routing text does not mention it: `catalog_enabled` changes what the agent can look up, not
   where it writes.
+- **Either built-in store can be off.** Hermes core then shrinks its own memory guidance and
+  the `memory` tool's targets to the stores that are on (checked on its `main`, 2026-11-19).
+  Core does not tell a provider which stores are on, so the routing text is a constant and
+  covers that case in words: what would go to a store that is off goes to `fact_store`.
 - The routing also goes out when the base block reports the store unavailable, or is empty:
   that is when a fact would otherwise drift into `MEMORY.md`.
 - No switch: the text is a constant of about 190 tokens by the base's estimate. Rolling back

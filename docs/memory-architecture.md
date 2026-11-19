@@ -63,6 +63,8 @@ One question decides it: **is it needed in every session, whatever the task?**
   decision, and the entries already in it are left as they are.
 - **`MEMORY.md` is not a fallback.** A failed `fact_store` write is reported. A fact parked
   in `MEMORY.md` instead would be a second copy that nothing reconciles, paid for on every turn.
+- **Either built-in store can be off.** `USER.md` and `MEMORY.md` are switched separately in
+  Hermes. What would go to one that is off goes to the store.
 
 The `holographic-semantic` wrapper puts this rule in the system prompt as a fixed block, the
 same with its fact catalog on or off. See [`../memory/plugin/README.md`](../memory/plugin/README.md).
