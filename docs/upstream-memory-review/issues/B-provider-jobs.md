@@ -1,21 +1,33 @@
-# Desktop: run a memory provider’s maintenance jobs on demand
+# Memory providers: let the user start a provider's maintenance job and see it finish
 
 **Target:** `NousResearch/hermes-agent` · Feature request · draft only
 
 ## Problem or use case
 
-After a user enables embeddings or changes models, facts already in the store may not have vectors for the active model. Some providers catch up a batch after each chat turn; their own CLI, when available, is another path. Desktop settings can configure a provider, but cannot ask it to finish this work now or show the result.
+Some memory providers have work to do on facts that are already stored. The usual case is search by meaning: after a user turns embeddings on or changes the model, the stored facts need vectors for the active model.
+
+Today that work happens implicitly. The catalog's Holographic plugin, for example, makes vectors in a time-boxed batch after each chat turn, and that catch-up works, including for slow local endpoints (itpartypattaya/hermes-plugin-holographic#5). What a user cannot do is start the work, see how far along it is, and know when it is done. The provider settings in the Desktop can change the configuration but cannot run anything, and `hermes memory` has only `setup`, `status`, `off` and `reset`.
 
 ## Proposed solution
 
-Let providers optionally list jobs with availability and progress, and run a job in bounded steps. Desktop shows **Run**, progress and the final result in the provider's settings, using the existing action-status mechanism. `hermes memory action` offers the same entry point from the CLI. The provider owns the tasks, model, index and continuation rules. No model or provider name is added to core, and providers without jobs have no new UI.
+Two optional methods on `MemoryProvider`, both with inert defaults:
 
-Our `holographic-semantic` adapter is a reference consumer that indexes existing facts through a local BGE-M3 sidecar. The catalog's Holographic plugin could offer a job using its own embedding path; it doesn't need this sidecar.
+- one lists the provider's jobs, each with a label, where it stands now and whether it can run;
+- one runs a single bounded step of a job, and is called again until the job says it is done.
 
-## Evidence and review plan
+Hermes only lists the jobs and calls the steps:
 
-In a separate test of Holographic 0.30.0's existing **after-turn** backfill, five local embedding models each finished indexing the same 40 synthetic facts. Qwen3 stopped at **28/40** in the intentionally bounded first run; a new process submitted **only the remaining 12**, with no overlap in inputs. That tests provider-side continuation, not the proposed Desktop job. It isn't a performance or model-quality ranking.
+- `hermes memory action [id]` lists the jobs or runs one, printing each status.
+- The Desktop shows the jobs under the provider's settings with **Run**, progress and the result. It starts that same CLI command through the existing maintenance-action mechanism (the one behind doctor, backup and the others), and adds nothing of its own to how action status is tracked (#25916).
+- Nothing runs unless the user starts it. A provider that offers no jobs gets no new UI.
+- The provider owns what a job does, its model, its index and how it resumes. No provider or model name is added to core.
 
-Separately, on Windows the integrated candidate's actual Desktop job drove the reference adapter with BGE-M3 on CPU: **0/12 → 12/12** synthetic facts. Running it again added **0** vectors; the same 12 remained after restarting the sidecar. This is an end-to-end smoke test, not a benchmark or a macOS result.
+There is a concrete consumer. `holographic-semantic`, a standalone adapter I maintain outside this repo, implements both methods for its local embedding index. It is not published yet; I can publish it alongside the PR. The catalog's Holographic plugin does not need the adapter or its local embedding service. It could offer a job over its own embedding path if its maintainer wants one.
 
-Would you be open to reviewing a **single, independent PR** for the optional job hooks, CLI and Desktop flow? I'll include the full per-PR test results, reproduction steps and limits. This proposal doesn't require the separate work on capacity or checkups.
+## Evidence so far
+
+On Windows 11, with a prototype of this change on `main` as of 2026-11-19, the actual **Run** button in the Desktop drove that adapter with BGE-M3 on CPU over 12 synthetic facts: **0 of 12 → 12 of 12** indexed. A second run embedded **0**, and all 12 vectors were still there after the embedding service restarted.
+
+That shows the flow working end to end with a real consumer. It is not a benchmark: I have not measured how much sooner a store is fully indexed than with the after-turn catch-up, and nothing has been run on macOS or Linux.
+
+Would a maintainer be open to reviewing one PR for the two optional methods plus the CLI and Desktop entry points? It is about 1,000 added lines, including tests, docs and the 9 locales.
