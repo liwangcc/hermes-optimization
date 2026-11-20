@@ -41,5 +41,21 @@ def current(hermes_home: str, load: Callable[[], dict]) -> dict[str, Any]:
 
 def to_store(values: dict[str, Any]) -> dict[str, Any]:
     """``write_config_fields`` input as stored values: only our keys; a cleared one (None) goes back to its default,
-    since the base's writer merges and cannot delete a key."""
-    return {k: DEFAULTS[k] if v is None else v for k, v in values.items() if k in DEFAULTS}
+    since the base's writer merges and cannot delete a key. A number arrives as the text its field holds; one that
+    is not a number is refused (ValueError: Hermes shows it and saves nothing)."""
+    out = {}
+    for key, value in values.items():
+        if key not in DEFAULTS:
+            continue
+        default = DEFAULTS[key]
+        if value is None:
+            out[key] = default
+        elif isinstance(default, bool):
+            out[key] = value
+        else:
+            try:
+                out[key] = type(default)(value)
+            except (TypeError, ValueError):
+                kind = "a whole number" if isinstance(default, int) else "a number"
+                raise ValueError(f"{key} must be {kind}, not {value!r}") from None
+    return out

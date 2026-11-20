@@ -259,6 +259,16 @@ def test_the_desktop_panel_reads_and_writes_the_profile_it_is_given():
     p.write_config_fields({"catalog_enabled": True, "semantic_tau": None, "scope": "user"}, "/homes/work")
     # a cleared field goes back to its default; a key that is not ours is never written from this panel
     assert saved == [({"catalog_enabled": True, "semantic_tau": 0.55}, "/homes/work")]
+    del saved[:]
+    p.write_config_fields({"semantic_tau": "0.6", "semantic_max_extra": "4"}, "/homes/work")  # numbers come as text
+    assert saved == [({"semantic_tau": 0.6, "semantic_max_extra": 4}, "/homes/work")]
+    for bad in ({"semantic_tau": "high"}, {"semantic_max_extra": "2.5"}):
+        try:
+            p.write_config_fields(bad, "/homes/work")
+        except ValueError:
+            continue
+        raise AssertionError(f"{bad} was saved")
+    assert len(saved) == 1  # a refused value saves nothing
 
 
 class _FakeSidecar:
