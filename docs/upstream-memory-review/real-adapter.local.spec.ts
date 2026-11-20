@@ -27,6 +27,22 @@ const BGE_MODEL = process.env.MEMORY_REVIEW_BGE_MODEL_DIR
 const REAL_SIDECAR = !!SIDECAR_PYTHON && !!BGE_MODEL
 if (!!SIDECAR_PYTHON !== !!BGE_MODEL) throw new Error('Real sidecar needs both the interpreter and the model directory')
 
+function demoAppEnv(sandbox: ReturnType<typeof createSandbox>): Record<string, string> {
+  // Both plugins are already seeded. Do not fetch unrelated default plugins on first boot.
+  const extra: Record<string, string> = {
+    USERPROFILE: sandbox.root,
+    HERMES_DISABLE_LAZY_INSTALLS: '1',
+  }
+  if (process.platform === 'win32') {
+    // An import can ask for Electron's default userData before main sets its override.
+    // A synthetic USERPROFILE therefore also needs real, existing AppData folders.
+    extra.APPDATA = path.join(sandbox.root, 'AppData', 'Roaming')
+    extra.LOCALAPPDATA = path.join(sandbox.root, 'AppData', 'Local')
+    for (const dir of [extra.APPDATA, extra.LOCALAPPDATA]) fs.mkdirSync(dir, { recursive: true })
+  }
+  return buildAppEnv(sandbox, extra)
+}
+
 function seedHome(sandbox: { hermesHome: string; root: string }, ...extra: string[]) {
   execFileSync(
     PYTHON,
@@ -114,7 +130,7 @@ test('screenshots of the real adapter', async () => {
   writeMockProviderConfig(sandbox.hermesHome, mock.url, 'language: en\n')
   writeEnvFile(sandbox.hermesHome)
 
-  const { app, page } = await launchDesktop(buildAppEnv(sandbox))
+  const { app, page } = await launchDesktop(demoAppEnv(sandbox))
 
   const fixture: MockBackendFixture = {
     app,
@@ -227,7 +243,7 @@ test('the adapter: its settings, its index job and the MEMORY.md suggestion', as
     seedHome(sandbox, '--memory-md', 'on', '--sidecar', sidecar.url)
     writeMockProviderConfig(sandbox.hermesHome, mock.url, 'language: en\n')
     writeEnvFile(sandbox.hermesHome)
-    launched = await launchDesktop(buildAppEnv(sandbox, { USERPROFILE: sandbox.root }))
+    launched = await launchDesktop(demoAppEnv(sandbox))
     const { app, page } = launched
     await waitForAppReady({ app, page, mock, mockUrl: mock.url, sandbox, cleanup: async () => {} })
     await page.getByRole('button', { name: 'No thanks' }).click()
