@@ -1,20 +1,20 @@
-# Holographic: configure semantic recall from Hermes Desktop
+# Holographic: configure search by meaning from Hermes Desktop
 
 **Target:** `itpartypattaya/hermes-plugin-holographic` · draft only
 
 ## Problem or use case
 
-`hermes memory setup` already knows Holographic's embedding settings. A Desktop user shouldn't need to leave Settings or edit YAML just to turn embeddings on and choose the endpoint and model. Hermes Desktop's existing provider settings panel can render these fields from a provider's `config_schema.py`.
+`hermes memory setup` already asks for Holographic's embedding settings. In Hermes Desktop the same settings are out of reach: the memory provider panel renders its fields from a `config_schema.py` next to the plugin's `__init__.py`, and Holographic doesn't ship one, so the panel is empty for it. A Desktop user has to leave Settings and edit `config.yaml`, or run setup in a terminal, to turn embeddings on or change the model.
 
-## First slice: settings only
+## Proposal: settings only
 
-Add that schema and pass profile-scoped reads and saves through the plugin's existing configuration helpers. The API key stays in its environment variable; the panel only edits the variable name. This needs no new Hermes interface and doesn't change `requires_hermes`. On the pinned Holographic 0.30.1 base (`76689f9`), the prototype passed **7 targeted tests**: five for the Desktop schema and two for the existing save path.
+Add a `config_schema.py` for `embeddings` and the ten `embedding_*` keys, plus two forwarding methods so the panel reads and saves the profile being configured through the plugin's existing `save_config`.
 
-Would you prefer a small PR for the settings panel, or prefer to implement it yourselves? The PR can include the full results, reproduction steps, and limitations.
+- Nothing is written until the user saves. A blank field stays unset, so the plugin's own default applies.
+- The API key stays in its environment variable. The panel edits only the variable's name, and a pasted key is refused.
+- It needs no new Hermes interface and leaves `requires_hermes` alone. On a Hermes without the panel, the file is never read.
+- It does not touch recall, indexing or the after-turn catch-up.
 
-## Optional later slices
+I have this working on 0.30.1 (`76689f9`). On Windows 11, **7 targeted tests** pass: 5 new ones for the schema and the panel's read and save, which fail without the change, and the 2 existing ones for `save_config`. I have not run it on Linux or macOS. I checked the panel through Hermes' route functions, not by clicking through a Desktop window with the catalog plugin installed.
 
-- **Read-only usage and review:** if Hermes adopts the optional hooks for capacity and checkups, Holographic could report its store's counts and consented review items. Does `protected` as a fact tag fit your design? Should a fact count as `unconfirmed` when it was inferred and has not been confirmed since?
-- **Run backfill from Settings:** if Hermes adopts provider maintenance jobs, a Holographic job could reuse existing after-turn backfill and indexing logic to index the remaining facts for the active embedding configuration. It would be separate from the schema PR. This isn't a proposal to replace Holographic's index with a sidecar.
-
-Our `holographic-semantic` adapter is a reference consumer on the Hermes side, not a dependency for this plugin. The core proposals can be discussed separately.
+Would you take a small PR for this (5 files, about 200 added lines), or would you rather implement it yourself?
