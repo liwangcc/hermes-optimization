@@ -1,20 +1,21 @@
-# Desktop: show memory capacity by layer
+# Comment on #5320: usage against the write limit for the two built-in files
 
-**Target:** `NousResearch/hermes-agent` · Feature request · draft only
+**Target:** `NousResearch/hermes-agent` · comment on the open issue #5320, not a new issue · draft only. Paste everything below the line.
 
-## Problem or use case
+---
 
-When a memory write reaches its configured limit, a Desktop user has no clear way to tell which layer is full. The byte sizes of `USER.md` and `MEMORY.md` don't answer how close they are to the write-time character cap. An optional provider store is a third, separate layer; its usage should not be guessed from those files.
+A narrow piece of this issue, in case it is useful on its own: showing how full `MEMORY.md` and `USER.md` are, without changing any limit.
 
-## Proposed solution
+Since #145574 the Memory Layers panel names the two built-in files and the active provider. What it shows for the files is their size in bytes (`builtin_files` from `GET /api/memory`). That doesn't say how close a file is to the point where a write is refused, because the limit is in characters, counted after the entries are parsed and de-duplicated.
 
-Show each layer in Memory & Context and Command Center → Maintenance. For the two built-in files, use the same count and limit as the write path. For an active provider, display only the usage it reports through an optional read-only `MemoryProvider.usage_report(hermes_home)`. Keep **off**, **empty**, **unreadable**, and **not reported** distinct. There is no new route for this slice: `GET /api/memory` adds a `layers` field without removing the existing fields. The built-in layers work without a provider.
+The change I have in mind is read-only:
 
-On the pinned Hermes base (`152fe189`), this slice alone passed **6 targeted backend tests and 119 Desktop tests (including i18n checks)** on Windows. Our `holographic-semantic` adapter is a reference consumer of the optional hook; Holographic itself could adopt it separately. Neither plugin change is required for the built-in layers.
+- In that same panel, show each built-in file as characters used out of its configured limit, counted the way the write path counts them.
+- `GET /api/memory` gains one field for this. Its existing fields stay as they are, and no route is added.
+- The default limits, the write path and what goes into the prompt do not change. So this covers only the visibility part of this issue, in the Desktop; it takes no position on raising or auto-sizing the limits.
 
-## Review plan
+I have a prototype against `main` as of 2026-11-19. On Windows 11, 6 new backend tests pass, and so do the 119 Desktop tests in the touched areas (8 of them new). I have not run it on macOS or Linux, and I have not measured what the extra read adds to the endpoint's response time; I would measure that before opening a PR.
 
-1. **First PR: capacity by layer**, as above. It does not depend on the reminder or either refactor.
-2. **Follow-ups only if useful:** a separate user-started, read-only checkup that makes proposals but applies nothing; a separate suggestion when a provider catalog overlaps `MEMORY.md`; and an opt-in reminder. The reminder needs two small preparatory refactors (profile-keyed storage and composer offers), each reviewable on its own. They are not prerequisites for the first PR.
+The prototype also lets a provider report its own store's usage through an optional read-only method. I would leave that out of a first PR unless you want it there.
 
-Would you be open to reviewing the standalone capacity PR first? I'll include the full test output summary, reproduction steps, and limitations in each PR. The checkup and reminder can be discussed separately. Provider maintenance jobs are a separate proposal, not a dependency.
+Would a maintainer be open to reviewing a PR limited to this? If it doesn't belong under #5320, I can open a separate issue instead.
