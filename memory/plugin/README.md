@@ -192,11 +192,9 @@ context each session, and the write routing already keeps fact ids out of MEMORY
 
 ## Desktop settings and the index job (need Hermes core support)
 
-- **Settings.** `config_schema.py` declares the wrapper's own keys for the Desktop's provider panel, all on the
-  panel itself with no separate full-config page: `semantic_enabled`, `semantic_url`, `semantic_tau` and
-  `semantic_max_extra` together, then `catalog_enabled` with `catalog_max_tokens`. The three numbers are text
-  fields, because the Desktop's number input changes under the mouse wheel and the panel saves on blur; a value
-  that is not a number is refused. They are read from and written to `plugins.hermes-memory-store` of the profile being
+- **Settings.** `config_schema.py` declares the wrapper's own keys (`semantic_enabled`, `semantic_url`,
+  `catalog_enabled`, and in the full config `semantic_tau`, `semantic_max_extra`, `catalog_max_tokens`) for the
+  Desktop's provider panel. They are read from and written to `plugins.hermes-memory-store` of the profile being
   configured (`settings.py`), through the base provider's own writer, so the panel and `config.yaml` are one
   setting. The base's keys stay in `config.yaml` and `hermes memory setup`. New values apply from the next session.
 - **Index job.** `maintenance_actions` offers "Index facts for semantic recall" (`sidecar_index.py`). Its status
