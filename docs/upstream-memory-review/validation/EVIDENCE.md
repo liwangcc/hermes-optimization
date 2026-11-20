@@ -31,7 +31,14 @@ Qwen3 第一段是刻意有界运行：4 次 sync 后保存 **28/40**。下一�
 
 用 `testkit/run.py --only live`：固定核心基线叠七个补丁（合体补丁 SHA-256 `6cec54f8fc700d5bba88b30e0a72e9c0f5f1a0ae51bd6b3dd0cff3fb7942f957`），实际加载 `holographic-semantic` 与基于 0.30.1 的 Holographic。只用独立 home 和 12 条合成事实。外部生成式调用由本机替身回答；embedding 由本机侧车加载 BGE-M3 权重。具体命令和下载 pin 见 [Mac 复验](../MAC-TEST.md)。
 
-本节等本机真模型回执后更新；不以第 1、2 节的结果代替。
+在 Windows x64 的专用源码安装上，复验了候选 `a510d702f7974a83ddd14e72d4fa69b061dc7104`。`--only live` 实跑 7 个步骤全通过，含 2 个 Desktop E2E：
+
+- 只读体检读取合成库并展示建议，SQLite 主文件未改；建议由固定的本机替身生成，不代表真实生成模型质量。
+- 在真实插件设置页点击 **Run**，BGE-M3（CPU）由 **0/12 → 12/12**，落盘 12 个 1024 维向量。用 SQLite 只读核对事实 ID、内容/标签哈希和向量形状，不通过会补索引的查询来读结果。再次点击新增 **0**；重启侧车后仍是 **12/12**，向量文件摘要不变。
+
+首跑一项停在 Desktop 连接中，另一项 Electron 启动超时。为合成 Windows profile 补上独立 AppData，并关闭不参与验证的默认插件自动安装，两项重跑均通过。没有改七份核心补丁、侧车断言或测试超时。
+
+同一版本随后定向复验默认替身路径：13 个步骤通过，包括 2 个 Desktop E2E、7 个 HOLO-1 单测和 14 个适配器自检（catalog 10、侧车同步 4）。这不是 PR1–PR7 的又一次全量回归。脱敏结果与模型版本见 [`windows-live-checks.json`](windows-live-checks.json)，原始回执留本机。
 
 ## 4. 仍需什么
 

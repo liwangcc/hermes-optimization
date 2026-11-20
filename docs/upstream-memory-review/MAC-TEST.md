@@ -9,7 +9,8 @@
 ```bash
 REPO="$HOME/hermes-memory-review"
 BUNDLE="$HOME/Downloads/hermes-memory-review-rc.bundle"
-git clone --branch threshold-calib https://github.com/liwangcc/hermes-optimization.git "$REPO" &&
+test -f "$BUNDLE" &&
+  git clone --branch threshold-calib https://github.com/liwangcc/hermes-optimization.git "$REPO" &&
   cd "$REPO" &&
   git bundle verify "$BUNDLE" &&
   git fetch "$BUNDLE" refs/heads/memory-review-rc:refs/heads/memory-review-rc &&
@@ -29,7 +30,7 @@ python3 docs/upstream-memory-review/testkit/run.py \
   --work "$HOME/hkit-memory-review" --jobs 2 --quick --only holo,adapter,pr3,pr7,all
 ```
 
-首次下载和构建可能较久。`--quick` 只跳过 Holographic 完整测试套件，不跳过 HOLO-1 定向测试；`all` 是七份合体的状态，不等于逐份跑完。要跑七份独立测试，去掉 `--only …`。两条候选 Issue 的重点是 `pr3`（分层容量）与 `pr7`（一键任务）。合体 e2e 默认用替身侧车。
+首次下载和构建可能较久。用图形会话的 Terminal 启动，不要在无桌面的 SSH 会话中跑。`--quick` 只跳过 Holographic 完整测试套件，不跳过 HOLO-1 定向测试；`all` 是七份合体的状态，不等于逐份跑完。要跑七份独立测试，去掉 `--only …`。两条候选 Issue 的重点是 `pr3`（分层容量）与 `pr7`（一键任务）。合体 e2e 默认用替身侧车。
 
 ## 3. Apple Silicon：跑真实 BGE-M3
 
@@ -41,11 +42,12 @@ set -e
 cd "$HOME/hermes-memory-review"
 WORK="$HOME/hkit-memory-review"
 mkdir -p "$WORK"
+python3.11 -c 'import platform; assert platform.machine() == "arm64", "Use native arm64 Python 3.11"'
 python3.11 -m venv "$WORK/sidecar-venv"
 PY="$WORK/sidecar-venv/bin/python"
 "$PY" -m pip install -r memory/sidecar/requirements.txt \
   'torch==2.11.0' 'sentence-transformers==5.5.0' 'transformers==5.8.1' 'numpy==1.26.4'
-HF_HUB_DISABLE_IMPLICIT_TOKEN=1 "$WORK/sidecar-venv/bin/hf" download BAAI/bge-m3 \
+HF_HOME="$WORK/hf-download" HF_HUB_DISABLE_IMPLICIT_TOKEN=1 "$WORK/sidecar-venv/bin/hf" download BAAI/bge-m3 \
   --revision 5617a9f61b028005a4858fdac845db406aefb181 --local-dir "$WORK/bge-m3" \
   pytorch_model.bin config.json config_sentence_transformers.json modules.json \
   sentence_bert_config.json sentencepiece.bpe.model special_tokens_map.json \

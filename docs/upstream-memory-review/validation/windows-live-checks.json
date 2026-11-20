@@ -1,0 +1,48 @@
+{
+  "scope": "Isolated Windows x64 source build; synthetic data; chat replies supplied by a local mock.",
+  "tested_candidate": "a510d702f7974a83ddd14e72d4fa69b061dc7104",
+  "hermes_base": "152fe18976002e9a987422b7c6102c805d61264b",
+  "holo_base": "76689f954f500d49a7ef2eb73d0e868a5b43b53e",
+  "combined_patch_sha256": "6cec54f8fc700d5bba88b30e0a72e9c0f5f1a0ae51bd6b3dd0cff3fb7942f957",
+  "setup": {
+    "platform": "windows-x64",
+    "os": "Windows-11-10.0.26200-SP0",
+    "test_python": "Python 3.14.9",
+    "node": "v26.12.1",
+    "pnpm": "12.15.0",
+    "jobs": 2
+  },
+  "model_weights": {
+    "revision": "5617a9f61b028005a4858fdac845db406aefb181",
+    "sha256": "b5e0ce3470abf5ef3831aa1bd5553b486803e83251590ab7ff35a117cf6aad38"
+  },
+  "desktop_real_sidecar": {
+    "passed_steps": 7,
+    "e2e_passed": 2,
+    "model": "BAAI/bge-m3",
+    "device": "cpu",
+    "before": 0,
+    "facts": 12,
+    "vectors": 12,
+    "dimensions": 1024,
+    "vector_file_sha256": "94821e267291617f8cfb0b4d3e5df3d63b2686a434eb7830ab4d91f3bcc36f15",
+    "runtime": {
+      "torch": "2.11.0+cu128",
+      "sentence-transformers": "5.5.0",
+      "transformers": "5.8.1",
+      "numpy": "1.26.4"
+    },
+    "embeddedOnRepeat": 0,
+    "indexedAfterSidecarRestart": 12,
+    "runMs": 6585
+  },
+  "desktop_stand_in_sidecar": {
+    "passed_steps": 13,
+    "e2e_passed": 2
+  },
+  "holo_1_targeted_passed": 7,
+  "adapter_self_checks_passed": {
+    "adapter-catalog": 10,
+    "adapter-sidecar-sync": 4
+  }
+}

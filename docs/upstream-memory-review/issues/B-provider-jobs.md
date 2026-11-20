@@ -16,4 +16,6 @@ Our `holographic-semantic` adapter is a reference consumer that indexes existing
 
 In a separate test of Holographic 0.30.0's existing **after-turn** backfill, five local embedding models each finished indexing the same 40 synthetic facts. Qwen3 stopped at **28/40** in the intentionally bounded first run; a new process submitted **only the remaining 12**, with no overlap in inputs. That tests provider-side continuation, not the proposed Desktop job. It isn't a performance or model-quality ranking.
 
+Separately, on Windows the integrated candidate's actual Desktop job drove the reference adapter with BGE-M3 on CPU: **0/12 → 12/12** synthetic facts. Running it again added **0** vectors; the same 12 remained after restarting the sidecar. This is an end-to-end smoke test, not a benchmark or a macOS result.
+
 Would you be open to reviewing a **single, independent PR** for the optional job hooks, CLI and Desktop flow? I'll include the full per-PR test results, reproduction steps and limits. This proposal doesn't require the separate work on capacity or checkups.
