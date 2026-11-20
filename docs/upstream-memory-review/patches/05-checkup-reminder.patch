@@ -1,0 +1,1451 @@
+diff --git a/apps/desktop/e2e/memory-checkup.spec.ts b/apps/desktop/e2e/memory-checkup.spec.ts
+index fc5f88d3..af506c2b 100644
+--- a/apps/desktop/e2e/memory-checkup.spec.ts
++++ b/apps/desktop/e2e/memory-checkup.spec.ts
+@@ -14,7 +14,9 @@ import { expect, test } from './test'
+ // synthetic memory; only the model is the mock server. The checkup reads three
+ // layers, proposes, and writes nothing.
+ 
++const REMINDER_KEY = 'hermes:memory-checkup-reminder:'
+ const REVIEW_MARK = 'Find entries that are stale'
++const DAY = 24 * 60 * 60 * 1000
+ 
+ const USER_MD = ['Reply in Chinese; keep code in English', 'Works at Acme on the billing service']
+ const MEMORY_MD = ['Config is changed through the CLI, never by patching the file']
+@@ -133,9 +135,16 @@ function reviewReply(prompt: string): string {
+   })
+ }
+ 
++const reminder = (page: Page) =>
++  page.evaluate(prefix => {
++    const key = Object.keys(window.localStorage).find(name => name.startsWith(prefix))
++
++    return key ? { key, ...(JSON.parse(window.localStorage.getItem(key)!) as { dueAt: number; pending: boolean }) } : null
++  }, REMINDER_KEY)
++
+ const openRoute = (page: Page, route: string) => page.evaluate(hash => void (window.location.hash = hash), `#${route}`)
+ 
+-test('a memory checkup reads three layers once and writes nothing', async () => {
++test('a due memory-checkup reminder leads to one read-only checkup', async () => {
+   test.setTimeout(240_000)
+ 
+   const testInfo = test.info()
+@@ -185,13 +194,60 @@ test('a memory checkup reads three layers once and writes nothing', async () =>
+   try {
+     await waitForAppReady(fixture)
+ 
+-    // Nothing asked the model about memory before the click.
++    // A fresh profile's own first-run question holds the composer's one offer slot: answer it, so the
++    // reminder below has the slot to itself.
++    await page.getByRole('button', { name: 'No thanks' }).click()
++
++    // Opt in. Off until here: no reminder is stored, and no model was asked anything about memory.
++    expect(await reminder(page)).toBeNull()
+     await openRoute(page, '/command-center?section=maintenance')
++
++    const panel = page.getByTestId('memory-checkup')
++
++    await panel.getByRole('switch', { name: 'Remind me to review' }).click()
++    await expect(panel.getByRole('button', { name: '14 days' })).toHaveAttribute('aria-pressed', 'true')
++    await expect(panel.getByRole('button', { name: '10 days' })).toBeVisible()
++
++    const armed = await reminder(page)
++
++    expect(armed!.pending).toBe(false)
++    expect(armed!.dueAt - Date.now()).toBeGreaterThan(13 * DAY)
++
++    // The due date passes while the app is closed: the stored date moves back, and the app is opened again.
++    await page.evaluate(
++      ({ key, dueAt }) => {
++        const stored = JSON.parse(window.localStorage.getItem(key)!)
++
++        window.localStorage.setItem(key, JSON.stringify({ ...stored, dueAt }))
++      },
++      { key: armed!.key, dueAt: Date.now() - 3 * DAY }
++    )
++    await openRoute(page, '/')
++    await page.reload()
++    await waitForAppReady(fixture)
++
++    const strip = page.locator('[data-slot="status-row"]').filter({ hasText: 'Memory checkup' })
++
++    await expect(strip).toHaveCount(1)
++    await expect(strip.getByRole('button', { name: 'Review now' })).toBeVisible()
++    await expect(strip.getByRole('button', { name: 'Next time' })).toBeVisible()
++
++    // The next interval starts once the reminder is on screen, and opening the app again does not restart it.
++    await expect.poll(async () => (await reminder(page))!.dueAt - Date.now()).toBeGreaterThan(13 * DAY)
++
++    const shown = await reminder(page)
++
++    expect(shown!.pending).toBe(true)
++    await page.reload()
++    await waitForAppReady(fixture)
++    await expect(strip).toHaveCount(1)
++    expect(await reminder(page)).toEqual(shown)
+     expect(prompts).toEqual([])
++    await page.screenshot({ path: testInfo.outputPath('memory-checkup-reminder.png') })
+ 
+     const before = memoryState(sandbox.hermesHome)
+ 
+-    await page.getByTestId('memory-checkup').getByRole('button', { name: 'Review now' }).click()
++    await strip.getByRole('button', { name: 'Review now' }).click()
+ 
+     // Capacity, by layer: a cap where Hermes enforces one, a count and a size where nothing does.
+     const capacity = page.getByTestId('memory-capacity')
+@@ -224,6 +280,7 @@ test('a memory checkup reads three layers once and writes nothing', async () =>
+     expect(prompts[0]).not.toContain(MEMORY_MD[0])
+     expect(memoryState(sandbox.hermesHome)).toEqual(before)
+     expect(fs.existsSync(path.join(sandbox.hermesHome, 'pending'))).toBe(false)
++    expect((await reminder(page))!.pending).toBe(false)
+ 
+     await capacity.scrollIntoViewIfNeeded()
+     await page.screenshot({ path: testInfo.outputPath('memory-checkup-capacity.png') })
+diff --git a/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx b/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx
+index 4a53b6a3..af8737a5 100644
+--- a/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx
++++ b/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx
+@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react'
+ import { beforeEach, describe, expect, it, vi } from 'vitest'
+ 
+ import { $freeTierRoute, $freeTierStatus } from '@/store/free-tier'
++import { $memoryCheckupReminder } from '@/store/memory-checkup-reminder'
+ import { markOnboardingDecided } from '@/store/onboarding-presence'
+ import { $sharedMetricsConsent } from '@/store/shared-metrics'
+ 
+@@ -18,6 +19,7 @@ type FreeTierStatus = NonNullable<ReturnType<typeof $freeTierStatus.get>>
+ 
+ const notice = (pending: boolean) => ({ has_guest: true, notice_pending: pending }) as FreeTierStatus
+ const consent = (decided: boolean) => ({ decided }) as NonNullable<ReturnType<typeof $sharedMetricsConsent.get>>
++const reminder = (pending: boolean) => ({ enabled: true, intervalDays: 14 as const, dueAt: 1, pending })
+ 
+ beforeEach(() => {
+   owner.owns = true
+@@ -25,6 +27,7 @@ beforeEach(() => {
+   $freeTierRoute.set(false)
+   $freeTierStatus.set(notice(false))
+   $sharedMetricsConsent.set(null)
++  $memoryCheckupReminder.set(reminder(false))
+ })
+ 
+ describe('composer offers', () => {
+@@ -44,9 +47,24 @@ describe('composer offers', () => {
+     expect(result.current?.key).toBe('shared-metrics')
+   })
+ 
++  it('makes a reminder the user opted into wait for the question Hermes has to ask', () => {
++    const { result } = renderHook(() => useComposerOffer())
++
++    act(() => $memoryCheckupReminder.set(reminder(true)))
++    expect(result.current?.key).toBe('memory-checkup')
++
++    act(() => $sharedMetricsConsent.set(consent(false)))
++    expect(result.current?.key).toBe('shared-metrics')
++
++    // Answered: the reminder, still pending, takes the slot back.
++    act(() => $sharedMetricsConsent.set(consent(true)))
++    expect(result.current?.key).toBe('memory-checkup')
++  })
++
+   it('shows nothing in a composer that does not own the slot', () => {
+     owner.owns = false
+     $sharedMetricsConsent.set(consent(false))
++    $memoryCheckupReminder.set(reminder(true))
+ 
+     expect(renderHook(() => useComposerOffer()).result.current).toBeUndefined()
+   })
+diff --git a/apps/desktop/src/app/chat/composer/status-stack/offers.tsx b/apps/desktop/src/app/chat/composer/status-stack/offers.tsx
+index 5963e331..51eed52f 100644
+--- a/apps/desktop/src/app/chat/composer/status-stack/offers.tsx
++++ b/apps/desktop/src/app/chat/composer/status-stack/offers.tsx
+@@ -2,14 +2,18 @@ import { useStore } from '@nanostores/react'
+ import type { ReactNode } from 'react'
+ 
+ import { FreeTierNoticeStrip, useFreeTierNoticeOwner } from '@/components/free-tier/notice-strip'
++import { MemoryCheckupReminderStrip } from '@/components/memory-checkup/reminder-strip'
+ import { SharedMetricsConsentStrip } from '@/components/shared-metrics/consent-strip'
+ import { $freeTierRoute, $freeTierStatus, freeTierStripPending } from '@/store/free-tier'
++import { $memoryCheckupReminder } from '@/store/memory-checkup-reminder'
+ import { $sharedMetricsConsent, sharedMetricsOfferPending } from '@/store/shared-metrics'
+ 
+-// In the order they are offered: the metrics question waits for the free-tier notice.
++// In the order they are offered: the metrics question waits for the free-tier
++// notice, and a reminder the user opted into waits for both.
+ const OFFERS: readonly { key: string; node: ReactNode }[] = [
+   { key: 'free-tier', node: <FreeTierNoticeStrip /> },
+-  { key: 'shared-metrics', node: <SharedMetricsConsentStrip /> }
++  { key: 'shared-metrics', node: <SharedMetricsConsentStrip /> },
++  { key: 'memory-checkup', node: <MemoryCheckupReminderStrip /> }
+ ]
+ 
+ /**
+@@ -22,8 +26,13 @@ export function useComposerOffer(): { key: string; node: ReactNode } | undefined
+   const freeTierStatus = useStore($freeTierStatus)
+   const freeTierRoute = useStore($freeTierRoute)
+   const sharedMetricsConsent = useStore($sharedMetricsConsent)
++  const memoryCheckup = useStore($memoryCheckupReminder)
+ 
+-  const pending = [freeTierStripPending(freeTierStatus, freeTierRoute), sharedMetricsOfferPending(sharedMetricsConsent)]
++  const pending = [
++    freeTierStripPending(freeTierStatus, freeTierRoute),
++    sharedMetricsOfferPending(sharedMetricsConsent),
++    memoryCheckup.pending
++  ]
+ 
+   return owns ? OFFERS[pending.indexOf(true)] : undefined
+ }
+diff --git a/apps/desktop/src/app/command-center/memory-checkup.test.tsx b/apps/desktop/src/app/command-center/memory-checkup.test.tsx
+index 30445e13..5d3f49ac 100644
+--- a/apps/desktop/src/app/command-center/memory-checkup.test.tsx
++++ b/apps/desktop/src/app/command-center/memory-checkup.test.tsx
+@@ -19,8 +19,14 @@ vi.mock('@/app/chat/composer/focus', async importOriginal => ({
+ 
+ const { clearMemoryCheckupRun } = await import('@/store/memory-checkup')
+ 
++const { $memoryCheckupReminder, checkMemoryCheckupDue, setMemoryCheckupReminder } = await import(
++  '@/store/memory-checkup-reminder'
++)
++
+ const { MemoryCheckupPanel } = await import('./memory-checkup')
+ 
++const DAY = 24 * 60 * 60 * 1000
++
+ const layer = (over: Partial<MemoryCheckupLayer> = {}): MemoryCheckupLayer => ({
+   state: 'ok',
+   total: 0,
+@@ -90,9 +96,13 @@ function review(): MemoryCheckupResponse {
+ const within_ = (testId: string) => within(screen.getByTestId(testId))
+ 
+ beforeEach(() => {
++  window.localStorage.clear()
+   vi.mocked(runMemoryCheckup).mockReset()
+   vi.mocked(requestComposerInsert).mockReset()
+-  act(() => clearMemoryCheckupRun())
++  act(() => {
++    clearMemoryCheckupRun()
++    checkMemoryCheckupDue()
++  })
+ })
+ 
+ afterEach(cleanup)
+@@ -212,4 +222,37 @@ describe('memory checkup panel', () => {
+     expect(within_('memory-checkup-facts').getByText('This provider does not offer its facts for review.')).toBeTruthy()
+     expect(screen.queryByRole('button', { name: 'Add selected to chat' })).toBeNull()
+   })
++
++  it('offers the reminder as an opt-in, with 10 and 14 days and 14 chosen first', () => {
++    render(<MemoryCheckupPanel />)
++
++    const toggle = screen.getByRole('switch', { name: 'Remind me to review' })
++
++    expect(toggle.getAttribute('aria-checked')).toBe('false')
++    expect(screen.queryByRole('button', { name: '14 days' })).toBeNull()
++
++    fireEvent.click(toggle)
++
++    expect(screen.getByRole('button', { name: '14 days' }).getAttribute('aria-pressed')).toBe('true')
++    expect(screen.getByText(/Next reminder:/)).toBeTruthy()
++
++    fireEvent.click(screen.getByRole('button', { name: '10 days' }))
++    expect($memoryCheckupReminder.get()).toMatchObject({ enabled: true, intervalDays: 10, pending: false })
++    expect(runMemoryCheckup).not.toHaveBeenCalled()
++  })
++
++  it('answers a waiting reminder when the checkup is started here', async () => {
++    vi.mocked(runMemoryCheckup).mockResolvedValue(review())
++    act(() => {
++      setMemoryCheckupReminder({ enabled: true }, Date.now() - 15 * DAY)
++      checkMemoryCheckupDue()
++    })
++    expect($memoryCheckupReminder.get().pending).toBe(true)
++    render(<MemoryCheckupPanel />)
++
++    fireEvent.click(screen.getByRole('button', { name: 'Review now' }))
++
++    expect($memoryCheckupReminder.get().pending).toBe(false)
++    await screen.findByTestId('memory-checkup-results')
++  })
+ })
+diff --git a/apps/desktop/src/app/command-center/memory-checkup.tsx b/apps/desktop/src/app/command-center/memory-checkup.tsx
+index ee7adc5e..7bb56ee4 100644
+--- a/apps/desktop/src/app/command-center/memory-checkup.tsx
++++ b/apps/desktop/src/app/command-center/memory-checkup.tsx
+@@ -6,11 +6,19 @@ import { requestComposerInsert } from '@/app/chat/composer/focus'
+ import { Button } from '@/components/ui/button'
+ import { Checkbox } from '@/components/ui/checkbox'
+ import { DisclosureCaret } from '@/components/ui/disclosure-caret'
++import { SegmentedControl } from '@/components/ui/segmented-control'
+ import { useI18n } from '@/i18n'
+ import type { MemoryCheckupTranslations } from '@/i18n/types_memory_checkup'
+ import { AlertCircle } from '@/lib/icons'
+ import { memoryCheckupRequest } from '@/lib/memory-checkup-request'
+ import { $memoryCheckupRun, memoryCheckupScope, startMemoryCheckup } from '@/store/memory-checkup'
++import {
++  $memoryCheckupReminder,
++  dismissMemoryCheckupReminder,
++  REMINDER_INTERVAL_DAYS,
++  type ReminderIntervalDays,
++  setMemoryCheckupReminder
++} from '@/store/memory-checkup-reminder'
+ import { $activeGatewayProfile } from '@/store/profile'
+ import type {
+   MemoryCheckupEntry,
+@@ -20,7 +28,7 @@ import type {
+   MemoryCheckupResponse
+ } from '@/types/memory-checkup'
+ 
+-import { ListRow, Pill } from '../settings/primitives'
++import { ListRow, Pill, ToggleRow } from '../settings/primitives'
+ 
+ const LAYERS: readonly MemoryCheckupLayerName[] = ['user', 'memory', 'facts']
+ const CAPTION = 'text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)'
+@@ -210,13 +218,15 @@ function Results({ m, result }: { m: MemoryCheckupTranslations; result: MemoryCh
+ }
+ 
+ /**
+- * Command Center > Maintenance: "Review now", and what the checkup proposed.
++ * Command Center > Maintenance: "Review now", the reminder's opt-in, and what
++ * the checkup proposed.
+  * The run belongs to the (connection, profile) it was started on; after a
+  * switch, another profile's proposals are not shown here.
+  */
+ export function MemoryCheckupPanel() {
+   const { t } = useI18n()
+   const m = t.memoryCheckup
++  const reminder = useStore($memoryCheckupReminder)
+   const run = useStore($memoryCheckupRun)
+ 
+   // Re-render on a profile or connection switch: the scope below is read from them.
+@@ -227,24 +237,52 @@ export function MemoryCheckupPanel() {
+   const running = run.status === 'running'
+   const root = useRef<HTMLDivElement>(null)
+ 
+-  // Bring the checkup the user just asked for into view.
++  // "Review now" on the reminder opens Maintenance at its top; bring the checkup the user just asked for into view.
+   useEffect(() => {
+     if (running) {
+       root.current?.scrollIntoView?.({ block: 'nearest' })
+     }
+   }, [running])
+ 
++  // A checkup answers a waiting reminder wherever it was started from.
++  const checkupNow = () => {
++    dismissMemoryCheckupReminder()
++    void startMemoryCheckup()
++  }
++
+   return (
+     <div data-testid="memory-checkup" ref={root}>
+       <ListRow
+         action={
+-          <Button disabled={running} onClick={() => void startMemoryCheckup()} size="xs" type="button" variant="textStrong">
++          <Button disabled={running} onClick={checkupNow} size="xs" type="button" variant="textStrong">
+             {m.reviewNow}
+           </Button>
+         }
+         description={m.desc}
+         title={m.title}
+       />
++      <ToggleRow
++        below={
++          reminder.enabled && reminder.dueAt !== null ? (
++            <div className={`mt-2 flex flex-wrap items-center gap-2 ${CAPTION}`}>
++              <span>{m.every}</span>
++              <SegmentedControl
++                onChange={id => setMemoryCheckupReminder({ intervalDays: Number(id) as ReminderIntervalDays })}
++                options={REMINDER_INTERVAL_DAYS.map(days => ({ id: String(days), label: m.days(days) }))}
++                value={String(reminder.intervalDays)}
++              />
++              <span>
++                {reminder.pending ? `${m.reminderDue} ` : ''}
++                {m.nextReminder(new Date(reminder.dueAt).toLocaleDateString())}
++              </span>
++            </div>
++          ) : null
++        }
++        checked={reminder.enabled}
++        description={m.remindDesc}
++        label={m.remind}
++        onChange={enabled => setMemoryCheckupReminder({ enabled })}
++      />
+       {mine?.status === 'running' && (
+         <div className={`py-2 ${CAPTION}`} role="status">
+           {m.running}
+@@ -267,7 +305,7 @@ export function MemoryCheckupPanel() {
+           )}
+           <div className="mt-2 flex items-center gap-3">
+             <span className="text-(--ui-text-tertiary)">{m.nothingChanged}</span>
+-            <Button onClick={() => void startMemoryCheckup()} size="xs" type="button" variant="textStrong">
++            <Button onClick={checkupNow} size="xs" type="button" variant="textStrong">
+               {m.retry}
+             </Button>
+           </div>
+diff --git a/apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts b/apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts
+index 6d744fe2..5034b350 100644
+--- a/apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts
++++ b/apps/desktop/src/app/contrib/hooks/use-desktop-integrations.ts
+@@ -17,6 +17,7 @@ import { recordAction } from '@/store/desktop-metrics'
+ import { onKeptRouteOpened } from '@/store/gateway-kept-routes'
+ import { requestMcpInstallFromDeepLink } from '@/store/mcp-deeplink-install'
+ import { startMcpHealthChecker, stopMcpHealthChecker } from '@/store/mcp-health'
++import { startMemoryCheckupReminder, stopMemoryCheckupReminder } from '@/store/memory-checkup-reminder'
+ import {
+   clearPluginNotifyHandlers,
+   invokePluginNotifyAction,
+@@ -99,6 +100,8 @@ export function useDesktopIntegrations({
+     // Background MCP health: HTTP/SSE servers only (never spawns stdio),
+     // notifies on transitions into needs-auth/error with a Sign in action.
+     startMcpHealthChecker()
++    // The opt-in memory-checkup reminder: a clock in this app, nothing on the backend.
++    startMemoryCheckupReminder()
+     // The native "Check for Updates…" menu item lives in the app menu next to
+     // "About Hermes" — it is the OS-standard affordance for updating THIS app,
+     // so it always opens the client overlay. Inheriting the connection-mode
+@@ -110,6 +113,7 @@ export function useDesktopIntegrations({
+       unsubscribe?.()
+       stopUpdatePoller()
+       stopMcpHealthChecker()
++      stopMemoryCheckupReminder()
+     }
+   }, [])
+ 
+diff --git a/apps/desktop/src/components/memory-checkup/reminder-strip.test.tsx b/apps/desktop/src/components/memory-checkup/reminder-strip.test.tsx
+new file mode 100644
+index 00000000..3d85e623
+--- /dev/null
++++ b/apps/desktop/src/components/memory-checkup/reminder-strip.test.tsx
+@@ -0,0 +1,98 @@
++import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
++
++import type * as SystemApi from '@/api/system'
++import { runMemoryCheckup } from '@/api/system'
++import { $routeRequest } from '@/store/recovery-requests'
++import type { MemoryCheckupLayer, MemoryCheckupResponse } from '@/types/memory-checkup'
++
++vi.mock('@/api/system', async importOriginal => ({
++  ...(await importOriginal<typeof SystemApi>()),
++  runMemoryCheckup: vi.fn()
++}))
++
++const { $memoryCheckupRun, clearMemoryCheckupRun } = await import('@/store/memory-checkup')
++
++const { $memoryCheckupReminder, checkMemoryCheckupDue, setMemoryCheckupReminder } = await import(
++  '@/store/memory-checkup-reminder'
++)
++
++const { MemoryCheckupReminderStrip } = await import('./reminder-strip')
++
++const DAY = 24 * 60 * 60 * 1000
++
++const empty: MemoryCheckupLayer = { state: 'empty', total: 0, reviewed: 0, changes: [], needs_evidence: [], keep: [] }
++const done: MemoryCheckupResponse = { model: '', generated_at: 1, dropped: 0, layers: { user: empty, memory: empty, facts: empty } }
++
++const dueReminder = () =>
++  act(() => {
++    setMemoryCheckupReminder({ enabled: true }, Date.now() - 15 * DAY)
++    checkMemoryCheckupDue()
++  })
++
++beforeEach(() => {
++  window.localStorage.clear()
++  vi.mocked(runMemoryCheckup).mockReset()
++  act(() => {
++    clearMemoryCheckupRun()
++    checkMemoryCheckupDue()
++  })
++})
++
++afterEach(cleanup)
++
++describe('memory checkup reminder strip', () => {
++  it('starts the next interval once it has been on screen, and showing it again changes nothing', () => {
++    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
++
++    try {
++      dueReminder()
++
++      const past = $memoryCheckupReminder.get().dueAt!
++
++      // A strip that only flashed (another offer took the slot back) has not been shown.
++      render(<MemoryCheckupReminderStrip />)
++      vi.advanceTimersByTime(200)
++      cleanup()
++      vi.advanceTimersByTime(5000)
++      expect($memoryCheckupReminder.get().dueAt).toBe(past)
++
++      render(<MemoryCheckupReminderStrip />)
++      act(() => void vi.advanceTimersByTime(1000))
++
++      const due = $memoryCheckupReminder.get().dueAt!
++
++      expect(due - Date.now()).toBeGreaterThan(13 * DAY)
++      cleanup()
++      render(<MemoryCheckupReminderStrip />)
++      act(() => void vi.advanceTimersByTime(5000))
++      expect($memoryCheckupReminder.get()).toMatchObject({ dueAt: due, pending: true })
++    } finally {
++      vi.useRealTimers()
++    }
++  })
++
++  it('"Next time" dismisses it without running a model or recording a checkup', () => {
++    dueReminder()
++    render(<MemoryCheckupReminderStrip />)
++
++    fireEvent.click(screen.getByRole('button', { name: 'Next time' }))
++
++    expect($memoryCheckupReminder.get().pending).toBe(false)
++    expect(runMemoryCheckup).not.toHaveBeenCalled()
++    expect($memoryCheckupRun.get()).toEqual({ status: 'idle' })
++  })
++
++  it('"Review now" starts the one checkup and opens the panel that shows it', async () => {
++    vi.mocked(runMemoryCheckup).mockResolvedValue(done)
++    dueReminder()
++    render(<MemoryCheckupReminderStrip />)
++
++    fireEvent.click(screen.getByRole('button', { name: 'Review now' }))
++
++    expect($memoryCheckupReminder.get().pending).toBe(false)
++    expect($routeRequest.get()?.path).toBe('/command-center?section=maintenance')
++    await waitFor(() => expect($memoryCheckupRun.get().status).toBe('done'))
++    expect(runMemoryCheckup).toHaveBeenCalledTimes(1)
++  })
++})
+diff --git a/apps/desktop/src/components/memory-checkup/reminder-strip.tsx b/apps/desktop/src/components/memory-checkup/reminder-strip.tsx
+new file mode 100644
+index 00000000..2752c8e1
+--- /dev/null
++++ b/apps/desktop/src/components/memory-checkup/reminder-strip.tsx
+@@ -0,0 +1,72 @@
++import { useEffect } from 'react'
++
++import { StatusRow } from '@/components/chat/status-row'
++import { Button } from '@/components/ui/button'
++import { Codicon } from '@/components/ui/codicon'
++import { useI18n } from '@/i18n'
++import { startMemoryCheckup } from '@/store/memory-checkup'
++import { dismissMemoryCheckupReminder, markMemoryCheckupReminderShown } from '@/store/memory-checkup-reminder'
++import { requestRoute } from '@/store/recovery-requests'
++
++const MAINTENANCE_ROUTE = '/command-center?section=maintenance'
++// On screen long enough to be seen. An offer ahead of it in the queue can load a moment after boot and take the
++// slot back; a reminder that only flashed has not been shown.
++const SHOWN_AFTER_MS = 1000
++
++/**
++ * The opt-in memory-checkup reminder, in the composer status stack beside the
++ * other offers: it never blocks the composer or takes focus, and it stays
++ * until the user answers. "Next time" only takes it off the screen; the model
++ * runs on "Review now" and at no other time.
++ */
++export function MemoryCheckupReminderStrip() {
++  const { t } = useI18n()
++  const m = t.memoryCheckup
++
++  // On screen for the first time: this, not the due date passing, starts the next interval.
++  useEffect(() => {
++    const timer = window.setTimeout(() => markMemoryCheckupReminderShown(), SHOWN_AFTER_MS)
++
++    return () => window.clearTimeout(timer)
++  }, [])
++
++  const reviewNow = () => {
++    dismissMemoryCheckupReminder()
++    void startMemoryCheckup()
++    requestRoute(MAINTENANCE_ROUTE)
++  }
++
++  return (
++    <StatusRow
++      leading={<Codicon aria-hidden className="text-(--ui-text-tertiary)" name="history" size="0.8rem" />}
++      trailing={
++        <>
++          <Button
++            className="text-foreground/90 hover:text-foreground"
++            onClick={reviewNow}
++            size="micro"
++            type="button"
++            variant="text"
++          >
++            {m.reviewNow}
++          </Button>
++          <Button
++            className="text-muted-foreground/75 hover:text-foreground/90"
++            onClick={() => dismissMemoryCheckupReminder()}
++            size="micro"
++            type="button"
++            variant="text"
++          >
++            {m.reminder.nextTime}
++          </Button>
++        </>
++      }
++      trailingVisible
++    >
++      <span className="min-w-0 truncate text-[0.73rem] leading-4 text-foreground/92">
++        <span className="font-medium">{m.reminder.title}</span>
++        <span className="text-muted-foreground/80"> {m.reminder.body}</span>
++      </span>
++    </StatusRow>
++  )
++}
+diff --git a/apps/desktop/src/i18n/ar_memory_checkup.ts b/apps/desktop/src/i18n/ar_memory_checkup.ts
+index 0df36e13..c0f35c33 100644
+--- a/apps/desktop/src/i18n/ar_memory_checkup.ts
++++ b/apps/desktop/src/i18n/ar_memory_checkup.ts
+@@ -1,9 +1,20 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const arMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'مراجعة الذاكرة',
++    body: 'حان وقت مراجعة ما يتذكره Hermes.',
++    nextTime: 'في المرة القادمة'
++  },
+   title: 'مراجعة الذاكرة',
+   desc: 'يقرأ نموذجك USER.md و MEMORY.md والحقائق المخزّنة ويقترح ما يجب تحديثه أو دمجه أو حذفه. يقرأ فقط: لا يتغير شيء حتى توافق عليه.',
+   reviewNow: 'راجع الآن',
++  remind: 'ذكّرني بالمراجعة',
++  remindDesc: 'تذكير فوق مربع المحادثة عند استحقاق المراجعة. يُحفظ على هذا الجهاز ولهذا الملف الشخصي.',
++  every: 'كل',
++  days: days => `${days} يومًا`,
++  nextReminder: date => `التذكير التالي: ${date}`,
++  reminderDue: 'حان موعد المراجعة.',
+   running: 'نموذجك يقرأ ذاكرتك…',
+   failed: 'فشلت مراجعة الذاكرة',
+   nothingChanged: 'لم يتغير شيء.',
+diff --git a/apps/desktop/src/i18n/de_memory_checkup.ts b/apps/desktop/src/i18n/de_memory_checkup.ts
+index b12c123d..1fbcc390 100644
+--- a/apps/desktop/src/i18n/de_memory_checkup.ts
++++ b/apps/desktop/src/i18n/de_memory_checkup.ts
+@@ -1,9 +1,21 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const deMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'Speicherüberprüfung',
++    body: 'Es ist Zeit, durchzusehen, was Hermes sich merkt.',
++    nextTime: 'Nächstes Mal'
++  },
+   title: 'Speicherüberprüfung',
+   desc: 'Dein Modell liest USER.md, MEMORY.md und die gespeicherten Fakten und schlägt vor, was aktualisiert, zusammengeführt oder entfernt werden soll. Es liest nur: Nichts ändert sich, bis du zustimmst.',
+   reviewNow: 'Jetzt überprüfen',
++  remind: 'An die Überprüfung erinnern',
++  remindDesc:
++    'Eine Erinnerung über dem Chatfeld, wenn eine Überprüfung fällig ist. Auf diesem Gerät gespeichert, für dieses Profil.',
++  every: 'Alle',
++  days: days => `${days} Tage`,
++  nextReminder: date => `Nächste Erinnerung: ${date}`,
++  reminderDue: 'Eine Überprüfung ist fällig.',
+   running: 'Dein Modell liest deinen Speicher…',
+   failed: 'Die Speicherüberprüfung ist fehlgeschlagen',
+   nothingChanged: 'Es wurde nichts geändert.',
+diff --git a/apps/desktop/src/i18n/en_memory_checkup.ts b/apps/desktop/src/i18n/en_memory_checkup.ts
+index 3e02a71f..b316c343 100644
+--- a/apps/desktop/src/i18n/en_memory_checkup.ts
++++ b/apps/desktop/src/i18n/en_memory_checkup.ts
+@@ -1,9 +1,20 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const enMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'Memory checkup',
++    body: 'It is time to look over what Hermes remembers.',
++    nextTime: 'Next time'
++  },
+   title: 'Memory checkup',
+   desc: 'Your model reads USER.md, MEMORY.md and the stored facts, and proposes what to update, merge or remove. It only reads: nothing changes until you approve it.',
+   reviewNow: 'Review now',
++  remind: 'Remind me to review',
++  remindDesc: 'A reminder above the chat box when a checkup is due. Kept on this device, for this profile.',
++  every: 'Every',
++  days: days => `${days} days`,
++  nextReminder: date => `Next reminder: ${date}`,
++  reminderDue: 'A checkup is due.',
+   running: 'Your model is reading your memory…',
+   failed: 'The memory checkup failed',
+   nothingChanged: 'Nothing was changed.',
+diff --git a/apps/desktop/src/i18n/es_memory_checkup.ts b/apps/desktop/src/i18n/es_memory_checkup.ts
+index 2e87f23d..a2dfa126 100644
+--- a/apps/desktop/src/i18n/es_memory_checkup.ts
++++ b/apps/desktop/src/i18n/es_memory_checkup.ts
+@@ -1,9 +1,21 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const esMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'Revisión de la memoria',
++    body: 'Es hora de repasar lo que Hermes recuerda.',
++    nextTime: 'La próxima vez'
++  },
+   title: 'Revisión de la memoria',
+   desc: 'Tu modelo lee USER.md, MEMORY.md y los hechos guardados, y propone qué actualizar, combinar o eliminar. Solo lee: nada cambia hasta que lo apruebes.',
+   reviewNow: 'Revisar ahora',
++  remind: 'Recordarme la revisión',
++  remindDesc:
++    'Un recordatorio sobre el cuadro de chat cuando toca una revisión. Se guarda en este dispositivo, para este perfil.',
++  every: 'Cada',
++  days: days => `${days} días`,
++  nextReminder: date => `Próximo recordatorio: ${date}`,
++  reminderDue: 'Toca una revisión.',
+   running: 'Tu modelo está leyendo tu memoria…',
+   failed: 'La revisión de la memoria falló',
+   nothingChanged: 'No se cambió nada.',
+diff --git a/apps/desktop/src/i18n/fr_memory_checkup.ts b/apps/desktop/src/i18n/fr_memory_checkup.ts
+index 683016af..8fc5ffb5 100644
+--- a/apps/desktop/src/i18n/fr_memory_checkup.ts
++++ b/apps/desktop/src/i18n/fr_memory_checkup.ts
+@@ -1,9 +1,21 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const frMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'Revue de la mémoire',
++    body: 'Il est temps de passer en revue ce dont Hermes se souvient.',
++    nextTime: 'La prochaine fois'
++  },
+   title: 'Revue de la mémoire',
+   desc: 'Votre modèle lit USER.md, MEMORY.md et les faits enregistrés, puis propose ce qu’il faut mettre à jour, fusionner ou supprimer. Il ne fait que lire : rien ne change tant que vous ne l’approuvez pas.',
+   reviewNow: 'Passer en revue',
++  remind: 'Me rappeler la revue',
++  remindDesc:
++    'Un rappel au-dessus de la zone de discussion quand une revue est due. Conservé sur cet appareil, pour ce profil.',
++  every: 'Tous les',
++  days: days => `${days} jours`,
++  nextReminder: date => `Prochain rappel : ${date}`,
++  reminderDue: 'Une revue est due.',
+   running: 'Votre modèle lit votre mémoire…',
+   failed: 'La revue de la mémoire a échoué',
+   nothingChanged: 'Rien n’a été modifié.',
+diff --git a/apps/desktop/src/i18n/ja_memory_checkup.ts b/apps/desktop/src/i18n/ja_memory_checkup.ts
+index d0a69e01..926de359 100644
+--- a/apps/desktop/src/i18n/ja_memory_checkup.ts
++++ b/apps/desktop/src/i18n/ja_memory_checkup.ts
+@@ -1,9 +1,21 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const jaMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'メモリレビュー',
++    body: 'Hermes が覚えていることを見直す時期です。',
++    nextTime: '次回にする'
++  },
+   title: 'メモリレビュー',
+   desc: 'モデルが USER.md、MEMORY.md、保存済みのファクトを読み、更新・統合・削除の候補を提案します。読み取るだけで、承認するまで何も変更されません。',
+   reviewNow: '今すぐレビュー',
++  remind: 'レビューを通知する',
++  remindDesc:
++    'レビューの時期になると、チャット入力欄の上に通知を表示します。このデバイスに、このプロファイル用として保存されます。',
++  every: '間隔',
++  days: days => `${days} 日`,
++  nextReminder: date => `次の通知: ${date}`,
++  reminderDue: 'レビューの時期です。',
+   running: 'モデルがメモリを読んでいます…',
+   failed: 'メモリレビューに失敗しました',
+   nothingChanged: '何も変更されていません。',
+diff --git a/apps/desktop/src/i18n/ru_memory_checkup.ts b/apps/desktop/src/i18n/ru_memory_checkup.ts
+index 336c2bfa..67c1f241 100644
+--- a/apps/desktop/src/i18n/ru_memory_checkup.ts
++++ b/apps/desktop/src/i18n/ru_memory_checkup.ts
+@@ -1,9 +1,21 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const ruMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: 'Проверка памяти',
++    body: 'Пора просмотреть, что помнит Hermes.',
++    nextTime: 'В следующий раз'
++  },
+   title: 'Проверка памяти',
+   desc: 'Ваша модель читает USER.md, MEMORY.md и сохранённые факты и предлагает, что обновить, объединить или удалить. Она только читает: ничего не меняется, пока вы не одобрите.',
+   reviewNow: 'Проверить сейчас',
++  remind: 'Напоминать о проверке',
++  remindDesc:
++    'Напоминание над полем чата, когда подошло время проверки. Хранится на этом устройстве для этого профиля.',
++  every: 'Каждые',
++  days: days => `${days} дн.`,
++  nextReminder: date => `Следующее напоминание: ${date}`,
++  reminderDue: 'Пора провести проверку.',
+   running: 'Модель читает вашу память…',
+   failed: 'Проверка памяти не удалась',
+   nothingChanged: 'Ничего не изменено.',
+diff --git a/apps/desktop/src/i18n/types_memory_checkup.ts b/apps/desktop/src/i18n/types_memory_checkup.ts
+index 663d84fe..b7c4785f 100644
+--- a/apps/desktop/src/i18n/types_memory_checkup.ts
++++ b/apps/desktop/src/i18n/types_memory_checkup.ts
+@@ -1,9 +1,21 @@
+-// Memory checkup: the review a user starts in Command Center > Maintenance and
+-// the proposals it returns; `Translations.memoryCheckup`.
++// Memory checkup: the review a user starts in Command Center > Maintenance, the
++// proposals it returns, and the opt-in reminder above the composer;
++// `Translations.memoryCheckup`.
+ export interface MemoryCheckupTranslations {
++  reminder: {
++    title: string
++    body: string
++    nextTime: string
++  }
+   title: string
+   desc: string
+   reviewNow: string
++  remind: string
++  remindDesc: string
++  every: string
++  days: (days: number) => string
++  nextReminder: (date: string) => string
++  reminderDue: string
+   running: string
+   failed: string
+   nothingChanged: string
+diff --git a/apps/desktop/src/i18n/zh-hant_memory_checkup.ts b/apps/desktop/src/i18n/zh-hant_memory_checkup.ts
+index 94f551ce..da986097 100644
+--- a/apps/desktop/src/i18n/zh-hant_memory_checkup.ts
++++ b/apps/desktop/src/i18n/zh-hant_memory_checkup.ts
+@@ -1,9 +1,20 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const zhHantMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: '記憶複查',
++    body: '該看一看 Hermes 記住了什麼。',
++    nextTime: '下次再說'
++  },
+   title: '記憶複查',
+   desc: '由你的模型閱讀 USER.md、MEMORY.md 和已儲存的事實，並建議哪些需要更新、合併或刪除。它只讀取：在你核准之前不會有任何變更。',
+   reviewNow: '立即複查',
++  remind: '提醒我複查',
++  remindDesc: '複查到期時，在聊天輸入框上方顯示提醒。僅儲存在此裝置上，針對目前的設定檔。',
++  every: '每',
++  days: days => `${days} 天`,
++  nextReminder: date => `下次提醒：${date}`,
++  reminderDue: '已到複查時間。',
+   running: '你的模型正在閱讀你的記憶…',
+   failed: '記憶複查失敗',
+   nothingChanged: '沒有任何變更。',
+diff --git a/apps/desktop/src/i18n/zh_memory_checkup.ts b/apps/desktop/src/i18n/zh_memory_checkup.ts
+index eebff97b..e3fca1a1 100644
+--- a/apps/desktop/src/i18n/zh_memory_checkup.ts
++++ b/apps/desktop/src/i18n/zh_memory_checkup.ts
+@@ -1,9 +1,20 @@
+ import type { MemoryCheckupTranslations } from './types_memory_checkup'
+ 
+ export const zhMemoryCheckup: MemoryCheckupTranslations = {
++  reminder: {
++    title: '记忆复查',
++    body: '该看一看 Hermes 记住了什么。',
++    nextTime: '下次再说'
++  },
+   title: '记忆复查',
+   desc: '由你的模型阅读 USER.md、MEMORY.md 和已存储的事实，并建议哪些需要更新、合并或删除。它只读取：在你批准之前不会有任何更改。',
+   reviewNow: '立即复查',
++  remind: '提醒我复查',
++  remindDesc: '复查到期时，在聊天输入框上方显示提醒。仅保存在此设备上，针对当前配置。',
++  every: '每',
++  days: days => `${days} 天`,
++  nextReminder: date => `下次提醒：${date}`,
++  reminderDue: '已到复查时间。',
+   running: '你的模型正在阅读你的记忆…',
+   failed: '记忆复查失败',
+   nothingChanged: '没有任何更改。',
+diff --git a/apps/desktop/src/store/memory-checkup-reminder.test.ts b/apps/desktop/src/store/memory-checkup-reminder.test.ts
+new file mode 100644
+index 00000000..bbd5f54e
+--- /dev/null
++++ b/apps/desktop/src/store/memory-checkup-reminder.test.ts
+@@ -0,0 +1,290 @@
++// @vitest-environment jsdom
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
++
++import type * as CheckupStore from './memory-checkup'
++import type * as ReminderStore from './memory-checkup-reminder'
++
++const mocks = vi.hoisted(() => {
++  const makeAtom = <T>(initial: T) => {
++    let value = initial
++    const listeners = new Set<(value: T) => void>()
++
++    return {
++      get: () => value,
++      listen(listener: (value: T) => void) {
++        listeners.add(listener)
++
++        return () => listeners.delete(listener)
++      },
++      set(next: T) {
++        value = next
++
++        for (const listener of listeners) {
++          listener(value)
++        }
++      },
++      subscribe(listener: (value: T) => void) {
++        listener(value)
++
++        return this.listen(listener)
++      }
++    }
++  }
++
++  return {
++    activeProfile: makeAtom('default'),
++    apiScope: makeAtom<{ connectionId: null | string; profile: null | string }>({ connectionId: null, profile: null }),
++    gatewayState: makeAtom<'closed' | 'open'>('closed'),
++    runMemoryCheckup: vi.fn()
++  }
++})
++
++vi.mock('@/api/client', () => ({
++  $apiRequestScope: mocks.apiScope,
++  resolveOwnerNow: () => ({ connectionId: mocks.apiScope.get().connectionId, profile: mocks.activeProfile.get() })
++}))
++
++vi.mock('@/api/system', () => ({ runMemoryCheckup: mocks.runMemoryCheckup }))
++
++vi.mock('@/i18n', () => ({ translateNow: (key: string) => key }))
++
++vi.mock('@/store/notifications', () => ({
++  readableError: (error: unknown, fallback: string) => ({ message: fallback, detail: String((error as Error).message) })
++}))
++
++vi.mock('@/store/profile', () => ({
++  $activeGatewayProfile: mocks.activeProfile,
++  normalizeProfileKey: (name: null | string | undefined) => (name ?? '').trim() || 'default'
++}))
++
++vi.mock('@/store/session', () => ({ $gatewayState: mocks.gatewayState }))
++
++type Store = typeof CheckupStore & typeof ReminderStore
++
++const DAY = 24 * 60 * 60 * 1000
++const T0 = Date.UTC(2026, 0, 1, 9)
++
++// One Desktop window: its own module state over the storage every window shares.
++async function openWindow(): Promise<Store> {
++  vi.resetModules()
++
++  const reminder = await import('./memory-checkup-reminder')
++  const checkup = await import('./memory-checkup')
++
++  reminder.startMemoryCheckupReminder()
++
++  return { ...checkup, ...reminder }
++}
++
++let app: Store
++
++beforeEach(async () => {
++  vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
++  vi.setSystemTime(T0)
++  window.localStorage.clear()
++  mocks.activeProfile.set('default')
++  mocks.apiScope.set({ connectionId: null, profile: null })
++  mocks.gatewayState.set('open')
++  mocks.runMemoryCheckup.mockReset()
++  app = await openWindow()
++})
++
++afterEach(() => {
++  app.stopMemoryCheckupReminder()
++  vi.useRealTimers()
++})
++
++describe('memory checkup reminder', () => {
++  it('is off until the user turns it on, and then offers 10 or 14 days with 14 as the default', () => {
++    vi.setSystemTime(T0 + 400 * DAY)
++    app.checkMemoryCheckupDue()
++    expect(app.$memoryCheckupReminder.get()).toEqual({ enabled: false, intervalDays: 14, dueAt: null, pending: false })
++
++    expect(app.REMINDER_INTERVAL_DAYS).toEqual([10, 14])
++    app.setMemoryCheckupReminder({ enabled: true })
++    expect(app.$memoryCheckupReminder.get()).toMatchObject({ enabled: true, intervalDays: 14, pending: false })
++    expect(app.$memoryCheckupReminder.get().dueAt).toBe(Date.now() + 14 * DAY)
++
++    app.setMemoryCheckupReminder({ intervalDays: 10 })
++    expect(app.$memoryCheckupReminder.get().dueAt).toBe(Date.now() + 10 * DAY)
++  })
++
++  it('shows one reminder when it came due while the app was closed, and starts the next interval when shown', async () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    app.stopMemoryCheckupReminder()
++
++    // Closed across almost three intervals: one reminder, not three.
++    vi.setSystemTime(T0 + 40 * DAY)
++    app = await openWindow()
++    expect(app.$memoryCheckupReminder.get()).toMatchObject({ enabled: true, pending: true })
++
++    // On screen: the next one is due 14 days from now, not from the date that passed.
++    app.markMemoryCheckupReminderShown()
++    expect(app.$memoryCheckupReminder.get()).toEqual({
++      enabled: true,
++      intervalDays: 14,
++      dueAt: T0 + 54 * DAY,
++      pending: true
++    })
++  })
++
++  it('starts the interval when the reminder is first shown, not while it waits behind another offer', () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    vi.setSystemTime(T0 + 14 * DAY)
++    app.checkMemoryCheckupDue()
++
++    // Pending, but another offer holds the composer slot for two days: the clock has not moved.
++    vi.setSystemTime(T0 + 16 * DAY)
++    app.checkMemoryCheckupDue()
++    expect(app.$memoryCheckupReminder.get()).toMatchObject({ dueAt: T0 + 14 * DAY, pending: true })
++
++    app.markMemoryCheckupReminderShown()
++    expect(app.$memoryCheckupReminder.get()).toMatchObject({ dueAt: T0 + 30 * DAY, pending: true })
++  })
++
++  it('keeps the reminder and its clock across a restart, a rerender and the hourly check', async () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    vi.setSystemTime(T0 + 15 * DAY)
++    app.checkMemoryCheckupDue()
++    app.markMemoryCheckupReminderShown()
++
++    const shown = app.$memoryCheckupReminder.get()
++    const seen: unknown[] = []
++
++    app.$memoryCheckupReminder.listen(value => seen.push(value))
++
++    // The strip mounts again (a rerender, a second composer) and the hourly check runs: nothing moves.
++    vi.setSystemTime(T0 + 15 * DAY + 3_600_000)
++    app.markMemoryCheckupReminderShown()
++    app.checkMemoryCheckupDue()
++    vi.advanceTimersByTime(3 * 3_600_000)
++    expect(app.$memoryCheckupReminder.get()).toBe(shown)
++    expect(seen).toEqual([])
++
++    app.stopMemoryCheckupReminder()
++    app = await openWindow()
++    app.markMemoryCheckupReminderShown()
++    expect(app.$memoryCheckupReminder.get()).toEqual(shown)
++  })
++
++  it('becomes due while the app stays open, without waiting for a restart', () => {
++    app.setMemoryCheckupReminder({ enabled: true, intervalDays: 10 })
++
++    vi.setSystemTime(T0 + 10 * DAY - 1)
++    vi.advanceTimersByTime(3_600_000)
++
++    expect(app.$memoryCheckupReminder.get().pending).toBe(true)
++  })
++
++  it('does not move the clock again from a second window, and an answer in one window reaches the other', async () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    vi.setSystemTime(T0 + 20 * DAY)
++    app.checkMemoryCheckupDue()
++    app.markMemoryCheckupReminderShown()
++
++    const first = app
++    const due = first.$memoryCheckupReminder.get().dueAt
++
++    vi.setSystemTime(T0 + 20 * DAY + 60_000)
++
++    const second = await openWindow()
++
++    second.markMemoryCheckupReminderShown()
++    expect(second.$memoryCheckupReminder.get()).toEqual({ enabled: true, intervalDays: 14, dueAt: due, pending: true })
++
++    second.dismissMemoryCheckupReminder()
++    window.dispatchEvent(new StorageEvent('storage', { key: 'hermes:memory-checkup-reminder:local::default' }))
++
++    expect(first.$memoryCheckupReminder.get()).toEqual({ enabled: true, intervalDays: 14, dueAt: due, pending: false })
++    second.stopMemoryCheckupReminder()
++  })
++
++  it('"Next time" takes the reminder away without a model call, a recorded checkup or a new clock', () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    vi.setSystemTime(T0 + 14 * DAY)
++    app.checkMemoryCheckupDue()
++    app.markMemoryCheckupReminderShown()
++
++    const due = app.$memoryCheckupReminder.get().dueAt
++
++    vi.setSystemTime(T0 + 14 * DAY + 60_000)
++    app.dismissMemoryCheckupReminder()
++
++    expect(app.$memoryCheckupReminder.get()).toEqual({ enabled: true, intervalDays: 14, dueAt: due, pending: false })
++    expect(mocks.runMemoryCheckup).not.toHaveBeenCalled()
++    expect(app.$memoryCheckupRun.get()).toEqual({ status: 'idle' })
++
++    // Still dismissed on the next check: the cycle is not replayed.
++    vi.setSystemTime(T0 + 14 * DAY + 3_600_000)
++    app.checkMemoryCheckupDue()
++    expect(app.$memoryCheckupReminder.get().pending).toBe(false)
++  })
++
++  it('keeps one clock per connection and profile', () => {
++    app.setMemoryCheckupReminder({ enabled: true, intervalDays: 10 })
++
++    mocks.activeProfile.set('work')
++    expect(app.$memoryCheckupReminder.get()).toEqual({ enabled: false, intervalDays: 14, dueAt: null, pending: false })
++
++    // Due on "default" while "work" is in view: nothing shows, and the clock of "default" has not moved.
++    vi.setSystemTime(T0 + 30 * DAY)
++    app.checkMemoryCheckupDue()
++    app.markMemoryCheckupReminderShown()
++    expect(app.$memoryCheckupReminder.get().pending).toBe(false)
++
++    mocks.apiScope.set({ connectionId: 'remote-1', profile: null })
++    mocks.activeProfile.set('default')
++    expect(app.$memoryCheckupReminder.get().enabled).toBe(false)
++
++    mocks.apiScope.set({ connectionId: null, profile: null })
++    expect(app.$memoryCheckupReminder.get()).toEqual({
++      enabled: true,
++      intervalDays: 10,
++      dueAt: T0 + 10 * DAY,
++      pending: true
++    })
++  })
++
++  it('does not raise a reminder before the gateway says which profile is in view', async () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    app.stopMemoryCheckupReminder()
++    mocks.gatewayState.set('closed')
++    vi.setSystemTime(T0 + 20 * DAY)
++    app = await openWindow()
++
++    expect(app.$memoryCheckupReminder.get().pending).toBe(false)
++    expect(JSON.parse(window.localStorage.getItem('hermes:memory-checkup-reminder:local::default')!).pending).toBe(false)
++
++    mocks.gatewayState.set('open')
++    expect(app.$memoryCheckupReminder.get().pending).toBe(true)
++  })
++
++  it('moves the clock of a renamed profile and drops the clock of a deleted one', () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    app.migrateMemoryCheckupReminder('default', 'main')
++
++    mocks.activeProfile.set('main')
++    expect(app.$memoryCheckupReminder.get().enabled).toBe(true)
++
++    app.dropMemoryCheckupReminder('main')
++    app.checkMemoryCheckupDue()
++    expect(app.$memoryCheckupReminder.get().enabled).toBe(false)
++  })
++
++  it('"Review now" answers a waiting reminder, also one that was never shown, and starts its clock then', () => {
++    app.setMemoryCheckupReminder({ enabled: true })
++    vi.setSystemTime(T0 + 20 * DAY)
++    app.checkMemoryCheckupDue()
++
++    app.dismissMemoryCheckupReminder()
++
++    expect(app.$memoryCheckupReminder.get()).toEqual({
++      enabled: true,
++      intervalDays: 14,
++      dueAt: T0 + 34 * DAY,
++      pending: false
++    })
++    app.checkMemoryCheckupDue()
++    expect(app.$memoryCheckupReminder.get().pending).toBe(false)
++  })
++})
+diff --git a/apps/desktop/src/store/memory-checkup-reminder.ts b/apps/desktop/src/store/memory-checkup-reminder.ts
+new file mode 100644
+index 00000000..7354a330
+--- /dev/null
++++ b/apps/desktop/src/store/memory-checkup-reminder.ts
+@@ -0,0 +1,213 @@
++import { LOCAL_CONNECTION_ID } from '@hermes/shared'
++import { atom } from 'nanostores'
++
++import { $apiRequestScope } from '@/api/client'
++import { readJson, writeJson } from '@/lib/storage'
++import { $activeGatewayProfile } from '@/store/profile'
++import { $gatewayState } from '@/store/session'
++
++import { checkupScopeFor, memoryCheckupScope } from './memory-checkup'
++
++// The memory checkup's opt-in reminder: a clock kept per (connection, profile)
++// on this device. No cron, no background model turn, nothing in the system
++// prompt: the reminder is this app's alone.
++
++const KEY_PREFIX = 'hermes:memory-checkup-reminder:'
++const DAY_MS = 24 * 60 * 60 * 1000
++const CHECK_INTERVAL_MS = 60 * 60 * 1000
++
++export const REMINDER_INTERVAL_DAYS = [10, 14] as const
++export type ReminderIntervalDays = (typeof REMINDER_INTERVAL_DAYS)[number]
++export const DEFAULT_REMINDER_INTERVAL_DAYS: ReminderIntervalDays = 14
++
++export interface MemoryCheckupReminder {
++  enabled: boolean
++  intervalDays: ReminderIntervalDays
++  /** When the next reminder is due (epoch ms); null while off. */
++  dueAt: null | number
++  /** A reminder waits for the user's answer: on screen, or queued behind another offer. */
++  pending: boolean
++}
++
++const OFF: MemoryCheckupReminder = {
++  enabled: false,
++  intervalDays: DEFAULT_REMINDER_INTERVAL_DAYS,
++  dueAt: null,
++  pending: false
++}
++
++function readReminder(scope: string): MemoryCheckupReminder {
++  const stored = readJson<Partial<MemoryCheckupReminder>>(KEY_PREFIX + scope)
++
++  if (!stored || typeof stored !== 'object') {
++    return OFF
++  }
++
++  const intervalDays = REMINDER_INTERVAL_DAYS.find(days => days === stored.intervalDays) ?? OFF.intervalDays
++  const dueAt = typeof stored.dueAt === 'number' && Number.isFinite(stored.dueAt) ? stored.dueAt : null
++  const enabled = stored.enabled === true && dueAt !== null
++
++  return { enabled, intervalDays, dueAt: enabled ? dueAt : null, pending: enabled && stored.pending === true }
++}
++
++export const $memoryCheckupReminder = atom<MemoryCheckupReminder>(OFF)
++
++function show(next: MemoryCheckupReminder): void {
++  const shown = $memoryCheckupReminder.get()
++
++  // Reference identity on no-ops: an hourly check must not repaint the strip.
++  if (JSON.stringify(shown) !== JSON.stringify(next)) {
++    $memoryCheckupReminder.set(next)
++  }
++}
++
++function save(scope: string, next: MemoryCheckupReminder): void {
++  writeJson(KEY_PREFIX + scope, next.enabled || next.intervalDays !== OFF.intervalDays ? next : null)
++
++  if (scope === memoryCheckupScope()) {
++    show(next)
++  }
++}
++
++/**
++ * A due reminder becomes pending: one reminder, however many intervals passed
++ * while the app was closed. The clock does not move here; it moves when the
++ * reminder is actually shown (below), which can be later when another offer
++ * holds the composer's one slot.
++ */
++export function checkMemoryCheckupDue(now = Date.now()): void {
++  const scope = memoryCheckupScope()
++  const stored = readReminder(scope)
++
++  if (stored.enabled && !stored.pending && stored.dueAt !== null && now >= stored.dueAt) {
++    save(scope, { ...stored, pending: true })
++  } else {
++    show(stored)
++  }
++}
++
++/**
++ * The reminder is on screen: the next interval starts now, when it is first
++ * shown, not when a checkup completes. The read is fresh from storage, so a
++ * rerender, a reload or another window finds the due date already in the
++ * future and changes nothing.
++ */
++// shortcut: localStorage has no cross-window transaction; two windows that first show it within the same few
++// milliseconds both write a due date, a moment apart. Move the clock to the main process if that must be exact.
++export function markMemoryCheckupReminderShown(now = Date.now()): void {
++  const scope = memoryCheckupScope()
++  const stored = readReminder(scope)
++
++  if (stored.pending && stored.dueAt !== null && now >= stored.dueAt) {
++    save(scope, { ...stored, dueAt: now + stored.intervalDays * DAY_MS })
++  }
++}
++
++/** The user's setting. Turning it on or changing the interval starts the clock from now. */
++export function setMemoryCheckupReminder(
++  change: { enabled?: boolean; intervalDays?: ReminderIntervalDays },
++  now = Date.now()
++): void {
++  const scope = memoryCheckupScope()
++  const current = readReminder(scope)
++  const enabled = change.enabled ?? current.enabled
++  const intervalDays = change.intervalDays ?? current.intervalDays
++
++  save(scope, {
++    enabled,
++    intervalDays,
++    dueAt: enabled ? now + intervalDays * DAY_MS : null,
++    pending: enabled && current.pending
++  })
++}
++
++/** "Next time", and the first half of "Review now" (on the strip or in
++ *  Maintenance): the reminder leaves the screen and no checkup is recorded. The
++ *  clock moved when it was shown; one answered before it ever was starts it now. */
++export function dismissMemoryCheckupReminder(now = Date.now()): void {
++  const scope = memoryCheckupScope()
++  const current = readReminder(scope)
++
++  if (current.pending && current.dueAt !== null) {
++    const dueAt = now >= current.dueAt ? now + current.intervalDays * DAY_MS : current.dueAt
++
++    save(scope, { ...current, dueAt, pending: false })
++  }
++}
++
++/** Rename counterpart (local connection only, like the tiles it joins). */
++export function migrateMemoryCheckupReminder(from: string, to: string): void {
++  const stored = readJson<unknown>(KEY_PREFIX + checkupScopeFor(LOCAL_CONNECTION_ID, from))
++
++  writeJson(KEY_PREFIX + checkupScopeFor(LOCAL_CONNECTION_ID, to), stored)
++  writeJson(KEY_PREFIX + checkupScopeFor(LOCAL_CONNECTION_ID, from), null)
++}
++
++/** A deleted profile's clock, so a later profile of the same name starts without one. */
++export function dropMemoryCheckupReminder(profile: string, connectionId?: string): void {
++  writeJson(KEY_PREFIX + checkupScopeFor(connectionId ?? $apiRequestScope.get().connectionId, profile), null)
++}
++
++let stop: (() => void) | null = null
++
++/** Wire the reminder to gateway/profile state. Idempotent. */
++export function startMemoryCheckupReminder(): void {
++  if (stop || typeof window === 'undefined') {
++    return
++  }
++
++  let timer: null | ReturnType<typeof setInterval> = null
++
++  const disarm = () => {
++    if (timer !== null) {
++      clearInterval(timer)
++      timer = null
++    }
++  }
++
++  // Only while the gateway is connected: before that the profile in view is
++  // not known, and the wrong profile's reminder would be raised.
++  const arm = () => {
++    disarm()
++
++    if ($gatewayState.get() === 'open') {
++      checkMemoryCheckupDue()
++      timer = setInterval(() => checkMemoryCheckupDue(), CHECK_INTERVAL_MS)
++    } else {
++      show(OFF)
++    }
++  }
++
++  // Another window answered or changed it: show what is stored, move nothing.
++  const onStorage = (event: StorageEvent) => {
++    if (event.key === KEY_PREFIX + memoryCheckupScope() && $gatewayState.get() === 'open') {
++      show(readReminder(memoryCheckupScope()))
++    }
++  }
++
++  let observedConnection = $apiRequestScope.get().connectionId
++
++  const offs = [
++    $gatewayState.subscribe(arm),
++    $activeGatewayProfile.listen(arm),
++    $apiRequestScope.listen(({ connectionId }) => {
++      if (connectionId !== observedConnection) {
++        observedConnection = connectionId
++        arm()
++      }
++    })
++  ]
++
++  window.addEventListener('storage', onStorage)
++
++  stop = () => {
++    disarm()
++    offs.forEach(off => off())
++    window.removeEventListener('storage', onStorage)
++    stop = null
++  }
++}
++
++export function stopMemoryCheckupReminder(): void {
++  stop?.()
++}
+diff --git a/apps/desktop/src/store/profile-families.ts b/apps/desktop/src/store/profile-families.ts
+index 53962059..adc2fd15 100644
+--- a/apps/desktop/src/store/profile-families.ts
++++ b/apps/desktop/src/store/profile-families.ts
+@@ -3,11 +3,12 @@ import { LOCAL_CONNECTION_ID } from '@hermes/shared'
+ import { dropBrowserProfilePrefs, migrateBrowserProfilePrefs } from '@/lib/browser-profile-prefs'
+ 
+ import { dropQueuedLaunchPicksForProfile, migrateQueuedLaunchPicksForProfile } from './composer-queued-pick'
++import { dropMemoryCheckupReminder, migrateMemoryCheckupReminder } from './memory-checkup-reminder'
+ import { dropPreviewTabsForProfile, migratePreviewTabsForProfile } from './preview'
+ 
+ // The profile-keyed localStorage families beside the session tiles: the rail's
+-// tabs, the browser prefs and the queued launch pick. A new family joins both
+-// functions.
++// tabs, the browser prefs, the queued launch pick and the memory-checkup
++// reminder. A new family joins both functions.
+ 
+ /** A deleted profile's records go with it: a later profile of the same name must not inherit them. */
+ export function dropProfileFamilies(name: string, route?: { connectionId?: string }): void {
+@@ -15,6 +16,7 @@ export function dropProfileFamilies(name: string, route?: { connectionId?: strin
+   dropPreviewTabsForProfile(name, (String(route?.connectionId ?? '').trim() || LOCAL_CONNECTION_ID) === LOCAL_CONNECTION_ID)
+   dropBrowserProfilePrefs(name, route?.connectionId?.trim() || undefined)
+   dropQueuedLaunchPicksForProfile(name, route ? (route.connectionId ?? '') : undefined)
++  dropMemoryCheckupReminder(name, route?.connectionId?.trim() || undefined)
+ }
+ 
+ /** A renamed profile's records move with it, or it opens without them and the old name keeps them. */
+@@ -22,4 +24,5 @@ export function migrateProfileFamilies(from: string, to: string): void {
+   migratePreviewTabsForProfile(from, to)
+   migrateBrowserProfilePrefs(from, to)
+   migrateQueuedLaunchPicksForProfile(from, to)
++  migrateMemoryCheckupReminder(from, to)
+ }
+diff --git a/locales/_keys.desktop.json b/locales/_keys.desktop.json
+index 51d8ea3b..ffaea895 100644
+--- a/locales/_keys.desktop.json
++++ b/locales/_keys.desktop.json
+@@ -1987,8 +1987,10 @@
+     "memoryCheckup.addedToChat",
+     "memoryCheckup.becomes",
+     "memoryCheckup.changes",
++    "memoryCheckup.days",
+     "memoryCheckup.desc",
+     "memoryCheckup.dropped",
++    "memoryCheckup.every",
+     "memoryCheckup.evidence",
+     "memoryCheckup.factsLayer",
+     "memoryCheckup.failed",
+@@ -2002,6 +2004,7 @@
+     "memoryCheckup.layerState.unavailable",
+     "memoryCheckup.layerState.unsupported",
+     "memoryCheckup.needsEvidence",
++    "memoryCheckup.nextReminder",
+     "memoryCheckup.noFindings",
+     "memoryCheckup.nothingChanged",
+     "memoryCheckup.nothingToReview",
+@@ -2009,6 +2012,12 @@
+     "memoryCheckup.preserve",
+     "memoryCheckup.proposalsOnly",
+     "memoryCheckup.related",
++    "memoryCheckup.remind",
++    "memoryCheckup.remindDesc",
++    "memoryCheckup.reminder.body",
++    "memoryCheckup.reminder.nextTime",
++    "memoryCheckup.reminder.title",
++    "memoryCheckup.reminderDue",
+     "memoryCheckup.retry",
+     "memoryCheckup.reviewNow",
+     "memoryCheckup.reviewed",
+diff --git a/website/docs/user-guide/features/memory.md b/website/docs/user-guide/features/memory.md
+index cd0768a3..f38ffdbe 100644
+--- a/website/docs/user-guide/features/memory.md
++++ b/website/docs/user-guide/features/memory.md
+@@ -242,6 +242,11 @@ send it, under your `write_approval` setting. A checkup never proposes removing
+ in the last seven days, and rarely used is not a reason to remove anything: such suggestions are listed under **Needs
+ evidence** instead.
+ 
++**Remind me to review** is off by default. Turned on, it shows a reminder above the chat box every 10 or 14 days
++(14 by default) with **Review now** and **Next time**. The reminder is kept in this desktop installation, per
++connection and profile; it uses no cron job, no background model call and nothing in the system prompt, and
++**Next time** only dismisses it.
++
+ ## Duplicate Prevention
+ 
+ The memory system automatically rejects exact duplicate entries. If you try to add content that already exists, it returns success with a "no duplicate added" message.

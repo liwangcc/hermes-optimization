@@ -5,8 +5,8 @@ memory provider, tuned for a **Chinese-heavy** personal fact store. It is an
 *enhancement*, not a replacement: holographic still owns the fact store, the lexical
 retriever, and trust/feedback; this layer adds a local embedding channel on top.
 
-> Design rationale — why a tiny always-on layer coexists with a retrieved store, what
-> pointers point at, and how each layer is kept clean — is in
+> Design rationale — why a tiny always-on layer coexists with a retrieved store, where a
+> new memory is written, and how each layer is kept clean — is in
 > [`../docs/memory-architecture.md`](../docs/memory-architecture.md).
 
 ## Why
@@ -57,15 +57,20 @@ And the fact text matters: upstream embeds **content only**; adding the curated
 Run it yourself: see [`eval/README.md`](eval/README.md). Numbers come from
 [`eval/results.json`](eval/results.json) (bge-m3, CUDA fp16).
 
-Two things to note:
+Two things to note — and one correction:
 - **Keywords help without lowering the bar** — they enrich the fact vector, so this is
   an *admission-input* improvement, not a request to relax the precision gate.
-- **Negative false-positive rate stays 0.0** — the cosine threshold does not admit
-  chit-chat, so recall goes up without the noise that a lower `zbar` margin would add.
+- **Precision is NOT preserved — earlier wording retracted.** On the 36 positive queries,
+  `cos ≥ 0.55` + keywords returns 75 facts but only 26 are the target (precision ≈ 0.35);
+  the other 49 are non-target. The `neg_fp_rate = 0.0` above only means the 6 *chit-chat*
+  negatives recall nothing — there are **no same-domain hard negatives** in this eval, so
+  it does not show that real-world precision is intact.
 
-In production the semantic channel is unioned with the lexical channel (hybrid), which
-pushes recall higher still; the eval above isolates the semantic admission decision so
-it is reproducible without the lexical stack.
+In production the semantic channel is unioned with the lexical channel (hybrid). On the
+real store the bigger lever is the write-time bilingual + colloquial keywords (lexical
+recall@5 24/39 → 32/39); the sidecar adds fallback + association on top (→ 34/39) at ~3G
+VRAM and falls back to lexical-only when unavailable. The top-level README has the
+real-store three-keyword comparison, the scale experiment, and the limitations.
 
 ## Tuning knobs
 

@@ -1,0 +1,3 @@
+# Preserve patch bytes across Windows/macOS checkouts. A unified diff's context lines
+# can contain trailing spaces as data; integrity/application are checked separately.
+*.patch -text whitespace=-blank-at-eol,-blank-at-eof

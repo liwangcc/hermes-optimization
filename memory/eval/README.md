@@ -35,5 +35,9 @@ Metrics: recall@5, top1, negative false-positive rate, and recall@5 by category.
 
 The point is not the absolute numbers (a 30-fact synthetic store is tiny) but the
 *ordering*: the upstream `zbar` gate admits almost nothing on paraphrased/colloquial
-queries, while `cos ≥ 0.55` with keywords admits most of them — and the negative
-false-positive rate stays 0.0, so the gain is not bought with noise.
+queries, while `cos ≥ 0.55` with keywords admits most of them.
+
+**Precision caveat (earlier "no noise" wording retracted):** on the 36 positive queries,
+`cos_content_tags` returns 75 facts but only 26 are the target (precision ≈ 0.35). The
+`neg_fp_rate = 0.0` only reflects the 6 chit-chat negatives — there are no same-domain
+hard negatives here, so this eval does not establish that precision is preserved.

@@ -1,8 +1,8 @@
 # hermes-optimization
 
-> 我如何优化我的 [Hermes Agent](https://github.com/NousResearch/hermes-agent)：本地语义记忆、精简工作流 skill、配置范式，以及一套可复现的评测。
+> 我如何优化我的 [Hermes Agent](https://github.com/NousResearch/hermes-agent)：本地语义记忆、配置范式，以及一套可复现的评测。
 >
-> *How I optimize my Hermes Agent: local semantic memory, lean workflow skills, config patterns — with a reproducible eval.*
+> *How I optimize my Hermes Agent: local semantic memory, config patterns — with a reproducible eval.*
 
 这是一个 **power-user 设置指南 + 可运行组件**，不是 Hermes 本体。我把日常调优里真正有价值、且能通用化的部分抽出来分享：方法、代码、评测都能照着跑，但**不含任何个人配置、密钥或私有数据**——所有示例值都是占位符。
 
@@ -13,20 +13,40 @@
 - ❌ **不是**：一个从零写的记忆系统。事实库、词法检索、trust/feedback 仍由 [holographic](https://github.com/itpartypattaya/hermes-plugin-holographic) 提供；嵌入模型是 BAAI 的 bge-m3。
 - ❌ **不是**：我的真实环境快照。没有密钥、没有个人记忆、没有网络/账号细节。
 
-## 亮点：语义召回怎么「准入」才是关键
+## 亮点：主杠杆是写入时的关键词，语义侧车是兜底和联想
 
-同一个 bge-m3 模型，**事实如何被准入**决定了召回质量。上游默认用统计离群门（`z ≥ √(2·ln N) + 1.0`，精度优先），在小型中文库上对口语/改写/跨语言查询几乎不召回；改成**余弦阈值 + 把 keywords 一起嵌入**，召回大幅上升且**负例零误报**：
+下面是在**真实个人事实库**（不是合成玩具）上测出的结论，按重要性排。口径：39 条有效查询，recall@5 = 标准答案进前 5 的查询占比。
 
-| 准入方式 | 事实文本 | recall@5 | 口语 | 跨语言 | 负例误报 |
-|---|---|---|---|---|---|
-| z-bar（上游默认） | 仅正文 | 0.083 | 0.00 | 0.125 | 0.0 |
-| z-bar | 正文+keywords | 0.194 | 0.20 | 0.125 | 0.0 |
-| cos ≥ 0.55 | 仅正文 | 0.556 | 0.50 | 0.375 | 0.0 |
-| **cos ≥ 0.55** | **正文+keywords** | **0.722** | **0.90** | **0.50** | **0.0** |
+1. **写入时的中英双语 + 口语关键词是主杠杆。** 只用词法召回（FTS，无 GPU），把关键词从「原始」换成「双语口语」，recall@5 从 **24/39 → 32/39**。这一步不花显存。
+2. **语义侧车是兜底和联想。** 在双语关键词之上再挂本地 bge-m3 侧车，到 **34/39**，代价约 **3G 显存**。侧车不可用 / 超时 → **自动退回纯词法**，绝不阻塞对话。
+3. **只留专有名词反而更差。** 通用词 + 双语 + 口语才匹配大多数查询；专名只锚「问名字」那一类。
 
-*合成 30 事实中文库 / 42 查询，bge-m3 CUDA fp16。自己跑：[`memory/eval/`](memory/eval/README.md)。*
+### 三套关键词 × 两种配置（真实库，39 条有效查询）
 
-两个要点：**keywords 是有用信号**（不靠降低门槛提召回），且**精度没丢**（负例误报始终 0.0）。
+| 关键词集 | 纯词法 recall@5 | 词法 + 语义侧车 recall@5 |
+|---|---|---|
+| 原始 | 24/39（0.615） | 32/39（0.821） |
+| **双语口语** | **32/39（0.821）** | **34/39（0.872）** |
+| 只留专有名词 | 23/39（0.590） | 29/39（0.744） |
+
+*三套的负例误报都是 0；但「非目标事实」是另一回事，见下方局限。*
+
+### 规模实验：灌合成干扰到 3000 条
+
+往库里加同领域合成干扰事实到 3000 条：**三套排序不变**（双语 > 原始 > 专名），**纯词法召回基本不动**，**语义通道的非目标事实随规模上升**。没有观察到「库一大、专名就反超」的交叉。
+
+### 局限（务必读）
+
+- 只有 **39 条有效查询**，1–2 条的差距在误差范围内，别把小差距当结论。
+- 查询和关键词都由模型根据**同一批事实**生成，纯词法的数字**偏乐观**。
+- 标注是**单一答案**：按意思找回来的相关事实一律被记成「非目标」，所以非目标数高估了真实噪声。
+- 规模实验的干扰事实各带**独立的假专名**，是最容易的一种噪声；**同一实体的近似事实没有测**。
+
+### 精度：收回「精度没丢」的说法
+
+早先版本写过「精度没丢（负例误报 0）」，这个说法**收回**。合成评测里 `cos ≥ 0.55` + keywords 在 36 条正例上召回 75 条事实，**只有 26 条是目标**（精度约 0.35）——语义通道会带回不少非目标事实。负例只有闲聊类、**没有同领域的难负例**，所以「负例误报 0」推不出真实场景精度无损。可复现的合成对照见 [`memory/eval/`](memory/eval/README.md)。
+
+> 使用体感（**主观感受，不是测量结果**）：开了侧车之后联想更多。
 
 ## 目录
 
@@ -35,12 +55,14 @@
 | [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（侧车 + wrapper + 评测） |
 | [`memory/sidecar/`](memory/sidecar/README.md) | 本地 bge-m3 HTTP 服务（GPU fp16、离线、缓存、fail-safe） |
 | [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` provider（零改动继承上游，一键回滚） |
-| [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现 |
-| [`skills/`](skills/README.md) | 精简工作流 skill（确认决策，而非复核事实） |
+| [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现（`results.json` 为实测输出） |
+| [`memory/threshold-calib/`](memory/threshold-calib/README.md) | 准入阈值校准工具 + 干跑证据（不透明行，可复算） |
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |
-| [`docs/memory-architecture.md`](docs/memory-architecture.md) | 记忆架构：两层分工、指针、满了怎么办、清理规程 |
+| [`docs/memory-architecture.md`](docs/memory-architecture.md) | 记忆架构：两层分工、生成目录、满了怎么办、清理规程 |
 | [`docs/methodology.md`](docs/methodology.md) | 方法论与踩坑：先评测、wrap 不 fork、fail-open、抗更新 |
-| [`docs/tiered-compression.md`](docs/tiered-compression.md) | **提案（未实施）**：高密度按相似度分档压缩成 gist，降低分母让 top-k 重新够用 |
+| [`docs/tiered-compression.md`](docs/tiered-compression.md) | 分层密度压缩提案（未实现） |
+| [`issue95-evidence/`](issue95-evidence/METRICS.md) | 关键词进向量门禁证据：公开合成集 + 真实库不透明行（零文本） |
+| [`docs/upstream-memory-review/`](docs/upstream-memory-review/SUBMISSION.md) | 上游投稿：记忆容量 / provider 维护任务 / 桌面设置的补丁与验证 |
 
 ## 快速开始（语义记忆）
 
@@ -69,7 +91,7 @@ hermes config set memory.provider holographic
 - **wrap 不 fork**：增强层在加载时继承上游 provider，上游更新自动继承，回滚是改配置不是改代码。
 - **fail-open**：侧车挂了/超时 → 退回词法召回，绝不阻塞对话。
 - **三不动**：常驻 USER/MEMORY 层不向量化、专有名词硬锚点保留、trust/feedback 与矛盾检测保留。
-- **精简 skill**：确认决策而非复核事实，仪式不是安全。
+- **生成目录供主动查询**：可选事实目录由库自动生成 `#id=label` 放进系统提示，给模型一张「有什么」的地图，想到相关词时能主动 `fact_store get`，不必等自动召回命中；它是生成的读索引，不是手写指针（手写 `fact#N` 会随事实合并/遗忘悬空）。详见 [memory-architecture.md](docs/memory-architecture.md)。
 
 详见 [`docs/methodology.md`](docs/methodology.md)。
 
@@ -80,4 +102,4 @@ holographic（MIT）、bge-m3（MIT）、Hermes Agent。模型权重与上游插
 
 ---
 
-*欢迎拍砖。这套东西的取舍是「召回优先但守住精度」，如果你的场景更怕噪声，上游默认的精度门可能更适合你——评测脚本就是用来帮你自己量的。*
+*欢迎拍砖。这套东西的取舍是「召回优先，精度有代价」——语义通道会带回非目标事实；如果你的场景更怕噪声，上游默认的精度门可能更适合你。评测脚本就是用来帮你自己量的。*

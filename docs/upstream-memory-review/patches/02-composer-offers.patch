@@ -1,0 +1,157 @@
+diff --git a/apps/desktop/src/app/chat/composer/status-stack/index.tsx b/apps/desktop/src/app/chat/composer/status-stack/index.tsx
+index 754b1c9e..4f13c208 100644
+--- a/apps/desktop/src/app/chat/composer/status-stack/index.tsx
++++ b/apps/desktop/src/app/chat/composer/status-stack/index.tsx
+@@ -10,9 +10,7 @@ import type { SubmitTextOptions } from '@/app/session/hooks/use-prompt-actions/u
+ import { BillingBanner } from '@/components/billing-banner'
+ import { composerDockCard } from '@/components/chat/composer-dock'
+ import { StatusSection } from '@/components/chat/status-section'
+-import { FreeTierNoticeStrip, useFreeTierNoticeOwner } from '@/components/free-tier/notice-strip'
+ import { usePaneVisible } from '@/components/pane-shell/pane-visibility'
+-import { SharedMetricsConsentStrip } from '@/components/shared-metrics/consent-strip'
+ import { Button } from '@/components/ui/button'
+ import { Codicon } from '@/components/ui/codicon'
+ import { GlyphSpinner } from '@/components/ui/glyph-spinner'
+@@ -31,15 +29,14 @@ import {
+   type StatusGroup,
+   stopBackgroundProcess
+ } from '@/store/composer-status'
+-import { $freeTierRoute, $freeTierStatus, freeTierStripPending } from '@/store/free-tier'
+ import { $interfaceMode, shownInMode, type Tiered } from '@/store/interface-mode'
+ import { $previewStatusBySession, dismissPreviewArtifact } from '@/store/preview-status'
+ import { $sessionControlBySession, refreshSessionControl } from '@/store/session-control'
+-import { $sharedMetricsConsent, sharedMetricsOfferPending } from '@/store/shared-metrics'
+ import { $threadScrolledUpBySession } from '@/store/thread-scroll'
+ import { $retainedTodosBySession } from '@/store/todos'
+ import { openSessionInNewWindow } from '@/store/windows'
+ 
++import { useComposerOffer } from './offers'
+ import { PreviewStatusRow } from './preview-row'
+ import { SessionControlSections } from './session-control'
+ import { useSessionValue } from './session-control-utils'
+@@ -138,15 +135,7 @@ export function ComposerStatusStack({ onSubmit, queue, sessionId }: ComposerStat
+   )
+ 
+   const billing = useStore($billingBlock)
+-  const freeTierStatus = useStore($freeTierStatus)
+-  const freeTierRoute = useStore($freeTierRoute)
+-  // One claimed owner across every mounted composer, so a split view shows the
+-  // notice once — and a non-owning stack adds no empty row to its card.
+-  const ownsFreeTierNotice = useFreeTierNoticeOwner()
+-  const freeTierNotice = ownsFreeTierNotice && freeTierStripPending(freeTierStatus, freeTierRoute)
+-  // Same single owner, one offer at a time: the metrics question waits for the free-tier notice.
+-  const sharedMetricsConsent = useStore($sharedMetricsConsent)
+-  const sharedMetricsOffer = ownsFreeTierNotice && !freeTierNotice && sharedMetricsOfferPending(sharedMetricsConsent)
++  const offer = useComposerOffer()
+ 
+   const isStructuredSupported = controlEntry?.capability === 'supported'
+ 
+@@ -232,12 +221,8 @@ export function ComposerStatusStack({ onSubmit, queue, sessionId }: ComposerStat
+   // Below the billing wall (a blocker outranks an offer), above everything the
+   // session itself is doing. The strip retires itself the moment any of its
+   // actions acks the notice.
+-  if (freeTierNotice) {
+-    sections.push({ key: 'free-tier', node: <FreeTierNoticeStrip /> })
+-  }
+-
+-  if (sharedMetricsOffer) {
+-    sections.push({ key: 'shared-metrics', node: <SharedMetricsConsentStrip /> })
++  if (offer) {
++    sections.push(offer)
+   }
+ 
+   const hasControlContent = Boolean(
+diff --git a/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx b/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx
+new file mode 100644
+index 00000000..4a53b6a3
+--- /dev/null
++++ b/apps/desktop/src/app/chat/composer/status-stack/offers.test.tsx
+@@ -0,0 +1,53 @@
++import { act, renderHook } from '@testing-library/react'
++import { beforeEach, describe, expect, it, vi } from 'vitest'
++
++import { $freeTierRoute, $freeTierStatus } from '@/store/free-tier'
++import { markOnboardingDecided } from '@/store/onboarding-presence'
++import { $sharedMetricsConsent } from '@/store/shared-metrics'
++
++import { useComposerOffer } from './offers'
++
++const owner = vi.hoisted(() => ({ owns: true }))
++
++vi.mock('@/components/free-tier/notice-strip', () => ({
++  FreeTierNoticeStrip: () => null,
++  useFreeTierNoticeOwner: () => owner.owns
++}))
++
++type FreeTierStatus = NonNullable<ReturnType<typeof $freeTierStatus.get>>
++
++const notice = (pending: boolean) => ({ has_guest: true, notice_pending: pending }) as FreeTierStatus
++const consent = (decided: boolean) => ({ decided }) as NonNullable<ReturnType<typeof $sharedMetricsConsent.get>>
++
++beforeEach(() => {
++  owner.owns = true
++  markOnboardingDecided() // first-run onboarding is done: the free-tier notice may show
++  $freeTierRoute.set(false)
++  $freeTierStatus.set(notice(false))
++  $sharedMetricsConsent.set(null)
++})
++
++describe('composer offers', () => {
++  it('shows one offer at a time, and the metrics question waits for the free-tier notice', () => {
++    const { result } = renderHook(() => useComposerOffer())
++
++    expect(result.current).toBeUndefined()
++
++    act(() => $sharedMetricsConsent.set(consent(false)))
++    expect(result.current?.key).toBe('shared-metrics')
++
++    act(() => $freeTierStatus.set(notice(true)))
++    expect(result.current?.key).toBe('free-tier')
++
++    // Acknowledged: the question, still unanswered, takes the slot back.
++    act(() => $freeTierStatus.set(notice(false)))
++    expect(result.current?.key).toBe('shared-metrics')
++  })
++
++  it('shows nothing in a composer that does not own the slot', () => {
++    owner.owns = false
++    $sharedMetricsConsent.set(consent(false))
++
++    expect(renderHook(() => useComposerOffer()).result.current).toBeUndefined()
++  })
++})
+diff --git a/apps/desktop/src/app/chat/composer/status-stack/offers.tsx b/apps/desktop/src/app/chat/composer/status-stack/offers.tsx
+new file mode 100644
+index 00000000..5963e331
+--- /dev/null
++++ b/apps/desktop/src/app/chat/composer/status-stack/offers.tsx
+@@ -0,0 +1,29 @@
++import { useStore } from '@nanostores/react'
++import type { ReactNode } from 'react'
++
++import { FreeTierNoticeStrip, useFreeTierNoticeOwner } from '@/components/free-tier/notice-strip'
++import { SharedMetricsConsentStrip } from '@/components/shared-metrics/consent-strip'
++import { $freeTierRoute, $freeTierStatus, freeTierStripPending } from '@/store/free-tier'
++import { $sharedMetricsConsent, sharedMetricsOfferPending } from '@/store/shared-metrics'
++
++// In the order they are offered: the metrics question waits for the free-tier notice.
++const OFFERS: readonly { key: string; node: ReactNode }[] = [
++  { key: 'free-tier', node: <FreeTierNoticeStrip /> },
++  { key: 'shared-metrics', node: <SharedMetricsConsentStrip /> }
++]
++
++/**
++ * The one offer this composer shows, if any. One claimed owner across every
++ * mounted composer, so a split view shows it once and a non-owning stack adds
++ * no empty row to its card; one offer at a time.
++ */
++export function useComposerOffer(): { key: string; node: ReactNode } | undefined {
++  const owns = useFreeTierNoticeOwner()
++  const freeTierStatus = useStore($freeTierStatus)
++  const freeTierRoute = useStore($freeTierRoute)
++  const sharedMetricsConsent = useStore($sharedMetricsConsent)
++
++  const pending = [freeTierStripPending(freeTierStatus, freeTierRoute), sharedMetricsOfferPending(sharedMetricsConsent)]
++
++  return owns ? OFFERS[pending.indexOf(true)] : undefined
++}

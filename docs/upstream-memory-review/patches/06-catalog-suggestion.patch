@@ -1,0 +1,396 @@
+diff --git a/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx b/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx
+index db7c5979..df6e404b 100644
+--- a/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx
++++ b/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx
+@@ -77,6 +77,33 @@ describe('memory capacity', () => {
+     expect(within(catalog).getByText(/not what a model was sent or billed/)).toBeTruthy()
+   })
+ 
++  it('suggests MEMORY.md is optional while a catalog lists the same facts, with what it costs, and changes nothing', () => {
++    const catalog = { ...FACTS.budgets![0], overlaps: ['memory' as const] }
++    const overlapping: ProviderMemoryLayer = { ...FACTS, budgets: [catalog] }
++    const memoryOn = { state: 'ok' as const, chars: 1900, char_limit: 2200, entries: 9, tokens: 610 }
++
++    render(<MemoryCapacity layers={layers(overlapping, { memory: memoryOn })} />)
++
++    const hint = row('MEMORY.md is optional while Fact catalog is on')
++
++    expect(hint.textContent).toContain('(about 610 tokens)')
++    expect(hint.textContent).toContain('both can stay on')
++    expect(within(hint).queryByRole('button')).toBeNull() // a suggestion: nothing is switched off from here
++    expect(within(hint).queryByRole('switch')).toBeNull()
++    cleanup()
++
++    // Not while MEMORY.md is off (the default here) or empty, nor while the catalog itself is off.
++    for (const shown of [
++      layers(overlapping),
++      layers(overlapping, { memory: { ...memoryOn, state: 'empty' } }),
++      layers({ ...FACTS, budgets: [{ ...catalog, enabled: false }] }, { memory: memoryOn })
++    ]) {
++      render(<MemoryCapacity layers={shown} />)
++      expect(screen.queryByText(/is optional while/)).toBeNull()
++      cleanup()
++    }
++  })
++
+   it('says off, empty, unreadable and not reported apart, never as zero', () => {
+     const cases: [ProviderMemoryLayer, string, RegExp][] = [
+       [{ state: 'disabled', name: '' }, 'Off', /No memory provider is active/],
+diff --git a/apps/desktop/src/app/settings/memory/memory-capacity.tsx b/apps/desktop/src/app/settings/memory/memory-capacity.tsx
+index 3947d65c..ae55139d 100644
+--- a/apps/desktop/src/app/settings/memory/memory-capacity.tsx
++++ b/apps/desktop/src/app/settings/memory/memory-capacity.tsx
+@@ -1,4 +1,4 @@
+-import type { ReactNode } from 'react'
++import { Fragment, type ReactNode } from 'react'
+ 
+ import { Progress } from '@/components/ui/progress'
+ import { useI18n } from '@/i18n'
+@@ -109,6 +109,27 @@ function BudgetRow({ budget, c }: { budget: MemoryBudget; c: Capacity }) {
+   )
+ }
+ 
++const FILES = { memory: 'MEMORY.md', user: 'USER.md' } as const
++
++/** The built-in files a budget's text makes optional: only one that is on and holds something. */
++function overlapped(budget: MemoryBudget, layers: MemoryLayers): (keyof typeof FILES)[] {
++  return budget.enabled ? (budget.overlaps ?? []).filter(name => layers[name].state === 'ok') : []
++}
++
++/** A suggestion, never a change: nothing is switched off here, and both can stay on. What each costs in every
++ *  session is on screen: the budget's own row above, and the file's estimate here. */
++function OverlapRow({ budget, c, layer, name }: { budget: MemoryBudget; c: Capacity; layer: BuiltinMemoryLayer; name: keyof typeof FILES }) {
++  const label = budget.label ?? budget.key ?? ''
++  const tokens = layer.tokens !== undefined ? count(layer.tokens) : undefined
++
++  return (
++    <ListRow
++      description={c.overlapDesc(label, FILES[name], tokens)}
++      title={c.overlapTitle(FILES[name], label)}
++    />
++  )
++}
++
+ function ProviderRow({ c, layer }: { c: Capacity; layer: ProviderMemoryLayer }) {
+   const description: Record<MemoryLayerState, string> = {
+     ok: c.factStoreDesc,
+@@ -163,7 +184,12 @@ export function MemoryCapacity({ layers }: { layers: MemoryLayers | undefined })
+       <BuiltinRow c={c} layer={layers.memory} title="MEMORY.md" />
+       <ProviderRow c={c} layer={layers.provider} />
+       {(layers.provider.budgets ?? []).map((budget, index) => (
+-        <BudgetRow budget={budget} c={c} key={budget.key ?? index} />
++        <Fragment key={budget.key ?? index}>
++          <BudgetRow budget={budget} c={c} />
++          {overlapped(budget, layers).map(name => (
++            <OverlapRow budget={budget} c={c} key={name} layer={layers[name]} name={name} />
++          ))}
++        </Fragment>
+       ))}
+     </div>
+   )
+diff --git a/apps/desktop/src/i18n/ar_memory_capacity.ts b/apps/desktop/src/i18n/ar_memory_capacity.ts
+index 63df321d..ac1f80c2 100644
+--- a/apps/desktop/src/i18n/ar_memory_capacity.ts
++++ b/apps/desktop/src/i18n/ar_memory_capacity.ts
+@@ -23,5 +23,8 @@ export const arMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: 'هذا الإصدار من Hermes لا يبلّغ عن استخدام الذاكرة. حدّث Hermes لعرضه.',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `أُدرجت ${listed} من ${eligible} حقيقة مؤهلة`,
+-  budgetNote: 'هذا تقدير المزوّد نفسه لهذا النص، وليس ما أُرسل إلى النموذج أو ما تمت فوترته.'
++  budgetNote: 'هذا تقدير المزوّد نفسه لهذا النص، وليس ما أُرسل إلى النموذج أو ما تمت فوترته.',
++  overlapTitle: (file, label) => `${file} اختياري ما دام ${label} مفعّلًا`,
++  overlapDesc: (label, file, tokens) =>
++    `يسرد ${label} حقائقك المحفوظة في كل جلسة. ويُحمَّل ${file} أيضًا في كل جلسة${tokens ? ` (نحو ${tokens} رمزًا)` : ''}. إن كان يكرر الحقائق فقط فيمكنك إيقافه من الذاكرة والسياق؛ ويمكن إبقاء الاثنين مفعّلين.`
+ }
+diff --git a/apps/desktop/src/i18n/de_memory_capacity.ts b/apps/desktop/src/i18n/de_memory_capacity.ts
+index 5cf26d91..fab8cdb8 100644
+--- a/apps/desktop/src/i18n/de_memory_capacity.ts
++++ b/apps/desktop/src/i18n/de_memory_capacity.ts
+@@ -26,5 +26,8 @@ export const deMemoryCapacity: MemoryCapacityTranslations = {
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `${listed} von ${eligible} geeigneten Fakten aufgeführt`,
+   budgetNote:
+-    'Die eigene Schätzung des Anbieters für diesen Text. Sie ist nicht das, was an ein Modell gesendet oder abgerechnet wurde.'
++    'Die eigene Schätzung des Anbieters für diesen Text. Sie ist nicht das, was an ein Modell gesendet oder abgerechnet wurde.',
++  overlapTitle: (file, label) => `${file} ist optional, solange ${label} an ist`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} listet deine gespeicherten Fakten bereits in jeder Sitzung auf. ${file} wird ebenfalls in jede Sitzung geladen${tokens ? ` (etwa ${tokens} Tokens)` : ''}. Wiederholt es nur Fakten, kannst du es unter Speicher & Kontext ausschalten; beides darf an bleiben.`
+ }
+diff --git a/apps/desktop/src/i18n/en_memory_capacity.ts b/apps/desktop/src/i18n/en_memory_capacity.ts
+index 5117209e..ca660910 100644
+--- a/apps/desktop/src/i18n/en_memory_capacity.ts
++++ b/apps/desktop/src/i18n/en_memory_capacity.ts
+@@ -23,5 +23,8 @@ export const enMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: 'This Hermes version does not report memory usage. Update Hermes to see it.',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `${listed} of ${eligible} eligible facts listed`,
+-  budgetNote: 'The provider’s own estimate of this text. It is not what a model was sent or billed.'
++  budgetNote: 'The provider’s own estimate of this text. It is not what a model was sent or billed.',
++  overlapTitle: (file, label) => `${file} is optional while ${label} is on`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} already lists your stored facts in every session. ${file} is loaded into every session too${tokens ? ` (about ${tokens} tokens)` : ''}. If it only repeats facts, you can turn it off under Memory & Context; both can stay on.`
+ }
+diff --git a/apps/desktop/src/i18n/es_memory_capacity.ts b/apps/desktop/src/i18n/es_memory_capacity.ts
+index e78e2f20..3f9d7053 100644
+--- a/apps/desktop/src/i18n/es_memory_capacity.ts
++++ b/apps/desktop/src/i18n/es_memory_capacity.ts
+@@ -25,5 +25,8 @@ export const esMemoryCapacity: MemoryCapacityTranslations = {
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `${listed} de ${eligible} hechos aptos listados`,
+   budgetNote:
+-    'Es la estimación del propio proveedor para este texto. No es lo que se envió a un modelo ni lo que se facturó.'
++    'Es la estimación del propio proveedor para este texto. No es lo que se envió a un modelo ni lo que se facturó.',
++  overlapTitle: (file, label) => `${file} es opcional mientras ${label} esté activado`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} ya enumera tus hechos guardados en cada sesión. ${file} también se carga en cada sesión${tokens ? ` (unos ${tokens} tokens)` : ''}. Si solo repite hechos, puedes desactivarlo en Memoria y contexto; ambos pueden seguir activados.`
+ }
+diff --git a/apps/desktop/src/i18n/fr_memory_capacity.ts b/apps/desktop/src/i18n/fr_memory_capacity.ts
+index ec217198..fa4c0533 100644
+--- a/apps/desktop/src/i18n/fr_memory_capacity.ts
++++ b/apps/desktop/src/i18n/fr_memory_capacity.ts
+@@ -26,5 +26,8 @@ export const frMemoryCapacity: MemoryCapacityTranslations = {
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `${listed} faits listés sur ${eligible} éligibles`,
+   budgetNote:
+-    'Estimation de ce texte par le fournisseur lui-même. Ce n’est pas ce qui a été envoyé à un modèle ni facturé.'
++    'Estimation de ce texte par le fournisseur lui-même. Ce n’est pas ce qui a été envoyé à un modèle ni facturé.',
++  overlapTitle: (file, label) => `${file} est facultatif tant que ${label} est activé`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} liste déjà vos faits enregistrés à chaque session. ${file} est aussi chargé à chaque session${tokens ? ` (environ ${tokens} jetons)` : ''}. S’il ne fait que répéter des faits, vous pouvez le désactiver dans Mémoire et contexte ; les deux peuvent rester activés.`
+ }
+diff --git a/apps/desktop/src/i18n/ja_memory_capacity.ts b/apps/desktop/src/i18n/ja_memory_capacity.ts
+index 56d82c6d..5aad80e7 100644
+--- a/apps/desktop/src/i18n/ja_memory_capacity.ts
++++ b/apps/desktop/src/i18n/ja_memory_capacity.ts
+@@ -24,5 +24,8 @@ export const jaMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: 'このバージョンの Hermes はメモリ使用量を報告しません。Hermes を更新すると表示されます。',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `対象のファクト ${eligible} 件中 ${listed} 件を掲載`,
+-  budgetNote: 'プロバイダー自身によるこのテキストの見積もりです。モデルに送信された量や課金額ではありません。'
++  budgetNote: 'プロバイダー自身によるこのテキストの見積もりです。モデルに送信された量や課金額ではありません。',
++  overlapTitle: (file, label) => `${label} がオンのあいだ、${file} は任意です`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} は保存済みの事実を毎セッション一覧にしています。${file} も毎セッション読み込まれます${tokens ? `（約 ${tokens} トークン）` : ''}。事実の繰り返しにすぎないなら「メモリとコンテキスト」でオフにできます。両方をオンのままにしても構いません。`
+ }
+diff --git a/apps/desktop/src/i18n/ru_memory_capacity.ts b/apps/desktop/src/i18n/ru_memory_capacity.ts
+index 04335b87..75230705 100644
+--- a/apps/desktop/src/i18n/ru_memory_capacity.ts
++++ b/apps/desktop/src/i18n/ru_memory_capacity.ts
+@@ -24,5 +24,8 @@ export const ruMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: 'Эта версия Hermes не сообщает об использовании памяти. Обновите Hermes, чтобы увидеть его.',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `В списке ${listed} из ${eligible} подходящих фактов`,
+-  budgetNote: 'Это собственная оценка провайдера для этого текста, а не то, что было отправлено модели или оплачено.'
++  budgetNote: 'Это собственная оценка провайдера для этого текста, а не то, что было отправлено модели или оплачено.',
++  overlapTitle: (file, label) => `${file} необязателен, пока включён ${label}`,
++  overlapDesc: (label, file, tokens) =>
++    `${label} уже перечисляет сохранённые факты в каждом сеансе. ${file} тоже загружается в каждый сеанс${tokens ? ` (около ${tokens} токенов)` : ''}. Если он лишь повторяет факты, его можно выключить в разделе «Память и контекст»; оба могут оставаться включёнными.`
+ }
+diff --git a/apps/desktop/src/i18n/types_memory_capacity.ts b/apps/desktop/src/i18n/types_memory_capacity.ts
+index 1a68cdef..44c29199 100644
+--- a/apps/desktop/src/i18n/types_memory_capacity.ts
++++ b/apps/desktop/src/i18n/types_memory_capacity.ts
+@@ -24,4 +24,6 @@ export interface MemoryCapacityTranslations {
+   budgetUsed: (used: string, limit: string, unit: string) => string
+   budgetListed: (listed: string, eligible: string) => string
+   budgetNote: string
++  overlapTitle: (file: string, label: string) => string
++  overlapDesc: (label: string, file: string, tokens?: string) => string
+ }
+diff --git a/apps/desktop/src/i18n/zh-hant_memory_capacity.ts b/apps/desktop/src/i18n/zh-hant_memory_capacity.ts
+index 8e81a964..036e8cd6 100644
+--- a/apps/desktop/src/i18n/zh-hant_memory_capacity.ts
++++ b/apps/desktop/src/i18n/zh-hant_memory_capacity.ts
+@@ -23,5 +23,8 @@ export const zhHantMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: '此版本的 Hermes 不回報記憶用量。更新 Hermes 後即可查看。',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `符合條件的 ${eligible} 筆事實中已列出 ${listed} 筆`,
+-  budgetNote: '這是提供者對這段文字的自行估算，不是實際傳送給模型或計費的數量。'
++  budgetNote: '這是提供者對這段文字的自行估算，不是實際傳送給模型或計費的數量。',
++  overlapTitle: (file, label) => `開啟${label}後，${file}變為可選`,
++  overlapDesc: (label, file, tokens) =>
++    `${label}已在每次工作階段中列出已儲存的事實。${file}也會載入每次工作階段${tokens ? `（約 ${tokens} token）` : ''}。如果它只是重複這些事實，可以在「記憶與上下文」中關閉；兩者也可以同時開啟。`
+ }
+diff --git a/apps/desktop/src/i18n/zh_memory_capacity.ts b/apps/desktop/src/i18n/zh_memory_capacity.ts
+index 38b22f5b..6838a09a 100644
+--- a/apps/desktop/src/i18n/zh_memory_capacity.ts
++++ b/apps/desktop/src/i18n/zh_memory_capacity.ts
+@@ -23,5 +23,8 @@ export const zhMemoryCapacity: MemoryCapacityTranslations = {
+   olderBackendDesc: '此版本的 Hermes 不报告记忆用量。更新 Hermes 后即可查看。',
+   budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
+   budgetListed: (listed, eligible) => `符合条件的 ${eligible} 条事实中已列出 ${listed} 条`,
+-  budgetNote: '这是提供方对这段文本的自行估算，不是实际发送给模型或计费的数量。'
++  budgetNote: '这是提供方对这段文本的自行估算，不是实际发送给模型或计费的数量。',
++  overlapTitle: (file, label) => `开启${label}后，${file}变为可选`,
++  overlapDesc: (label, file, tokens) =>
++    `${label}已在每次会话中列出已存的事实。${file}也会载入每次会话${tokens ? `（约 ${tokens} token）` : ''}。如果它只是重复这些事实，可以在「记忆与上下文」中关闭；两者也可以同时开启。`
+ }
+diff --git a/apps/desktop/src/types/memory-layers.ts b/apps/desktop/src/types/memory-layers.ts
+index 6a27ac91..6393da2f 100644
+--- a/apps/desktop/src/types/memory-layers.ts
++++ b/apps/desktop/src/types/memory-layers.ts
+@@ -10,6 +10,8 @@ export interface BuiltinMemoryLayer {
+   chars: number
+   char_limit: number
+   entries: number
++  /** What it costs in every session, by core's estimate; absent from a backend older than it. */
++  tokens?: number
+ }
+ 
+ /** A budget the provider itself enforces, counted the way it enforces it. */
+@@ -23,6 +25,8 @@ export interface MemoryBudget {
+   limit: number
+   listed?: number
+   eligible?: number
++  /** Built-in files this budget's text makes optional (it lists the stored items in every session). */
++  overlaps?: ('memory' | 'user')[]
+ }
+ 
+ /** The active provider's store. No ceiling: only what the provider reports. */
+diff --git a/hermes_cli/web_routers/memory_layers.py b/hermes_cli/web_routers/memory_layers.py
+index 1f0dd45e..f5d1ec83 100644
+--- a/hermes_cli/web_routers/memory_layers.py
++++ b/hermes_cli/web_routers/memory_layers.py
+@@ -17,8 +17,10 @@ _log = logging.getLogger("hermes_cli.web_server")
+ _load_memory_provider = late("_load_memory_provider", "hermes_cli.web_server_memory")
+ get_hermes_home = late("get_hermes_home", "hermes_cli.config")
+ builtin_memory_layers = late("builtin_memory_layers", "tools.memory_tool")
++estimate_tokens_rough = late("estimate_tokens_rough", "agent.model_metadata")
+ 
+ _BUDGET_TEXT, _BUDGET_INT = ("key", "label", "unit"), ("used", "limit", "listed", "eligible")
++_BUILTIN = ("memory", "user")
+ 
+ 
+ def _is_int(value: Any) -> bool:
+@@ -62,6 +64,9 @@ def _budget(raw: Any) -> Optional[dict[str, Any]]:
+     budget: dict[str, Any] = {"enabled": raw.get("enabled") is not False}
+     budget.update({k: str(raw[k]) for k in _BUDGET_TEXT if raw.get(k)})
+     budget.update({k: raw[k] for k in _BUDGET_INT if _is_int(raw.get(k))})
++    overlaps = [name for name in _BUILTIN if name in (raw.get("overlaps") or ())]
++    if overlaps:  # the built-in files this budget's text makes optional: the Desktop may suggest turning one off
++        budget["overlaps"] = overlaps
+     return budget
+ 
+ 
+@@ -76,9 +81,13 @@ def builtin_layers(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+ def memory_layers(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
+     """USER.md, MEMORY.md and the provider's store, each with its own state and only the limits something
+     enforces: the built-in files' character caps, and whatever budgets the provider reports."""
++    from tools.memory_tool import ENTRY_DELIMITER  # here, not at import: importing the tool registers it
++
+     layers: dict[str, dict[str, Any]] = {
+         name: {"state": layer["state"], "chars": layer["chars"], "char_limit": layer["char_limit"],
+-               "entries": len(layer["entries"])}
++               "entries": len(layer["entries"]),
++               # what it costs in every session, by core's own estimate: a file holds characters, a prompt tokens
++               "tokens": estimate_tokens_rough(ENTRY_DELIMITER.join(layer["entries"]))}
+         for name, layer in builtin_layers(config).items()
+     }
+     active = active_provider(config)
+diff --git a/locales/_keys.desktop.json b/locales/_keys.desktop.json
+index ffaea895..5020afac 100644
+--- a/locales/_keys.desktop.json
++++ b/locales/_keys.desktop.json
+@@ -1970,6 +1970,8 @@
+     "memoryCapacity.facts",
+     "memoryCapacity.noProviderDesc",
+     "memoryCapacity.olderBackendDesc",
++    "memoryCapacity.overlapDesc",
++    "memoryCapacity.overlapTitle",
+     "memoryCapacity.providerEmptyDesc",
+     "memoryCapacity.providerUnavailableDesc",
+     "memoryCapacity.providerUnsupportedDesc",
+diff --git a/tests/hermes_cli/test_web_memory_layers.py b/tests/hermes_cli/test_web_memory_layers.py
+index 9a17c0a7..4e05b59b 100644
+--- a/tests/hermes_cli/test_web_memory_layers.py
++++ b/tests/hermes_cli/test_web_memory_layers.py
+@@ -69,7 +69,7 @@ def register(ctx):
+ 
+ _USAGE = {"items": 4, "storage_bytes": 180224, "budgets": [
+     {"key": "catalog", "label": "Fact catalog", "enabled": True, "used": 1170, "limit": 3000,
+-     "unit": "estimated tokens", "listed": 3, "eligible": 4},
++     "unit": "estimated tokens", "listed": 3, "eligible": 4, "overlaps": ["memory", "SOUL.md"]},
+     {"key": "made-up", "label": "no numbers"},  # says neither how much nor of what: not shown
+ ]}
+ 
+@@ -106,18 +106,23 @@ def client(home):
+ def test_each_layer_reports_its_own_usage_and_only_limits_something_enforces(home, client):
+     _write_home(home, memory={"user_char_limit": 500},
+                 user="likes tea\n§\n  works remotely  \n§\nlikes tea\n§\n\n")  # a duplicate, padding, an empty entry
++    from agent.model_metadata import estimate_tokens_rough
+     from tools.memory_tool import ENTRY_DELIMITER, load_on_disk_store
+ 
+     layers = client.get("/api/memory").json()["layers"]
+-    store = load_on_disk_store()  # the store writes are checked against
+-    assert layers["user"] == {"state": "ok", "chars": len(ENTRY_DELIMITER.join(store.user_entries)),
+-                              "char_limit": 500, "entries": 2}
++    store = load_on_disk_store()  # the store writes are checked against, and the text a session loads
++    loaded = ENTRY_DELIMITER.join(store.user_entries)
++    assert layers["user"] == {"state": "ok", "chars": len(loaded), "char_limit": 500, "entries": 2,
++                              "tokens": estimate_tokens_rough(loaded)}
+     assert layers["user"]["chars"] < len((home / "memories" / "USER.md").read_text(encoding="utf-8"))  # not the file size
+-    assert layers["memory"] == {"state": "ok", "chars": len("Deploy from the release branch"), "char_limit": 2200, "entries": 1}
+-    # The provider's own numbers, passed on as given; a budget without numbers is not a budget.
++    notes = "Deploy from the release branch"
++    assert layers["memory"] == {"state": "ok", "chars": len(notes), "char_limit": 2200, "entries": 1,
++                                "tokens": estimate_tokens_rough(notes)}
++    # The provider's own numbers, passed on as given; a budget without numbers is not a budget, and only a built-in
++    # file can be what a budget overlaps.
+     assert layers["provider"] == {"state": "ok", "name": "layersprov", "items": 4, "storage_bytes": 180224, "budgets": [
+         {"enabled": True, "key": "catalog", "label": "Fact catalog", "unit": "estimated tokens", "used": 1170,
+-         "limit": 3000, "listed": 3, "eligible": 4}]}
++         "limit": 3000, "listed": 3, "eligible": 4, "overlaps": ["memory"]}]}
+     assert not {"limit", "char_limit", "percent"} & set(layers["provider"])  # no ceiling is invented for the store
+ 
+ 
+@@ -126,7 +131,7 @@ def test_off_empty_unreadable_and_unsupported_are_different_answers(home, client
+     (home / "memories" / "USER.md").unlink()
+     layers = client.get("/api/memory").json()["layers"]
+     assert layers["memory"]["state"] == "disabled" and layers["memory"]["chars"] > 0  # off, with what is on disk
+-    assert layers["user"] == {"state": "empty", "chars": 0, "char_limit": 1375, "entries": 0}
++    assert layers["user"] == {"state": "empty", "chars": 0, "char_limit": 1375, "entries": 0, "tokens": 0}
+     assert layers["provider"] == {"state": "empty", "name": "layersprov", "items": 0}
+ 
+     (home / "memories" / "USER.md").write_bytes(b"\xff\xfe not utf-8 \xff")
+diff --git a/website/docs/developer-guide/memory-provider-plugin.md b/website/docs/developer-guide/memory-provider-plugin.md
+index 3ec02b0b..2f6127b6 100644
+--- a/website/docs/developer-guide/memory-provider-plugin.md
++++ b/website/docs/developer-guide/memory-provider-plugin.md
+@@ -441,7 +441,7 @@ def usage_report(self, hermes_home: str) -> dict:
+     # enforces it; report no limit you do not enforce.
+     return {"items": 56, "storage_bytes": 180224, "budgets": [
+         {"key": "catalog", "label": "Fact catalog", "enabled": True, "used": 1170, "limit": 3000,
+-         "unit": "estimated tokens", "listed": 54, "eligible": 56}]}
++         "unit": "estimated tokens", "listed": 54, "eligible": 56, "overlaps": ["memory"]}]}
+ 
+ def review_items(self, hermes_home: str) -> dict:
+     # What a memory checkup the user starts may read. Only id and text are required.
+@@ -449,7 +449,11 @@ def review_items(self, hermes_home: str) -> dict:
+                        "protected": False, "uses": 9, "score": 0.8, "unconfirmed": False}]}
+ ```
+ 
+-`usage_report` feeds `layers.provider` of `GET /api/memory`. `review_items` feeds
++`usage_report` feeds `layers.provider` of `GET /api/memory`. A budget whose text lists the stored items in
++every session (a generated catalog) may name the built-in files that then become optional in `overlaps`
++(`"memory"`, `"user"`): while that budget and the file are both on and the file holds something, the Desktop
++suggests turning the file off, with what it costs per session. It only suggests: nothing is switched off, and
++both may stay on. `review_items` feeds
+ `POST /api/memory/checkup`: one model call with no tools that returns proposals and writes nothing.
+ The provider only reports. Hermes orders the checkup by `score`, `unconfirmed` and `uses` (in that
+ weight; low use alone never justifies a removal), and holds back any proposal to remove or change a
+diff --git a/website/docs/user-guide/features/memory.md b/website/docs/user-guide/features/memory.md
+index f38ffdbe..40b66b3f 100644
+--- a/website/docs/user-guide/features/memory.md
++++ b/website/docs/user-guide/features/memory.md
+@@ -232,6 +232,11 @@ has no limit to fill, so it gets no percentage; a budget the provider itself enf
+ example) is shown against that budget, by the provider's own estimate. A layer that is switched off, empty, unreadable
+ or not reported says which.
+ 
++When the provider's catalog lists your stored facts in every session and `MEMORY.md` is on as well, the panel says
++that `MEMORY.md` has become optional and roughly how many tokens it adds to each session. Turning it off is up to
++you: nothing is switched off for you, and the two can stay on together; keeping both only means one more block in
++every session's context.
++
+ ### Memory checkup in the desktop app
+ 
+ **Command Center → Maintenance → Memory checkup → Review now** asks your configured model to read those layers and

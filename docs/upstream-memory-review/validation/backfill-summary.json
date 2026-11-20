@@ -1,0 +1,56 @@
+{
+  "source_zip_sha256": "7e86cfd5bb90413f414aa39c0c809b1563d2bfa720d51def43339cf850760eb8",
+  "core_base": "152fe18976002e9a987422b7c6102c805d61264b",
+  "upstream_plugin": "0.30.0",
+  "device": "cpu",
+  "trigger": "HolographicMemoryProvider.sync_turn (existing upstream after-turn backfill; not Desktop one-click)",
+  "seed_facts": 40,
+  "semantic_probe_total": 5,
+  "models": [
+    {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "dimensions": 384,
+      "vectors": 40,
+      "semantic_probes": 3,
+      "backfill_s": 2.851,
+      "backfill_sent": 40
+    },
+    {
+      "model": "intfloat/multilingual-e5-small",
+      "dimensions": 384,
+      "vectors": 40,
+      "semantic_probes": 1,
+      "backfill_s": 0.836,
+      "backfill_sent": 40
+    },
+    {
+      "model": "BAAI/bge-small-zh-v1.5",
+      "dimensions": 512,
+      "vectors": 40,
+      "semantic_probes": 2,
+      "backfill_s": 0.718,
+      "backfill_sent": 40
+    },
+    {
+      "model": "BAAI/bge-m3",
+      "dimensions": 1024,
+      "vectors": 40,
+      "semantic_probes": 5,
+      "backfill_s": 8.207,
+      "backfill_sent": 40
+    },
+    {
+      "model": "Qwen/Qwen3-Embedding-0.6B",
+      "dimensions": 1024,
+      "vectors": 40,
+      "semantic_probes": 4,
+      "backfill_s": 20.629,
+      "backfill_sent": 12
+    }
+  ],
+  "qwen3_continuation": {
+    "initial": 28,
+    "submitted_after_restart": 12,
+    "overlap": 0
+  }
+}

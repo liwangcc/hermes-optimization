@@ -1,0 +1,104 @@
+diff --git a/apps/desktop/AGENTS.md b/apps/desktop/AGENTS.md
+index 01487656..c835e50b 100644
+--- a/apps/desktop/AGENTS.md
++++ b/apps/desktop/AGENTS.md
+@@ -52,7 +52,7 @@ Getting the scope wrong is how one profile's setting bleeds into another.
+ Sessions have durable, runtime and lineage-root identities; pick the one the surface needs and
+ translate at the boundary. The user's message is durable at send (`prompt.submit` writes the session
+ and user rows first and the turn adopts that row, #111868). A new profile-keyed localStorage family
+-joins BOTH `migrateTilesForProfile` and `dropTilesForProfile`. A verifiably gone session
++joins BOTH `migrateProfileFamilies` and `dropProfileFamilies` (`store/profile-families.ts`). A verifiably gone session
+ (`goneSessionVerdict` → `'draft'`) drops to a fresh draft that adopts its unsent text once, with no
+ toast, navigation or focus steal.
+ 
+diff --git a/apps/desktop/src/store/profile-families.ts b/apps/desktop/src/store/profile-families.ts
+new file mode 100644
+index 00000000..53962059
+--- /dev/null
++++ b/apps/desktop/src/store/profile-families.ts
+@@ -0,0 +1,25 @@
++import { LOCAL_CONNECTION_ID } from '@hermes/shared'
++
++import { dropBrowserProfilePrefs, migrateBrowserProfilePrefs } from '@/lib/browser-profile-prefs'
++
++import { dropQueuedLaunchPicksForProfile, migrateQueuedLaunchPicksForProfile } from './composer-queued-pick'
++import { dropPreviewTabsForProfile, migratePreviewTabsForProfile } from './preview'
++
++// The profile-keyed localStorage families beside the session tiles: the rail's
++// tabs, the browser prefs and the queued launch pick. A new family joins both
++// functions.
++
++/** A deleted profile's records go with it: a later profile of the same name must not inherit them. */
++export function dropProfileFamilies(name: string, route?: { connectionId?: string }): void {
++  // F4: the cookie jar lives in LOCAL userData — clear it only for a LOCAL delete, never a remote one.
++  dropPreviewTabsForProfile(name, (String(route?.connectionId ?? '').trim() || LOCAL_CONNECTION_ID) === LOCAL_CONNECTION_ID)
++  dropBrowserProfilePrefs(name, route?.connectionId?.trim() || undefined)
++  dropQueuedLaunchPicksForProfile(name, route ? (route.connectionId ?? '') : undefined)
++}
++
++/** A renamed profile's records move with it, or it opens without them and the old name keeps them. */
++export function migrateProfileFamilies(from: string, to: string): void {
++  migratePreviewTabsForProfile(from, to)
++  migrateBrowserProfilePrefs(from, to)
++  migrateQueuedLaunchPicksForProfile(from, to)
++}
+diff --git a/apps/desktop/src/store/session-states.ts b/apps/desktop/src/store/session-states.ts
+index e899eb4c..c47d1190 100644
+--- a/apps/desktop/src/store/session-states.ts
++++ b/apps/desktop/src/store/session-states.ts
+@@ -33,28 +33,25 @@ import {
+ } from '@/components/pane-shell/tree/store'
+ import { resolveRememberedActivePane, workspaceScopeKey } from '@/components/pane-shell/workspace-scope'
+ import type { WorkspaceMode } from '@/contrib/types'
+-import { dropBrowserProfilePrefs, migrateBrowserProfilePrefs } from '@/lib/browser-profile-prefs'
+ import { finalizeInterruptedMessages, sealOpenToolParts } from '@/lib/chat-messages'
+ import { tileFocusStampOnFocusChange } from '@/lib/session-timer-since'
+ import { stableArray } from '@/lib/stable-array'
+ import { readJson, writeJson } from '@/lib/storage'
+ import type { SessionInfo } from '@/types/hermes'
+ 
+-import { dropQueuedLaunchPicksForProfile, migrateQueuedLaunchPicksForProfile } from './composer-queued-pick'
+ import { dropStatusDrawersForProfile, migrateStatusDrawersForProfile } from './composer-status-drawer'
+ import { registryConnectionKind } from './connection-registry-state'
+ import { recordDislike } from './desktop-metrics'
+ import { dialedGatewayModeFor } from './gateway'
+ import {
+   adoptPendingRuntimeTabs,
+-  dropPreviewTabsForProfile,
+-  migratePreviewTabsForProfile,
+   rekeyPreviewTabsSession,
+   setPreviewScope
+ } from './preview'
+ import { forgetPendingRuntimeTabs } from './preview-ownership'
+ import { dropPreviewArtifactsForProfile, migratePreviewArtifactsForProfile } from './preview-status'
+ import { $activeGatewayProfile, normalizeProfileKey } from './profile'
++import { dropProfileFamilies, migrateProfileFamilies } from './profile-families'
+ import { renameLocalOwnerRoute } from './profile-owner-rename'
+ import { $projectTree } from './project-tree'
+ import { clearAllProviderWaits, clearSessionProviderWait } from './provider-wait'
+@@ -2794,11 +2791,7 @@ export function dropTilesForProfile(
+   }
+ 
+   persistTiles()
+-  // The rail is a profile-keyed family too (a later same-named profile must not inherit the tabs).
+-  // F4: the cookie jar lives in LOCAL userData — clear it only for a LOCAL delete, never a remote one.
+-  dropPreviewTabsForProfile(name, (String(route?.connectionId ?? '').trim() || LOCAL_CONNECTION_ID) === LOCAL_CONNECTION_ID)
+-  dropBrowserProfilePrefs(name, route?.connectionId?.trim() || undefined)
+-  dropQueuedLaunchPicksForProfile(name, route ? (route.connectionId ?? '') : undefined)
++  dropProfileFamilies(name, route)
+ }
+ 
+ /**
+@@ -2848,11 +2841,7 @@ export function migrateTilesForProfile(oldProfile: string, newProfile: string):
+   migrateSessionOwnerHintsForProfile(from, to)
+   migratePreviewArtifactsForProfile(from, to)
+   migrateStatusDrawersForProfile(from, to)
+-  // Sibling family: the rail's profile-keyed buckets move with the rename, or
+-  // the renamed profile opens with an empty rail and the old name keeps them.
+-  migratePreviewTabsForProfile(from, to)
+-  migrateBrowserProfilePrefs(from, to)
+-  migrateQueuedLaunchPicksForProfile(from, to)
++  migrateProfileFamilies(from, to)
+ }
+ 
+ /** ⌘⇧T — reopen the most recently closed tab where it was, then focus it.

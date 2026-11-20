@@ -1,0 +1,422 @@
+{
+  "scope": "Fixed Windows x64 testkit baseline; merged initial run and targeted reruns. Not a clean full rerun or CI.",
+  "source_receipt_sha256": "498631969a0bc3d48b5dff8c1949e257997ba455526de19349af6556b5560584",
+  "hermes_base": "152fe18976002e9a987422b7c6102c805d61264b",
+  "holo_base": "76689f954f500d49a7ef2eb73d0e868a5b43b53e",
+  "setup": "The Holographic full suite and adapter self-checks are not in this tally. The adapter e2e used a stand-in sidecar.",
+  "known_reasons": {
+    "no-tmp": "catalog entry plugin-catalog/layersift.yaml, also present on the unpatched base",
+    "shims": "Windows check failure on the unpatched base",
+    "line-endings": "Windows check timed out on the unpatched base",
+    "all-backend": "Same ByteRover PATH separator assertion and two NTFS mode assertions on the unpatched base"
+  },
+  "patch_sha256": {
+    "01-profile-families.patch": "ad7695a87b94450e68a427f378ad214013adaced4e68aac23bacea0aa76eb25b",
+    "02-composer-offers.patch": "01f39f2b9064534260e4bc9a7aabc0997d5a53825ea7cb7c7f8dee284c064879",
+    "03-memory-capacity.patch": "234a5ddacac40307c70b496112c156a1358bc0a0f5131a1353069a1e2a3c05dd",
+    "04-memory-checkup.patch": "fcb327a079457180f606636e3f748b29527c3588156b8ff5f586487b73569ea3",
+    "05-checkup-reminder.patch": "270bd3143de98a0cf98e670e29b0b62abfa123920099f488399a47a5410f8773",
+    "06-catalog-suggestion.patch": "45a090850c575b3d1dcb1f7533da4e595f89226c0dcb3205ed92262328f0a425",
+    "07-memory-provider-jobs.patch": "019117c20bd59bbc6408fee37529f3c231aa66ddf59e3b62bff5c5105000261c",
+    "hermes-agent-memory-review.patch": "6cec54f8fc700d5bba88b30e0a72e9c0f5f1a0ae51bd6b3dd0cff3fb7942f957"
+  },
+  "counts": {
+    "passed": 47,
+    "known": 9,
+    "failed": 0
+  },
+  "steps": [
+    {
+      "step": "setup-fetch-hermes",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "env-setup",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "✓ Tools + dependencies installed (hash-verified via pm + uv.lock)",
+      "source": "复验 B"
+    },
+    {
+      "step": "env-pnpm-install",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "Done in 225ms using pnpm v12.15.0",
+      "source": "复验 B"
+    },
+    {
+      "step": "env-electron-runtime",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr1-apply-01",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr1-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr1-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  11 passed (11) / Tests  210 passed (210)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr1-typecheck",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "pr2-apply-02",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr2-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr2-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  15 passed (15) / Tests  42 passed (42)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr2-typecheck",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "pr3-apply-03",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr3-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr3-backend",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "=== Summary: 1 files, 6 tests passed, 0 failed (100% complete) in 9.9s (4 workers) ===",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr3-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  21 passed (21) / Tests  119 passed (119)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr3-typecheck",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "pr4-apply-03",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-apply-04",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr4-backend",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "=== Summary: 3 files, 29 tests passed, 0 failed (100% complete) in 9.4s (4 workers) ===",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  23 passed (23) / Tests  126 passed (126)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-vitest-electron",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  1 passed (1) / Tests  126 passed (126)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-desktop-build",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "Done in 6ms",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr4-e2e",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "1 passed (27.5s)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-apply-01",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-apply-02",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-apply-03",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-apply-04",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-apply-05",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr5-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  21 passed (21) / Tests  73 passed (73)",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-desktop-build",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "Done in 6ms",
+      "source": "复验 A"
+    },
+    {
+      "step": "pr5-e2e",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "4 passed (42.5s)",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr6-apply-03",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr6-apply-04",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr6-apply-06",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr6-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr6-backend",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "=== Summary: 2 files, 12 tests passed, 0 failed (100% complete) in 10.9s (4 workers) ===",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr6-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  18 passed (18) / Tests  111 passed (111)",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr7-apply-07",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr7-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "pr7-backend",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "=== Summary: 3 files, 17 tests passed, 0 failed (100% complete) in 11.5s (4 workers) ===",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr7-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  18 passed (18) / Tests  106 passed (106)",
+      "source": "PR7 补测"
+    },
+    {
+      "step": "pr7-vitest-electron",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  1 passed (1) / Tests  126 passed (126)",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr7-typecheck",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "pr7-desktop-build",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "Done in 5ms",
+      "source": "复验 B"
+    },
+    {
+      "step": "pr7-e2e",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "1 passed (28.5s)",
+      "source": "复验 B"
+    },
+    {
+      "step": "all-apply-all",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "复验 B"
+    },
+    {
+      "step": "all-check",
+      "first_run_status": "known",
+      "status": "known",
+      "result": "scripts/check: 22 checks, FAILED: no-tmp, shims, line-endings",
+      "source": "原跑"
+    },
+    {
+      "step": "all-backend",
+      "first_run_status": "failed",
+      "status": "known",
+      "result": "=== Summary: 25 files, 432 tests passed, 3 failed, 6 skipped; FAILED: 2 of 25 files (100% complete) in 160.4s (4 workers) ===",
+      "source": "复验 B"
+    },
+    {
+      "step": "all-vitest",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "Test Files  258 passed (258) / Tests  2442 passed (2442)",
+      "source": "复验 B"
+    },
+    {
+      "step": "all-typecheck",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "",
+      "source": "原跑"
+    },
+    {
+      "step": "all-lint",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "0 errors and 92 warnings potentially fixable with the `--fix` option.",
+      "source": "原跑"
+    },
+    {
+      "step": "all-desktop-build",
+      "first_run_status": "passed",
+      "status": "passed",
+      "result": "Done in 6ms",
+      "source": "复验 B"
+    },
+    {
+      "step": "all-adapter-e2e",
+      "first_run_status": "failed",
+      "status": "passed",
+      "result": "2 passed (1.4m)",
+      "source": "复验 B"
+    }
+  ]
+}

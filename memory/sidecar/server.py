@@ -11,9 +11,11 @@ Environment overrides:
                     point this at the DB used by the holographic memory provider.
     SEMANTIC_MODEL  path to a local bge-m3 model directory (default: ./models/bge-m3)
     SEMANTIC_PORT   listen port (default: 8791)
+    SEMANTIC_CACHE  vector cache directory (default: ./cache)
 
 Endpoints:
-    GET  /health                 readiness, device, indexed fact count
+    GET  /health                 readiness, device, indexed fact count, the store's fact count
+    POST /sync                   {limit} -> index new/changed facts now (at most limit), drop deleted ones
     POST /candidates             {query, tau, limit, min_trust} -> ranked cosine candidates
     POST /embed                  {texts: [...]} -> normalized vectors
 """
@@ -30,7 +32,7 @@ SVC = Path(__file__).resolve().parent
 # Point SEMANTIC_DB at your holographic fact store. The default is a placeholder next to this file.
 DB = Path(os.environ.get("SEMANTIC_DB", str(SVC / "memory_store.db")))
 MODEL = Path(os.environ.get("SEMANTIC_MODEL", str(SVC / "models" / "bge-m3")))
-CACHE = SVC / "cache"
+CACHE = Path(os.environ.get("SEMANTIC_CACHE", str(SVC / "cache")))
 PORT = int(os.environ.get("SEMANTIC_PORT", "8791"))
 CACHE.mkdir(exist_ok=True)
 
@@ -78,30 +80,34 @@ def read_facts():
     finally:
         con.close()
 
-def sync_and_candidates(query, tau, limit, min_trust):
+def sync(limit=None):
+    """Embed new or changed facts (at most `limit` of them) and drop deleted ones.
+    Returns (facts, embedded, remaining): the store's rows, vectors made now, facts still without a current one."""
     import numpy as np
     with LOCK:
         facts = read_facts()
-        m = STATE["model"]
-        texts, ids = [], []
-        live = set()
-        for f in facts:
-            fid = f["fact_id"]; live.add(fid)
-            h = fact_hash(f["content"], f["tags"])
-            if STATE["hashes"].get(fid) != h or fid not in STATE["vecs"]:
-                texts.append((f["content"] or "") + " " + (f.get("tags") or ""))
-                ids.append(fid)
-                STATE["hashes"][fid] = h
+        live = {f["fact_id"] for f in facts}
         for fid in list(STATE["vecs"]):
             if fid not in live:
                 STATE["vecs"].pop(fid, None); STATE["hashes"].pop(fid, None)
-        embedded = 0
-        if texts:
-            vecs = m.encode(texts, normalize_embeddings=True, batch_size=16, show_progress_bar=False)
-            for fid, v in zip(ids, vecs):
-                STATE["vecs"][fid] = np.asarray(v, dtype=np.float32)
-            embedded = len(texts)
+        stale = [(f, fact_hash(f["content"], f["tags"])) for f in facts]
+        stale = [(f, h) for f, h in stale if STATE["hashes"].get(f["fact_id"]) != h or f["fact_id"] not in STATE["vecs"]]
+        batch = stale if limit is None else stale[:limit]
+        if batch:
+            texts = [(f["content"] or "") + " " + (f.get("tags") or "") for f, _ in batch]
+            vecs = STATE["model"].encode(texts, normalize_embeddings=True, batch_size=16, show_progress_bar=False)
+            for (f, h), v in zip(batch, vecs):  # the hash only once the vector exists
+                STATE["vecs"][f["fact_id"]] = np.asarray(v, dtype=np.float32)
+                STATE["hashes"][f["fact_id"]] = h
             save_cache()
+        return facts, len(batch), len(stale) - len(batch)
+
+
+def sync_and_candidates(query, tau, limit, min_trust):
+    import numpy as np
+    with LOCK:
+        facts, embedded, _ = sync()
+        m = STATE["model"]
         qv = np.asarray(m.encode([query], normalize_embeddings=True, show_progress_bar=False)[0], dtype=np.float32)
         out = []
         for f in facts:
@@ -125,8 +131,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/health":
+            try:
+                facts = len(read_facts())
+            except sqlite3.Error:
+                facts = None  # the store is missing or unreadable: say so instead of failing the probe
             self._send(200, {"ok": STATE["ready"], "model": "bge-m3", "device": STATE["device"],
-                             "facts_indexed": len(STATE["vecs"]), "error": STATE["error"]})
+                             "facts_indexed": len(STATE["vecs"]), "facts": facts, "error": STATE["error"]})
         else:
             self._send(404, {"error": "not found"})
 
@@ -146,6 +156,12 @@ class Handler(BaseHTTPRequestHandler):
                     int(req.get("limit", 8)), float(req.get("min_trust", 0.3)))
                 self._send(200, {"candidates": cands, "embedded": embedded, "facts": total,
                                  "ms": round((time.time() - t0) * 1000, 1)})
+            elif self.path == "/sync":
+                t0 = time.time()
+                limit = req.get("limit")
+                facts, embedded, remaining = sync(int(limit) if limit is not None else None)
+                self._send(200, {"embedded": embedded, "remaining": remaining, "facts": len(facts),
+                                 "facts_indexed": len(STATE["vecs"]), "ms": round((time.time() - t0) * 1000, 1)})
             elif self.path == "/embed":
                 import numpy as np
                 with LOCK:
@@ -169,5 +185,5 @@ if __name__ == "__main__":
         STATE["error"] = f"{type(e).__name__}: {e}"
         log(f"MODEL LOAD FAILED: {STATE['error']}")
     srv = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    log(f"listening on 127.0.0.1:{PORT}")
+    log(f"listening on 127.0.0.1:{srv.server_port}")
     srv.serve_forever()
