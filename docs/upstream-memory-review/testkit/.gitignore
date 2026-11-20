@@ -1,0 +1,3 @@
+# Each tester's results and logs (machine paths inside) are handed back, not committed; Python's bytecode cache.
+results/
+__pycache__/

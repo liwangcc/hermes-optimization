@@ -1,0 +1,1344 @@
+diff --git a/agent/memory_provider.py b/agent/memory_provider.py
+index c27bf9ff..b445a829 100644
+--- a/agent/memory_provider.py
++++ b/agent/memory_provider.py
+@@ -223,6 +223,22 @@ class MemoryProvider(ABC):
+         """Write non-secret setup ``values`` to the provider's native config. Plugins MUST either
+         override this or use only env vars (every schema field carrying ``env_var``)."""
+ 
++    # -- Maintenance jobs (Desktop provider settings, ``hermes memory action``). Uninitialized instance, outside any
++    # session, ``hermes_home`` passed in; JSON values only, so they cross ``plugins.isolation: host``. --
++
++    def maintenance_actions(self, hermes_home: str) -> list[dict[str, Any]]:
++        """One-click jobs for the provider's store (building a search index for what is stored, say); ``[]`` (the
++        default) = none. Quick: it runs when the settings page opens. Each: ``{"id", "label", "description",
++        "status", "ready"}``. ``status`` says where the job stands now ("80 of 120 facts indexed"); ``ready`` False,
++        with ``status`` saying why, when it cannot run yet. ``id``: letters, digits, ``-`` and ``_``."""
++        return []
++
++    def run_maintenance_step(self, action_id: str, hermes_home: str) -> dict[str, Any]:
++        """One bounded step of a job from ``maintenance_actions``; Hermes calls it again until ``done``, in a process
++        of its own whose output the Desktop shows. ``{"done": bool, "status": "..."}``, plus ``"result"`` (one line)
++        once done. Raise to fail the job: the message is shown. A step that changes nothing must say ``done``."""
++        raise ValueError(f"memory provider {self.name} has no maintenance action {action_id!r}")
++
+     def on_memory_write(self, action: str, target: str, content: str, metadata: Optional[dict[str, Any]] = None) -> None:
+         """Mirror a built-in memory-tool write (``action``: add | replace | remove; ``target``:
+         memory | user; ``metadata``: provenance such as write_origin, session_id, tool_name).
+diff --git a/apps/desktop/e2e/memory-provider-jobs.spec.ts b/apps/desktop/e2e/memory-provider-jobs.spec.ts
+new file mode 100644
+index 00000000..f306f08f
+--- /dev/null
++++ b/apps/desktop/e2e/memory-provider-jobs.spec.ts
+@@ -0,0 +1,135 @@
++import * as fs from 'node:fs'
++import * as path from 'node:path'
++
++import type { Page } from '@playwright/test'
++
++import { writeEnvFile, writeMockProviderConfig } from '../../../tests-js/scripts/mock-provider-config'
++import { startMockServer } from '../../../tests-js/scripts/mock-server'
++
++import { buildAppEnv, createSandbox, launchDesktop, type MockBackendFixture, waitForAppReady } from './fixtures'
++import { expect, test } from './test'
++
++// Real Electron, a real `hermes serve`, a provider plugin loaded through real discovery, and the job run by the
++// real `hermes memory action` process the backend starts. The job indexes items into a file in the sandbox home.
++
++const ITEMS = ['alpha', 'beta', 'gamma', 'delta', 'epsilon']
++
++const SCHEMA = `
++from plugins.memory.config_schema import KIND_TEXT, ProviderConfigSchema, ProviderField
++
++CONFIG_SCHEMA = ProviderConfigSchema(
++    name="jobprov", label="Job provider",
++    fields=(ProviderField("index_url", "Index address", KIND_TEXT, default="http://127.0.0.1:1", inline=True),),
++)
++`
++
++const PROVIDER = `
++import json
++import time
++from pathlib import Path
++
++from agent.memory_provider import MemoryProvider
++
++
++class JobProv(MemoryProvider):
++    @property
++    def name(self):
++        return "jobprov"
++
++    def is_available(self):
++        return True
++
++    def initialize(self, session_id, **kwargs):
++        pass
++
++    def get_tool_schemas(self):
++        return []
++
++    def _state(self, home):
++        items = json.loads(Path(home, "jobprov.json").read_text(encoding="utf-8"))
++        index = Path(home, "jobprov.index.json")
++        return items, (json.loads(index.read_text(encoding="utf-8")) if index.exists() else []), index
++
++    def maintenance_actions(self, hermes_home):
++        items, done, _ = self._state(hermes_home)
++        return [{"id": "index", "label": "Build index", "description": "Index every stored item.",
++                 "status": f"{len(done)} of {len(items)} items indexed", "ready": True}]
++
++    def run_maintenance_step(self, action_id, hermes_home):
++        items, done, index = self._state(hermes_home)
++        time.sleep(0.4)  # one batch takes a moment: the Desktop shows the job running
++        done = items[: len(done) + 2]
++        index.write_text(json.dumps(done), encoding="utf-8")
++        status = f"{len(done)} of {len(items)} items indexed"
++        if len(done) == len(items):
++            return {"done": True, "status": status, "result": f"All {len(items)} items are indexed."}
++        return {"done": False, "status": status}
++
++
++def register(ctx):
++    ctx.register_memory_provider(JobProv())
++`
++
++function seed(hermesHome: string): void {
++  const dir = path.join(hermesHome, 'plugins', 'jobprov')
++
++  fs.mkdirSync(dir, { recursive: true })
++  fs.writeFileSync(path.join(dir, '__init__.py'), PROVIDER, 'utf8')
++  fs.writeFileSync(path.join(dir, 'config_schema.py'), SCHEMA, 'utf8')
++  fs.writeFileSync(path.join(hermesHome, 'jobprov.json'), JSON.stringify(ITEMS), 'utf8')
++}
++
++const openRoute = (page: Page, route: string) => page.evaluate(hash => void (window.location.hash = hash), `#${route}`)
++
++test('a provider job runs from its settings to the end and says how it ended', async () => {
++  test.setTimeout(240_000)
++
++  const testInfo = test.info()
++  const mock = await startMockServer({ replyForPrompt: () => 'ok' })
++  const sandbox = createSandbox('memory-provider-jobs')
++
++  seed(sandbox.hermesHome)
++  writeMockProviderConfig(sandbox.hermesHome, mock.url, 'language: en\n', 'memory:\n  provider: jobprov\n')
++  writeEnvFile(sandbox.hermesHome)
++
++  const { app, page } = await launchDesktop(buildAppEnv(sandbox))
++
++  const fixture: MockBackendFixture = {
++    app,
++    page,
++    mock,
++    mockUrl: mock.url,
++    sandbox,
++    cleanup: async () => {
++      await app.close().catch(() => undefined)
++      await mock.close()
++      sandbox.cleanup()
++    }
++  }
++
++  try {
++    await waitForAppReady(fixture)
++    await openRoute(page, '/settings?tab=config:memory')
++
++    const jobs = page.getByTestId('provider-jobs')
++
++    await expect(jobs.getByText('0 of 5 items indexed')).toBeVisible({ timeout: 60_000 })
++    expect(fs.existsSync(path.join(sandbox.hermesHome, 'jobprov.index.json'))).toBe(false)
++
++    await jobs.getByRole('button', { name: 'Run' }).click()
++
++    const output = page.getByTestId('provider-job-output')
++
++    await expect(output.getByRole('status')).toHaveText('Finished.', { timeout: 120_000 })
++    await expect(output).toContainText('2 of 5 items indexed')
++    await expect(output).toContainText('All 5 items are indexed.')
++    // Read again once the job ended: the list says where it stands now.
++    await expect(jobs.getByText('5 of 5 items indexed', { exact: true })).toBeVisible()
++    expect(JSON.parse(fs.readFileSync(path.join(sandbox.hermesHome, 'jobprov.index.json'), 'utf8'))).toEqual(ITEMS)
++
++    await jobs.scrollIntoViewIfNeeded()
++    await page.screenshot({ path: testInfo.outputPath('memory-provider-jobs.png') })
++  } finally {
++    await fixture.cleanup()
++  }
++})
+diff --git a/apps/desktop/electron/connection-config.test.ts b/apps/desktop/electron/connection-config.test.ts
+index f38ead33..a556991e 100644
+--- a/apps/desktop/electron/connection-config.test.ts
++++ b/apps/desktop/electron/connection-config.test.ts
+@@ -665,6 +665,7 @@ test('a /api/profiles/<name>/… path already names its profile: no ambient scop
+   }
+ 
+   assert.equal(pathWithProfileScope('/api/profiles/p2/soul', 'default'), '/api/profiles/p2/soul')
++
+   // Method-aware: PATCH/DELETE of a profile NAMED active/import/sessions names that profile.
+   for (const [path, method] of [['/api/profiles/active', 'PATCH'], ['/api/profiles/import', 'DELETE'],
+     ['/api/profiles/sessions', 'DELETE']]) {
+@@ -942,6 +943,7 @@ test('resolveProfileApiRequest scopes destructive profile-owned routes to the sh
+     ['POST', '/api/webhooks'],
+     ['DELETE', '/api/webhooks/alerts'],
+     ['DELETE', '/api/ops/hooks'],
++    ['POST', '/api/memory/actions'],
+     ['POST', '/api/ops/checkpoints/prune']
+   ]) {
+     assert.deepEqual(
+diff --git a/apps/desktop/electron/connection-config.ts b/apps/desktop/electron/connection-config.ts
+index 193447cb..a5b3c7c9 100644
+--- a/apps/desktop/electron/connection-config.ts
++++ b/apps/desktop/electron/connection-config.ts
+@@ -686,6 +686,9 @@ const LOCAL_PRIMARY_SCOPED_ROUTES = new Set([
+   // live on the SAME backend as that poll family (below), or the poll asks a
+   // backend that never registered the dynamic action name and 404s.
+   'POST /api/mcp/catalog/install',
++  // A memory provider's job (`hermes memory action`), and the list that says what may run.
++  'GET /api/memory/actions',
++  'POST /api/memory/actions',
+   // Gateway lifecycle: the handlers take `?profile=` and already decide, per
+   // profile, whether X has its own gateway or is served by the default
+   // multiplexer (409 / restart the multiplexer). Spawning from the primary keeps
+diff --git a/apps/desktop/src/api/memory-jobs.ts b/apps/desktop/src/api/memory-jobs.ts
+new file mode 100644
+index 00000000..eefbe399
+--- /dev/null
++++ b/apps/desktop/src/api/memory-jobs.ts
+@@ -0,0 +1,16 @@
++import type { ActionResponse } from '@/types/hermes'
++import type { ProviderJobsResponse } from '@/types/provider-jobs'
++
++import { hermesApi, profileScoped } from './client'
++
++/** The action name a provider job runs under; its log is tailed through `/api/actions/<name>/status`. */
++export const MEMORY_JOB_ACTION = 'memory-action'
++
++export function getMemoryJobs(profile?: null | string): Promise<ProviderJobsResponse> {
++  return hermesApi<ProviderJobsResponse>({ ...profileScoped(profile), path: '/api/memory/actions' })
++}
++
++/** Starts `hermes memory action <action>` on the backend; the job writes the provider's own data. */
++export function runMemoryJob(action: string, profile?: null | string): Promise<ActionResponse> {
++  return hermesApi<ActionResponse>({ ...profileScoped(profile), path: '/api/memory/actions', method: 'POST', body: { action } })
++}
+diff --git a/apps/desktop/src/app/settings/memory/provider-config-panel.tsx b/apps/desktop/src/app/settings/memory/provider-config-panel.tsx
+index e245f411..bedf307a 100644
+--- a/apps/desktop/src/app/settings/memory/provider-config-panel.tsx
++++ b/apps/desktop/src/app/settings/memory/provider-config-panel.tsx
+@@ -13,6 +13,7 @@ import { ListRow, Pill } from '../primitives'
+ 
+ import { FieldControl, FieldTitle } from './field-control'
+ import { ProviderConfigModal } from './provider-config-modal'
++import { ProviderJobs } from './provider-jobs'
+ 
+ // Inline fields only: the compact panel must never re-write modal-owned keys.
+ function seedValues(config: MemoryProviderConfig): Record<string, string> {
+@@ -84,9 +85,9 @@ export function ProviderConfigPanel({ profile, provider }: { profile?: string; p
+     [profile, provider, saved]
+   )
+ 
+-  // Providers without a declared config surface (e.g. builtin) render nothing.
++  // Providers without a declared config surface (e.g. builtin) render no settings; their jobs, if any, still show.
+   if (config && config.fields.length === 0) {
+-    return null
++    return <ProviderJobs profile={profile} provider={provider} />
+   }
+ 
+   if (!config) {
+@@ -153,6 +154,7 @@ export function ProviderConfigPanel({ profile, provider }: { profile?: string; p
+               />
+             </div>
+           ))}
++          <ProviderJobs profile={profile} provider={provider} />
+         </div>
+       )}
+ 
+diff --git a/apps/desktop/src/app/settings/memory/provider-jobs.test.tsx b/apps/desktop/src/app/settings/memory/provider-jobs.test.tsx
+new file mode 100644
+index 00000000..57e724cc
+--- /dev/null
++++ b/apps/desktop/src/app/settings/memory/provider-jobs.test.tsx
+@@ -0,0 +1,120 @@
++import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
++
++import type * as MemoryJobsApi from '@/api/memory-jobs'
++import { getMemoryJobs, runMemoryJob } from '@/api/memory-jobs'
++import type * as SystemApi from '@/api/system'
++import { getActionStatus } from '@/api/system'
++import type { ActionStatusResponse } from '@/types/hermes'
++import type { ProviderJobsResponse } from '@/types/provider-jobs'
++
++import { ProviderJobs } from './provider-jobs'
++
++vi.mock('@/api/memory-jobs', async importOriginal => ({
++  ...(await importOriginal<typeof MemoryJobsApi>()),
++  getMemoryJobs: vi.fn(),
++  runMemoryJob: vi.fn()
++}))
++
++vi.mock('@/api/system', async importOriginal => ({
++  ...(await importOriginal<typeof SystemApi>()),
++  getActionStatus: vi.fn()
++}))
++
++const listing = (indexed: number, ready = true): ProviderJobsResponse => ({
++  provider: 'jobprov',
++  state: 'ok',
++  actions: [
++    {
++      id: 'index',
++      label: 'Build index',
++      description: 'Index every stored fact.',
++      status: ready ? `${indexed} of 5 facts indexed` : 'The index server is not running.',
++      ready
++    }
++  ]
++})
++
++const status = (running: boolean, exitCode: null | number, lines: string[]): ActionStatusResponse => ({
++  name: 'memory-action',
++  running,
++  exit_code: exitCode,
++  pid: 7,
++  lines
++})
++
++beforeEach(() => {
++  vi.useFakeTimers()
++  vi.mocked(getMemoryJobs).mockReset()
++  vi.mocked(runMemoryJob).mockReset().mockResolvedValue({ name: 'memory-action', ok: true, pid: 7 })
++  vi.mocked(getActionStatus).mockReset()
++})
++
++afterEach(() => {
++  cleanup()
++  vi.useRealTimers()
++})
++
++async function mount(): Promise<void> {
++  render(<ProviderJobs profile="work" provider="jobprov" />)
++  await act(() => vi.runOnlyPendingTimersAsync())
++}
++
++describe('provider jobs', () => {
++  it('shows where each job stands, and a job that cannot run yet cannot be started', async () => {
++    vi.mocked(getMemoryJobs).mockResolvedValue(listing(0, false))
++    await mount()
++
++    expect(screen.getByText('The index server is not running.')).toBeTruthy()
++    expect((screen.getByRole('button', { name: 'Run' }) as HTMLButtonElement).disabled).toBe(true)
++    expect(getMemoryJobs).toHaveBeenCalledWith('work')
++  })
++
++  it('runs a job for the profile, follows its output to the end, then shows where it stands', async () => {
++    vi.mocked(getMemoryJobs).mockResolvedValueOnce(listing(0)).mockResolvedValueOnce(listing(5))
++    vi.mocked(getActionStatus)
++      .mockResolvedValueOnce(status(true, null, ['Build index: 0 of 5 facts indexed', '2 of 5 facts indexed']))
++      .mockResolvedValueOnce(status(false, 0, ['5 of 5 facts indexed', 'All 5 facts are indexed.']))
++    await mount()
++
++    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
++    await act(() => vi.runOnlyPendingTimersAsync())
++
++    expect(runMemoryJob).toHaveBeenCalledWith('index', 'work')
++    const output = screen.getByTestId('provider-job-output')
++
++    expect(within(output).getByRole('status').textContent).toBe('Running…')
++    expect(output.textContent).toContain('2 of 5 facts indexed')
++    expect((screen.getByRole('button', { name: 'Running…' }) as HTMLButtonElement).disabled).toBe(true)
++
++    await act(() => vi.advanceTimersByTimeAsync(1200))
++
++    expect(within(screen.getByTestId('provider-job-output')).getByRole('status').textContent).toBe('Finished.')
++    expect(screen.getByText(/All 5 facts are indexed\./)).toBeTruthy()
++    expect(screen.getByText('5 of 5 facts indexed', { selector: 'span' })).toBeTruthy() // the list, read again
++    expect(getActionStatus).toHaveBeenCalledTimes(2)
++  })
++
++  it('says how a failed job ended, with its output', async () => {
++    vi.mocked(getMemoryJobs).mockResolvedValue(listing(2))
++    vi.mocked(getActionStatus).mockResolvedValue(status(false, 1, ['Failed: the index server refused the batch']))
++    await mount()
++
++    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
++    await act(() => vi.runOnlyPendingTimersAsync())
++
++    expect(screen.getByRole('status').textContent).toBe('Failed (exit code 1).')
++    expect(screen.getByText(/refused the batch/)).toBeTruthy()
++  })
++
++  it('shows nothing for a provider without jobs, or on a Hermes older than the route', async () => {
++    vi.mocked(getMemoryJobs).mockResolvedValue({ provider: 'jobprov', state: 'unsupported', actions: [] })
++    await mount()
++    expect(screen.queryByTestId('provider-jobs')).toBeNull()
++    cleanup()
++
++    vi.mocked(getMemoryJobs).mockRejectedValue(new Error('404: {"detail":"No such API endpoint: /api/memory/actions"}'))
++    await mount()
++    expect(screen.queryByTestId('provider-jobs')).toBeNull()
++  })
++})
+diff --git a/apps/desktop/src/app/settings/memory/provider-jobs.tsx b/apps/desktop/src/app/settings/memory/provider-jobs.tsx
+new file mode 100644
+index 00000000..3b67f3e5
+--- /dev/null
++++ b/apps/desktop/src/app/settings/memory/provider-jobs.tsx
+@@ -0,0 +1,141 @@
++import { useCallback, useEffect, useState } from 'react'
++
++import { getMemoryJobs, MEMORY_JOB_ACTION, runMemoryJob } from '@/api/memory-jobs'
++import { getActionStatus } from '@/api/system'
++import { Button } from '@/components/ui/button'
++import { useI18n } from '@/i18n'
++import { notifyError } from '@/store/notifications'
++import type { ActionStatusResponse } from '@/types/hermes'
++import type { ProviderJob } from '@/types/provider-jobs'
++
++import { ListRow } from '../primitives'
++
++const POLL_MS = 1200
++const LOG_LINES = 200
++const CAPTION = 'text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)'
++const HEADING = 'mt-3 text-[0.625rem] font-medium uppercase tracking-[0.08em] text-(--ui-text-tertiary)'
++
++/**
++ * The provider's one-click jobs, under its settings: where each stands, Run, the job's output while it runs and
++ * how it ended. A job runs in a process of its own, so leaving the page does not stop it; what it does is the
++ * provider's. Nothing shows for a provider without jobs or on a Hermes older than the route.
++ */
++export function ProviderJobs({ profile, provider }: { profile?: string; provider: string }) {
++  const { t } = useI18n()
++  const j = t.settings.memoryLayers.jobs
++  const [jobs, setJobs] = useState<ProviderJob[]>([])
++  // A fresh object per launch: the backend reuses one action name, so a bare id would not restart the tail.
++  const [tail, setTail] = useState<null | { id: string }>(null)
++  const [status, setStatus] = useState<ActionStatusResponse | null>(null)
++
++  const refresh = useCallback(async () => {
++    try {
++      const next = await getMemoryJobs(profile)
++      setJobs(next.state === 'ok' && next.provider === provider ? next.actions : [])
++    } catch {
++      setJobs([]) // an older Hermes (no route) or a backend hiccup: the settings above stay usable
++    }
++  }, [profile, provider])
++
++  useEffect(() => {
++    void refresh()
++  }, [refresh])
++
++  // Follow the job's output until it ends, then read where every job stands now.
++  useEffect(() => {
++    if (!tail) {
++      return
++    }
++
++    let cancelled = false
++    let timer: null | number = null
++
++    const poll = async () => {
++      try {
++        const next = await getActionStatus(MEMORY_JOB_ACTION, LOG_LINES, profile)
++
++        if (cancelled) {
++          return
++        }
++
++        setStatus(next)
++
++        if (next.running) {
++          timer = window.setTimeout(() => void poll(), POLL_MS)
++        } else {
++          void refresh()
++        }
++      } catch {
++        // The status route hiccuped: stop following; the job itself keeps running.
++      }
++    }
++
++    void poll()
++
++    return () => {
++      cancelled = true
++
++      if (timer !== null) {
++        window.clearTimeout(timer)
++      }
++    }
++  }, [tail, profile, refresh])
++
++  const start = async (job: ProviderJob) => {
++    try {
++      await runMemoryJob(job.id, profile)
++      setStatus(null)
++      setTail({ id: job.id })
++    } catch (err) {
++      notifyError(err, j.startFailed(job.label))
++    }
++  }
++
++  if (jobs.length === 0 && !tail) {
++    return null
++  }
++
++  const running = tail !== null && (status === null || status.running)
++
++  return (
++    <div data-testid="provider-jobs">
++      <div className={HEADING}>{j.title}</div>
++      {jobs.map(job => (
++        <ListRow
++          action={
++            <Button
++              disabled={!job.ready || running}
++              onClick={() => void start(job)}
++              size="xs"
++              type="button"
++              variant="textStrong"
++            >
++              {running && tail?.id === job.id ? j.running : j.run}
++            </Button>
++          }
++          description={
++            <>
++              {job.description}
++              {job.status && <span className={`block ${CAPTION}`}>{job.status}</span>}
++            </>
++          }
++          key={job.id}
++          title={job.label}
++        />
++      ))}
++      {tail && status && (
++        <div className="mt-2" data-testid="provider-job-output">
++          <div className={CAPTION} role="status">
++            {status.running ? j.running : status.exit_code === 0 ? j.finished : j.failed(status.exit_code)}
++          </div>
++          <pre
++            className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap wrap-break-word rounded-lg border border-(--ui-stroke-tertiary) bg-(--ui-bg-quinary) p-3 font-mono text-[0.65rem] leading-relaxed text-(--ui-text-tertiary)"
++            data-selectable-text="true"
++          >
++            {status.lines.join('\n')}
++          </pre>
++        </div>
++      )}
++    </div>
++  )
++}
+diff --git a/apps/desktop/src/i18n/ar_memory_layers.ts b/apps/desktop/src/i18n/ar_memory_layers.ts
+index b624b3e5..2026158a 100644
+--- a/apps/desktop/src/i18n/ar_memory_layers.ts
++++ b/apps/desktop/src/i18n/ar_memory_layers.ts
+@@ -27,5 +27,13 @@ export const arMemoryLayers: MemoryLayersTranslations = {
+   off: 'معطّلة',
+   onlyFile: file => `${file} فقط`,
+   builtinDesc:
+-    'MEMORY.md وUSER.md هما ذاكرة Hermes الخاصة، مستقلتان عن أي مزوّد خارجي. يُحمَّل كلاهما في الجلسات افتراضيًا؛ ويعطّل مفتاحا الذاكرة وملف المستخدم في الإعدادات › الذاكرة والسياق كلًّا منهما. يضيف المزوّد إلى هذه الطبقة ولا يستبدلها أبدًا.'
++    'MEMORY.md وUSER.md هما ذاكرة Hermes الخاصة، مستقلتان عن أي مزوّد خارجي. يُحمَّل كلاهما في الجلسات افتراضيًا؛ ويعطّل مفتاحا الذاكرة وملف المستخدم في الإعدادات › الذاكرة والسياق كلًّا منهما. يضيف المزوّد إلى هذه الطبقة ولا يستبدلها أبدًا.',
++  jobs: {
++    title: 'مهام المزوّد',
++    run: 'تشغيل',
++    running: 'قيد التشغيل…',
++    finished: 'اكتمل.',
++    failed: code => (code === null ? 'توقف.' : `فشل (رمز الخروج ${code}).`),
++    startFailed: job => `تعذّر بدء ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/de_memory_layers.ts b/apps/desktop/src/i18n/de_memory_layers.ts
+index a28d2292..efac102e 100644
+--- a/apps/desktop/src/i18n/de_memory_layers.ts
++++ b/apps/desktop/src/i18n/de_memory_layers.ts
+@@ -27,5 +27,13 @@ export const deMemoryLayers: MemoryLayersTranslations = {
+   off: 'Aus',
+   onlyFile: file => `nur ${file}`,
+   builtinDesc:
+-    'MEMORY.md und USER.md sind Hermes’ eigener Speicher, unabhängig von externen Anbietern. Beide werden standardmäßig in Sitzungen geladen; die Schalter für Speicher und Benutzerprofil unter Einstellungen › Speicher & Kontext schalten sie einzeln ab. Ein Anbieter ergänzt diese Ebene, er ersetzt sie nie.'
++    'MEMORY.md und USER.md sind Hermes’ eigener Speicher, unabhängig von externen Anbietern. Beide werden standardmäßig in Sitzungen geladen; die Schalter für Speicher und Benutzerprofil unter Einstellungen › Speicher & Kontext schalten sie einzeln ab. Ein Anbieter ergänzt diese Ebene, er ersetzt sie nie.',
++  jobs: {
++    title: 'Anbieter-Aufgaben',
++    run: 'Ausführen',
++    running: 'Läuft…',
++    finished: 'Fertig.',
++    failed: code => (code === null ? 'Angehalten.' : `Fehlgeschlagen (Exit-Code ${code}).`),
++    startFailed: job => `${job} konnte nicht gestartet werden`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/en_memory_layers.ts b/apps/desktop/src/i18n/en_memory_layers.ts
+index 2570f713..5419af7d 100644
+--- a/apps/desktop/src/i18n/en_memory_layers.ts
++++ b/apps/desktop/src/i18n/en_memory_layers.ts
+@@ -28,5 +28,13 @@ export const enMemoryLayers: MemoryLayersTranslations = {
+   off: 'Off',
+   onlyFile: file => `${file} only`,
+   builtinDesc:
+-    'MEMORY.md and USER.md are Hermes’s own memory, separate from any external provider. Both load into sessions by default; the memory and user profile toggles in Settings › Memory & Context turn each off. A provider adds to this layer; it never replaces it.'
++    'MEMORY.md and USER.md are Hermes’s own memory, separate from any external provider. Both load into sessions by default; the memory and user profile toggles in Settings › Memory & Context turn each off. A provider adds to this layer; it never replaces it.',
++  jobs: {
++    title: 'Provider jobs',
++    run: 'Run',
++    running: 'Running…',
++    finished: 'Finished.',
++    failed: code => (code === null ? 'Stopped.' : `Failed (exit code ${code}).`),
++    startFailed: job => `Could not start ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/es_memory_layers.ts b/apps/desktop/src/i18n/es_memory_layers.ts
+index 6da1a1c2..7c5a5057 100644
+--- a/apps/desktop/src/i18n/es_memory_layers.ts
++++ b/apps/desktop/src/i18n/es_memory_layers.ts
+@@ -28,5 +28,13 @@ export const esMemoryLayers: MemoryLayersTranslations = {
+   off: 'Desactivada',
+   onlyFile: file => `solo ${file}`,
+   builtinDesc:
+-    'MEMORY.md y USER.md son la memoria propia de Hermes, independiente de cualquier proveedor externo. Ambos se cargan en las sesiones por defecto; los interruptores de memoria y perfil de usuario en Ajustes › Memoria y contexto desactivan cada uno. Un proveedor se suma a esta capa; nunca la reemplaza.'
++    'MEMORY.md y USER.md son la memoria propia de Hermes, independiente de cualquier proveedor externo. Ambos se cargan en las sesiones por defecto; los interruptores de memoria y perfil de usuario en Ajustes › Memoria y contexto desactivan cada uno. Un proveedor se suma a esta capa; nunca la reemplaza.',
++  jobs: {
++    title: 'Tareas del proveedor',
++    run: 'Ejecutar',
++    running: 'En curso…',
++    finished: 'Terminado.',
++    failed: code => (code === null ? 'Detenido.' : `Falló (código de salida ${code}).`),
++    startFailed: job => `No se pudo iniciar ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/fr_memory_layers.ts b/apps/desktop/src/i18n/fr_memory_layers.ts
+index 568b5737..0053178a 100644
+--- a/apps/desktop/src/i18n/fr_memory_layers.ts
++++ b/apps/desktop/src/i18n/fr_memory_layers.ts
+@@ -28,5 +28,13 @@ export const frMemoryLayers: MemoryLayersTranslations = {
+   off: 'Désactivée',
+   onlyFile: file => `${file} uniquement`,
+   builtinDesc:
+-    'MEMORY.md et USER.md sont la mémoire propre de Hermes, indépendante de tout fournisseur externe. Les deux sont chargés dans les sessions par défaut ; les interrupteurs mémoire et profil utilisateur dans Réglages › Mémoire et contexte désactivent chacun. Un fournisseur s’ajoute à cette couche ; il ne la remplace jamais.'
++    'MEMORY.md et USER.md sont la mémoire propre de Hermes, indépendante de tout fournisseur externe. Les deux sont chargés dans les sessions par défaut ; les interrupteurs mémoire et profil utilisateur dans Réglages › Mémoire et contexte désactivent chacun. Un fournisseur s’ajoute à cette couche ; il ne la remplace jamais.',
++  jobs: {
++    title: 'Tâches du fournisseur',
++    run: 'Lancer',
++    running: 'En cours…',
++    finished: 'Terminé.',
++    failed: code => (code === null ? 'Arrêté.' : `Échec (code de sortie ${code}).`),
++    startFailed: job => `Impossible de lancer ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/ja_memory_layers.ts b/apps/desktop/src/i18n/ja_memory_layers.ts
+index d6d73c89..a112b964 100644
+--- a/apps/desktop/src/i18n/ja_memory_layers.ts
++++ b/apps/desktop/src/i18n/ja_memory_layers.ts
+@@ -28,5 +28,13 @@ export const jaMemoryLayers: MemoryLayersTranslations = {
+   off: 'オフ',
+   onlyFile: file => `${file} のみ`,
+   builtinDesc:
+-    'MEMORY.md と USER.md は外部プロバイダーとは別の Hermes 自身のメモリです。どちらも既定でセッションに読み込まれ、設定 › メモリとコンテキストのメモリとユーザープロファイルの切り替えでそれぞれオフにできます。プロバイダーはこのレイヤーに追加されるもので、置き換えることはありません。'
++    'MEMORY.md と USER.md は外部プロバイダーとは別の Hermes 自身のメモリです。どちらも既定でセッションに読み込まれ、設定 › メモリとコンテキストのメモリとユーザープロファイルの切り替えでそれぞれオフにできます。プロバイダーはこのレイヤーに追加されるもので、置き換えることはありません。',
++  jobs: {
++    title: 'プロバイダーのジョブ',
++    run: '実行',
++    running: '実行中…',
++    finished: '完了しました。',
++    failed: code => (code === null ? '停止しました。' : `失敗しました（終了コード ${code}）。`),
++    startFailed: job => `${job} を開始できませんでした`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/ru_memory_layers.ts b/apps/desktop/src/i18n/ru_memory_layers.ts
+index 9ce93a85..c2ce6a72 100644
+--- a/apps/desktop/src/i18n/ru_memory_layers.ts
++++ b/apps/desktop/src/i18n/ru_memory_layers.ts
+@@ -27,5 +27,13 @@ export const ruMemoryLayers: MemoryLayersTranslations = {
+   off: 'Выкл.',
+   onlyFile: file => `только ${file}`,
+   builtinDesc:
+-    'MEMORY.md и USER.md — собственная память Hermes, независимая от внешних провайдеров. По умолчанию оба файла загружаются в сеансы; переключатели памяти и профиля пользователя в Настройки › Память и контекст отключают каждый из них. Провайдер дополняет этот слой и никогда его не заменяет.'
++    'MEMORY.md и USER.md — собственная память Hermes, независимая от внешних провайдеров. По умолчанию оба файла загружаются в сеансы; переключатели памяти и профиля пользователя в Настройки › Память и контекст отключают каждый из них. Провайдер дополняет этот слой и никогда его не заменяет.',
++  jobs: {
++    title: 'Задачи провайдера',
++    run: 'Запустить',
++    running: 'Выполняется…',
++    finished: 'Готово.',
++    failed: code => (code === null ? 'Остановлено.' : `Ошибка (код выхода ${code}).`),
++    startFailed: job => `Не удалось запустить «${job}»`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/types_memory_layers.ts b/apps/desktop/src/i18n/types_memory_layers.ts
+index 18cf66b0..32fdb47f 100644
+--- a/apps/desktop/src/i18n/types_memory_layers.ts
++++ b/apps/desktop/src/i18n/types_memory_layers.ts
+@@ -27,4 +27,13 @@ export interface MemoryLayersTranslations {
+   off: string
+   onlyFile: (file: string) => string
+   builtinDesc: string
++  /** The provider's one-click jobs under its settings. */
++  jobs: {
++    title: string
++    run: string
++    running: string
++    finished: string
++    failed: (code: null | number) => string
++    startFailed: (job: string) => string
++  }
+ }
+diff --git a/apps/desktop/src/i18n/zh-hant_memory_layers.ts b/apps/desktop/src/i18n/zh-hant_memory_layers.ts
+index 37382957..e4e405ac 100644
+--- a/apps/desktop/src/i18n/zh-hant_memory_layers.ts
++++ b/apps/desktop/src/i18n/zh-hant_memory_layers.ts
+@@ -25,5 +25,13 @@ export const zhHantMemoryLayers: MemoryLayersTranslations = {
+   off: '關閉',
+   onlyFile: file => `僅 ${file}`,
+   builtinDesc:
+-    'MEMORY.md 和 USER.md 是 Hermes 自己的記憶，獨立於任何外部提供者。兩者預設都會載入工作階段；可在 設定 › 記憶與脈絡 中以記憶和使用者檔案開關分別關閉。提供者是對這一層的補充，絕不會取代它。'
++    'MEMORY.md 和 USER.md 是 Hermes 自己的記憶，獨立於任何外部提供者。兩者預設都會載入工作階段；可在 設定 › 記憶與脈絡 中以記憶和使用者檔案開關分別關閉。提供者是對這一層的補充，絕不會取代它。',
++  jobs: {
++    title: '提供者工作',
++    run: '執行',
++    running: '執行中…',
++    finished: '已完成。',
++    failed: code => (code === null ? '已停止。' : `失敗（結束代碼 ${code}）。`),
++    startFailed: job => `無法啟動 ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/i18n/zh_memory_layers.ts b/apps/desktop/src/i18n/zh_memory_layers.ts
+index 077500f2..12595b02 100644
+--- a/apps/desktop/src/i18n/zh_memory_layers.ts
++++ b/apps/desktop/src/i18n/zh_memory_layers.ts
+@@ -25,5 +25,13 @@ export const zhMemoryLayers: MemoryLayersTranslations = {
+   off: '关闭',
+   onlyFile: file => `仅 ${file}`,
+   builtinDesc:
+-    'MEMORY.md 和 USER.md 是 Hermes 自己的记忆，独立于任何外部提供方。两者默认都会载入会话；可在 设置 › 记忆与上下文 中用记忆和用户档案开关分别关闭。提供方是对这一层的补充，绝不会取代它。'
++    'MEMORY.md 和 USER.md 是 Hermes 自己的记忆，独立于任何外部提供方。两者默认都会载入会话；可在 设置 › 记忆与上下文 中用记忆和用户档案开关分别关闭。提供方是对这一层的补充，绝不会取代它。',
++  jobs: {
++    title: '提供方任务',
++    run: '运行',
++    running: '正在运行…',
++    finished: '已完成。',
++    failed: code => (code === null ? '已停止。' : `失败（退出码 ${code}）。`),
++    startFailed: job => `无法启动 ${job}`
++  }
+ }
+diff --git a/apps/desktop/src/types/provider-jobs.ts b/apps/desktop/src/types/provider-jobs.ts
+new file mode 100644
+index 00000000..e769cdd7
+--- /dev/null
++++ b/apps/desktop/src/types/provider-jobs.ts
+@@ -0,0 +1,17 @@
++// The active memory provider's maintenance jobs: `GET /api/memory/actions`.
++
++export interface ProviderJob {
++  id: string
++  label: string
++  description: string
++  /** Where the job stands now, in the provider's words ("80 of 120 facts indexed"). */
++  status: string
++  /** False when it cannot run yet; `status` says why. */
++  ready: boolean
++}
++
++export interface ProviderJobsResponse {
++  provider: string
++  state: 'disabled' | 'ok' | 'unavailable' | 'unsupported'
++  actions: ProviderJob[]
++}
+diff --git a/hermes_cli/main_agent_cmds.py b/hermes_cli/main_agent_cmds.py
+index b870144e..557bfab9 100644
+--- a/hermes_cli/main_agent_cmds.py
++++ b/hermes_cli/main_agent_cmds.py
+@@ -63,6 +63,9 @@ def cmd_memory(args):
+         _cmd_memory_off()
+     elif sub == "reset":
+         _cmd_memory_reset(args)
++    elif sub == "action":
++        from hermes_cli.memory_actions import cmd_memory_action
++        cmd_memory_action(args)
+     else:
+         from hermes_cli.memory_setup import memory_command
+         memory_command(args)
+diff --git a/hermes_cli/memory_actions.py b/hermes_cli/memory_actions.py
+new file mode 100644
+index 00000000..ef72e670
+--- /dev/null
++++ b/hermes_cli/memory_actions.py
+@@ -0,0 +1,118 @@
++"""Memory provider maintenance jobs: what the active provider offers (``GET /api/memory/actions``) and running one to
++the end (``hermes memory action <id>``, the process the Desktop starts and tails).
++
++A job is the provider's: Hermes lists it, calls its steps in order and prints where it stands; it decides nothing.
++"""
++
++from __future__ import annotations
++
++import logging
++import re
++from typing import Any, Callable, Optional
++
++_log = logging.getLogger(__name__)
++
++ACTION_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
++_MAX_STEPS = 100_000
++_STALLED_AFTER = 20  # the same status this many steps in a row: the job is not moving
++
++
++def active_provider_name(config: dict[str, Any]) -> str:
++    from agent.memory_provider import is_core_memory_provider
++
++    section = config.get("memory")
++    name = str(section.get("provider") or "").strip() if isinstance(section, dict) else ""
++    return "" if is_core_memory_provider(name) else name
++
++
++def _clean(raw: Any) -> Optional[dict[str, Any]]:
++    """One job as the Desktop may show it, or None when it is not one."""
++    if not isinstance(raw, dict) or not ACTION_ID_RE.fullmatch(str(raw.get("id") or "")):
++        return None
++    return {"id": str(raw["id"]), "label": str(raw.get("label") or raw["id"]),
++            "description": str(raw.get("description") or ""), "status": str(raw.get("status") or ""),
++            "ready": raw.get("ready") is not False}
++
++
++def _listed(provider: Any, hermes_home: str) -> list[dict[str, Any]]:
++    raw = provider.maintenance_actions(hermes_home)
++    return [a for a in map(_clean, raw if isinstance(raw, list) else []) if a]
++
++
++def provider_actions(config: dict[str, Any], hermes_home: str, load: Callable[[str], Any]) -> dict[str, Any]:
++    """``{"provider", "state", "actions"}``; ``state``: ``disabled`` (no provider), ``unavailable`` (it did not load,
++    or listing raised), ``unsupported`` (it offers no job) or ``ok``."""
++    name = active_provider_name(config)
++    if not name:
++        return {"provider": "", "state": "disabled", "actions": []}
++    provider = load(name)
++    if provider is None:
++        return {"provider": name, "state": "unavailable", "actions": []}
++    try:
++        actions = _listed(provider, hermes_home)
++    except Exception:  # health: allow BLE001 -- a plugin's listing may raise anything; its jobs then read as unavailable
++        _log.warning("memory provider %s failed in maintenance_actions()", name, exc_info=True)
++        return {"provider": name, "state": "unavailable", "actions": []}
++    return {"provider": name, "state": "ok" if actions else "unsupported", "actions": actions}
++
++
++def _say(line: str) -> None:
++    print(line, flush=True)  # the Desktop tails this process's log while it runs
++
++
++def run_action(action_id: str, provider: Any, hermes_home: str, out: Callable[[str], None] = _say) -> int:
++    """Run one job to the end. The exit code is the job's outcome the Desktop shows: 0 done, 1 failed or could
++    not start, 2 no such job."""
++    action = next((a for a in _listed(provider, hermes_home) if a["id"] == action_id), None)
++    if action is None:
++        out(f"{provider.name} offers no job {action_id!r}.")
++        return 2
++    if not action["ready"]:
++        out(f"{action['label']} cannot run yet: {action['status']}")
++        return 1
++    out(f"{action['label']}: {action['status']}" if action["status"] else action["label"])
++    last, same = None, 0
++    for _ in range(_MAX_STEPS):
++        try:
++            step = provider.run_maintenance_step(action_id, hermes_home)
++        except Exception as exc:  # health: allow BLE001 -- the provider's failure ends its job, in its own words
++            _log.warning("memory provider %s failed in run_maintenance_step(%s)", provider.name, action_id, exc_info=True)
++            out(f"Failed: {exc}")
++            return 1
++        step = step if isinstance(step, dict) else {}
++        status = str(step.get("status") or "")
++        if status:
++            out(status)
++        if step.get("done"):
++            out(str(step.get("result") or "Done."))
++            return 0
++        same, last = (same + 1 if status == last else 0), status
++        if same >= _STALLED_AFTER:
++            out(f"Stopped: {_STALLED_AFTER} steps in a row changed nothing ({status or 'no status'}).")
++            return 1
++    out("Stopped: the job did not finish.")
++    return 1
++
++
++def cmd_memory_action(args: Any) -> None:
++    """``hermes memory action [ID]``: list the active provider's jobs, or run one."""
++    from hermes_cli.config import load_config
++    from hermes_constants import get_hermes_home
++    from plugins.memory import load_memory_provider
++
++    name = active_provider_name(load_config())
++    if not name:
++        _say("No memory provider is active, so there are no provider jobs. Choose one: hermes memory setup")
++        raise SystemExit(1)
++    provider = load_memory_provider(name, register_skills=False)
++    if provider is None:
++        _say(f"Memory provider {name} could not be loaded; see: hermes memory status")
++        raise SystemExit(1)
++    home = str(get_hermes_home())
++    if args.action_id:
++        raise SystemExit(run_action(args.action_id, provider, home))
++    actions = _listed(provider, home)
++    if not actions:
++        _say(f"{name} offers no jobs.")
++    for a in actions:
++        _say(f"{a['id']}: {a['label']}{'' if a['ready'] else ' (not ready)'} — {a['status']}")
+diff --git a/hermes_cli/subcommands/memory.py b/hermes_cli/subcommands/memory.py
+index 9c9bad75..8f24f0c8 100644
+--- a/hermes_cli/subcommands/memory.py
++++ b/hermes_cli/subcommands/memory.py
+@@ -24,6 +24,9 @@ def build_memory_parser(subparsers, *, cmd_memory: Callable) -> None:
+         "provider", nargs="?", default=None,
+         help="Provider to configure directly (e.g. honcho), skipping the picker")
+     memory_sub.add_parser("status", help="Show current memory provider config")
++    _action_parser = memory_sub.add_parser(
++        "action", help="List the active provider's maintenance jobs, or run one (e.g. building a search index)")
++    _action_parser.add_argument("action_id", nargs="?", default=None, help="The job to run; omit to list them")
+     memory_sub.add_parser("off", help="Disable external provider (built-in only)")
+     _reset_parser = memory_sub.add_parser(
+         "reset", help="Erase all built-in memory (MEMORY.md and USER.md)")
+diff --git a/hermes_cli/web_routers/memory_actions.py b/hermes_cli/web_routers/memory_actions.py
+new file mode 100644
+index 00000000..3828cc1a
+--- /dev/null
++++ b/hermes_cli/web_routers/memory_actions.py
+@@ -0,0 +1,60 @@
++"""The active memory provider's maintenance jobs, for the Desktop's provider settings.
++
++``GET /api/memory/actions`` lists them; ``POST /api/memory/actions`` starts one as ``hermes memory action <id>``,
++tailed through ``/api/actions/memory-action/status`` like the other maintenance actions.
++"""
++
++from __future__ import annotations
++
++from typing import Any, Optional
++
++from fastapi import APIRouter, HTTPException
++from pydantic import BaseModel
++
++from hermes_cli.memory_actions import ACTION_ID_RE, provider_actions
++from hermes_cli.web_deps import LateState, late
++from hermes_cli.web_routers._common import config_scoped_to_thread, destructive_profile, spawn_profile_action
++
++router = APIRouter()
++
++# Late-bound so a test's monkeypatch on the owning module wins at call time.
++_load_memory_provider = late("_load_memory_provider", "hermes_cli.web_server_memory")
++get_hermes_home = late("get_hermes_home", "hermes_cli.config")
++load_config = late("load_config", "hermes_cli.config")
++_ACTION_PROCS = LateState("_ACTION_PROCS", "hermes_cli.web_server_gateway")
++
++ACTION_NAME = "memory-action"
++
++
++class MemoryActionRequest(BaseModel):
++    action: str
++
++
++def _actions() -> dict[str, Any]:
++    return provider_actions(load_config(), str(get_hermes_home()),
++                            lambda name: _load_memory_provider(name, register_skills=False))
++
++
++@router.get("/api/memory/actions")
++async def list_memory_actions(profile: Optional[str] = None):
++    return await config_scoped_to_thread(profile, _actions)
++
++
++@router.post("/api/memory/actions")
++async def run_memory_action(body: MemoryActionRequest, profile: Optional[str] = None):
++    """Start one job; it writes the provider's own data, so it names its profile like the other such routes."""
++    profile = destructive_profile(profile, "POST /api/memory/actions")
++    if not ACTION_ID_RE.fullmatch(body.action or ""):
++        raise HTTPException(status_code=400, detail="A job id is letters, digits, '-' and '_'.")
++    proc = _ACTION_PROCS.get(ACTION_NAME)
++    if proc is not None and proc.poll() is None:
++        raise HTTPException(status_code=409, detail="A memory provider job is already running. Wait for it to finish.")
++    listing = await config_scoped_to_thread(profile, _actions)
++    action = next((a for a in listing["actions"] if a["id"] == body.action), None)
++    if action is None:
++        raise HTTPException(status_code=404, detail=f"The active memory provider offers no job {body.action!r}.")
++    if not action["ready"]:
++        raise HTTPException(status_code=409, detail=f"{action['label']} cannot run yet: {action['status']}")
++    return spawn_profile_action(profile, ["memory", "action", body.action], ACTION_NAME,
++                                log_msg="Failed to spawn a memory provider job",
++                                prefix="Could not start the memory provider job")
+diff --git a/hermes_cli/web_server.py b/hermes_cli/web_server.py
+index 7849a498..75721e2a 100644
+--- a/hermes_cli/web_server.py
++++ b/hermes_cli/web_server.py
+@@ -799,6 +799,7 @@ from hermes_cli.web_routers import (
+     cron as _cron_routes,
+     mcp as _mcp_routes,
+     ops as _ops_routes,
++    memory_actions as _memory_actions_routes,
+     transfer as _transfer_routes,
+     skills as _skills_routes,
+     tools as _tools_routes,
+@@ -848,6 +849,7 @@ app.include_router(_status_routes.logs_router)
+ app.include_router(_cron_routes.router)
+ app.include_router(_mcp_routes.router)
+ app.include_router(_ops_routes.router)
++app.include_router(_memory_actions_routes.router)
+ app.include_router(_transfer_routes.router)
+ app.include_router(_skills_routes.hub_router)
+ app.include_router(_profiles_routes.router)
+diff --git a/hermes_cli/web_server_gateway.py b/hermes_cli/web_server_gateway.py
+index 4e570e01..2c8408bc 100644
+--- a/hermes_cli/web_server_gateway.py
++++ b/hermes_cli/web_server_gateway.py
+@@ -304,7 +304,7 @@ _ACTION_LOG_FILES: dict[str, str] = {
+     **{name: f"action-{name}.log" for name in (
+         "doctor", "security-audit", "backup", "import", "checkpoints-prune", "skills-install",
+         "skills-uninstall", "skills-update", "curator-run", "prompt-size", "dump", "config-migrate",
+-        "tools-post-setup",
++        "tools-post-setup", "memory-action",
+     )},
+ }
+ 
+diff --git a/locales/_keys.desktop.json b/locales/_keys.desktop.json
+index 097f2029..3225c991 100644
+--- a/locales/_keys.desktop.json
++++ b/locales/_keys.desktop.json
+@@ -3887,6 +3887,12 @@
+     "settings.memoryLayers.builtinDesc",
+     "settings.memoryLayers.builtinLayer",
+     "settings.memoryLayers.builtinMemory",
++    "settings.memoryLayers.jobs.failed",
++    "settings.memoryLayers.jobs.finished",
++    "settings.memoryLayers.jobs.run",
++    "settings.memoryLayers.jobs.running",
++    "settings.memoryLayers.jobs.startFailed",
++    "settings.memoryLayers.jobs.title",
+     "settings.memoryLayers.noProvider",
+     "settings.memoryLayers.noProviderDesc",
+     "settings.memoryLayers.off",
+diff --git a/tests/hermes_cli/serve_handler_ledger.json b/tests/hermes_cli/serve_handler_ledger.json
+index 8d97245f..cc9f2635 100644
+--- a/tests/hermes_cli/serve_handler_ledger.json
++++ b/tests/hermes_cli/serve_handler_ledger.json
+@@ -2,7 +2,7 @@
+  "counts": {
+   "http": {
+    "keep-host-wide": 1,
+-   "undecided": 349
++   "undecided": 351
+   },
+   "rpc": {
+    "authority": 113,
+@@ -129,6 +129,7 @@
+   {"current_path": "hermes_cli.web_routers.files:get_media", "decision": "undecided", "handler": "GET /api/media", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.files:proxy_remote_media", "decision": "undecided", "handler": "GET /api/media/proxy", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.ops:get_memory_status", "decision": "undecided", "handler": "GET /api/memory", "kind": "http", "ref": ""},
++  {"current_path": "hermes_cli.web_routers.memory_actions:list_memory_actions", "decision": "undecided", "handler": "GET /api/memory/actions", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_providers:get_memory_provider_config", "decision": "undecided", "handler": "GET /api/memory/providers/{name}/config", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.memory_oauth:memory_oauth_status", "decision": "undecided", "handler": "GET /api/memory/providers/{provider}/oauth/status", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.messaging:get_messaging_platforms", "decision": "undecided", "handler": "GET /api/messaging/platforms", "kind": "http", "ref": ""},
+@@ -279,6 +280,7 @@
+   {"current_path": "hermes_cli.web_routers.mcp:add_mcp_server", "decision": "undecided", "handler": "POST /api/mcp/servers", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.mcp:auth_mcp_server", "decision": "undecided", "handler": "POST /api/mcp/servers/{name}/auth", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.mcp:test_mcp_server", "decision": "undecided", "handler": "POST /api/mcp/servers/{name}/test", "kind": "http", "ref": ""},
++  {"current_path": "hermes_cli.web_routers.memory_actions:run_memory_action", "decision": "undecided", "handler": "POST /api/memory/actions", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_providers:setup_memory_provider", "decision": "undecided", "handler": "POST /api/memory/providers/{name}/setup", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.memory_oauth:start_memory_oauth", "decision": "undecided", "handler": "POST /api/memory/providers/{provider}/oauth/start", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.ops:reset_memory", "decision": "undecided", "handler": "POST /api/memory/reset", "kind": "http", "ref": ""},
+diff --git a/tests/hermes_cli/test_memory_actions.py b/tests/hermes_cli/test_memory_actions.py
+new file mode 100644
+index 00000000..e912661d
+--- /dev/null
++++ b/tests/hermes_cli/test_memory_actions.py
+@@ -0,0 +1,220 @@
++"""Memory provider maintenance jobs, against a real temp ``HERMES_HOME`` and a synthetic provider plugin loaded
++through real discovery: ``GET/POST /api/memory/actions`` and ``hermes memory action`` run in-process."""
++
++import json
++from argparse import Namespace
++from types import SimpleNamespace
++
++import hermes_yaml as yaml
++import pytest
++
++from hermes_cli import plugins as plugins_mod
++
++_JOBPROV = '''
++import json
++from pathlib import Path
++
++from agent.memory_provider import MemoryProvider
++
++
++class JobProv(MemoryProvider):
++    """Items in <hermes_home>/jobprov.json; the "index" job copies them two per step into jobprov.index.json."""
++
++    @property
++    def name(self):
++        return "jobprov"
++
++    def is_available(self):
++        return True
++
++    def initialize(self, session_id, **kwargs):
++        pass
++
++    def get_tool_schemas(self):
++        return []
++
++    def _paths(self, home):
++        return Path(home, "jobprov.json"), Path(home, "jobprov.index.json")
++
++    def _state(self, home):
++        data, index = self._paths(home)
++        items = json.loads(data.read_text(encoding="utf-8"))
++        done = json.loads(index.read_text(encoding="utf-8")) if index.exists() else []
++        return items, done
++
++    def maintenance_actions(self, hermes_home):
++        items, done = self._state(hermes_home)
++        if "listing breaks" in items:
++            raise RuntimeError("store is locked")
++        return [
++            {"id": "index", "label": "Build index", "description": "Index every item.",
++             "status": f"{len(done)} of {len(items)} items indexed", "ready": True},
++            {"id": "broken", "label": "Broken", "status": "", "ready": True},
++            {"id": "stuck", "label": "Stuck", "status": "", "ready": True},
++            {"id": "later", "label": "Later", "status": "The index server is not running.", "ready": False},
++            {"id": "../evil", "label": "not a job id"},
++            "not a job",
++        ]
++
++    def run_maintenance_step(self, action_id, hermes_home):
++        items, done = self._state(hermes_home)
++        if action_id == "broken":
++            raise RuntimeError("the index server refused the batch")
++        if action_id == "stuck":
++            return {"done": False, "status": "waiting"}
++        done = items[: len(done) + 2]
++        self._paths(hermes_home)[1].write_text(json.dumps(done), encoding="utf-8")
++        status = f"{len(done)} of {len(items)} items indexed"
++        if len(done) == len(items):
++            return {"done": True, "status": status, "result": f"All {len(items)} items are indexed."}
++        return {"done": False, "status": status}
++
++
++def register(ctx):
++    ctx.register_memory_provider(JobProv())
++'''
++
++_PLAINPROV = '''
++from agent.memory_provider import MemoryProvider
++
++
++class PlainProv(MemoryProvider):
++    @property
++    def name(self):
++        return "plainprov"
++
++    def is_available(self):
++        return True
++
++    def initialize(self, session_id, **kwargs):
++        pass
++
++    def get_tool_schemas(self):
++        return []
++
++
++def register(ctx):
++    ctx.register_memory_provider(PlainProv())
++'''
++
++
++def _write_home(home, *, provider="jobprov", items=("a", "b", "c", "d", "e")):
++    for name, source in (("jobprov", _JOBPROV), ("plainprov", _PLAINPROV)):
++        (home / "plugins" / name).mkdir(parents=True, exist_ok=True)
++        (home / "plugins" / name / "__init__.py").write_text(source, encoding="utf-8")
++    (home / "jobprov.json").write_text(json.dumps(list(items)), encoding="utf-8")
++    (home / "config.yaml").write_text(yaml.safe_dump({"memory": {"provider": provider}}), encoding="utf-8")
++
++
++@pytest.fixture
++def home(_isolate_hermes_home):
++    from hermes_constants import get_hermes_home
++
++    plugins_mod._reset_plugin_managers_for_tests()
++    yield get_hermes_home()
++    plugins_mod._reset_plugin_managers_for_tests()
++
++
++@pytest.fixture
++def client(home):
++    from starlette.testclient import TestClient
++    from hermes_cli.web_server import _SESSION_HEADER_NAME, _SESSION_TOKEN, app
++
++    return TestClient(app, headers={_SESSION_HEADER_NAME: _SESSION_TOKEN})
++
++
++@pytest.fixture
++def spawned(monkeypatch):
++    """What would have been started: argv and action name, instead of a real process."""
++    calls = []
++
++    def fake(argv, name, **_):
++        calls.append((argv, name))
++        return SimpleNamespace(pid=4242, poll=lambda: 0)
++
++    monkeypatch.setattr("hermes_cli.web_server_gateway._spawn_hermes_action", fake)
++    return calls
++
++
++def _run(action_id, capsys):
++    from hermes_cli.memory_actions import cmd_memory_action
++
++    with pytest.raises(SystemExit) as stop:
++        cmd_memory_action(Namespace(action_id=action_id))
++    return stop.value.code, capsys.readouterr().out.splitlines()
++
++
++def test_lists_only_well_formed_jobs_with_where_each_stands(home, client):
++    _write_home(home)
++    data = client.get("/api/memory/actions").json()
++    assert data["provider"] == "jobprov" and data["state"] == "ok"
++    assert [a["id"] for a in data["actions"]] == ["index", "broken", "stuck", "later"]  # bad ids and non-dicts dropped
++    assert data["actions"][0] == {"id": "index", "label": "Build index", "description": "Index every item.",
++                                  "status": "0 of 5 items indexed", "ready": True}
++    assert data["actions"][3]["ready"] is False
++
++
++@pytest.mark.parametrize("provider, items, state", [
++    ("", ("a",), "disabled"),  # no provider: no jobs
++    ("plainprov", ("a",), "unsupported"),  # a provider without jobs
++    ("no-such-provider", ("a",), "unavailable"),  # configured but not loadable
++    ("jobprov", ("listing breaks",), "unavailable"),  # its listing raised
++])
++def test_no_jobs_says_why(home, client, provider, items, state):
++    _write_home(home, provider=provider, items=items)
++    assert client.get("/api/memory/actions").json() == {"provider": provider, "state": state, "actions": []}
++
++
++def test_starting_a_job_spawns_it_for_the_profile_and_refuses_what_cannot_run(home, client, spawned):
++    _write_home(home)
++    response = client.post("/api/memory/actions", json={"action": "index"})
++    assert response.status_code == 200, response.text
++    assert response.json()["name"] == "memory-action"
++    [(argv, name)] = spawned
++    assert argv[-3:] == ["memory", "action", "index"] and name == "memory-action"
++
++    assert client.post("/api/memory/actions", json={"action": "../evil"}).status_code == 400
++    assert client.post("/api/memory/actions", json={"action": "nope"}).status_code == 404
++    later = client.post("/api/memory/actions", json={"action": "later"})
++    assert later.status_code == 409 and "not running" in later.json()["detail"]
++    assert len(spawned) == 1  # nothing else was started
++
++
++def test_a_job_already_running_is_not_started_twice(home, client, spawned, monkeypatch):
++    import hermes_cli.web_server_gateway as gateway
++
++    _write_home(home)
++    monkeypatch.setitem(gateway._ACTION_PROCS, "memory-action", SimpleNamespace(poll=lambda: None))
++    assert client.post("/api/memory/actions", json={"action": "index"}).status_code == 409
++    assert spawned == []
++
++
++def test_the_cli_runs_a_job_step_by_step_to_the_end(home, capsys):
++    _write_home(home)
++    code, out = _run("index", capsys)
++    assert code == 0
++    assert out == ["Build index: 0 of 5 items indexed", "2 of 5 items indexed", "4 of 5 items indexed",
++                   "5 of 5 items indexed", "All 5 items are indexed."]
++    assert json.loads((home / "jobprov.index.json").read_text(encoding="utf-8")) == ["a", "b", "c", "d", "e"]
++
++
++@pytest.mark.parametrize("action, code, last", [
++    ("broken", 1, "Failed: the index server refused the batch"),
++    ("stuck", 1, "Stopped: 20 steps in a row changed nothing (waiting)."),
++    ("later", 1, "Later cannot run yet: The index server is not running."),
++    ("nope", 2, "jobprov offers no job 'nope'."),
++])
++def test_the_cli_ends_a_job_that_cannot_finish_with_a_reason(home, capsys, action, code, last):
++    _write_home(home)
++    got, out = _run(action, capsys)
++    assert (got, out[-1]) == (code, last)
++
++
++def test_the_cli_lists_jobs_without_running_one(home, capsys):
++    from hermes_cli.memory_actions import cmd_memory_action
++
++    _write_home(home)
++    cmd_memory_action(Namespace(action_id=None))
++    out = capsys.readouterr().out
++    assert "index: Build index — 0 of 5 items indexed" in out and "later: Later (not ready)" in out
++    assert not (home / "jobprov.index.json").exists()
+diff --git a/website/docs/developer-guide/memory-provider-plugin.md b/website/docs/developer-guide/memory-provider-plugin.md
+index 68562232..2b4c28fa 100644
+--- a/website/docs/developer-guide/memory-provider-plugin.md
++++ b/website/docs/developer-guide/memory-provider-plugin.md
+@@ -364,6 +364,7 @@ own directory, so a provider installed from the plugin catalog keeps all of them
+ | Desktop → Capabilities → Tools → Memory (config panel) | `config_schema.py` (below) |
+ | `hermes memory setup` wizard | `get_config_schema()` declares the fields the wizard prompts for, `save_config(config, hermes_home)` persists them, `post_setup(hermes_home, config)` runs afterwards for anything interactive (OAuth, first sync); `get_status_config()` feeds `hermes memory status` |
+ | `hermes <provider> …` subcommands | `cli.py` with `register_cli(subparser)` ([Adding CLI Commands](#adding-cli-commands)) |
++| Desktop provider settings → one-click jobs (`hermes memory action`) | `maintenance_actions()` and `run_maintenance_step()` ([Maintenance jobs](#maintenance-jobs)) |
+ | Python dependencies | `pyproject.toml` `[project] dependencies` (or `python_dependencies` in `plugin.yaml`); installed under Hermes' own pins at install time and re-applied across `hermes update` |
+ 
+ Your provider's name, `memory.<name>` config section, data directory and tool names are the
+@@ -371,6 +372,31 @@ contract with existing users. A provider that moves out of core keeps all four;
+ installs the catalog plugin automatically for anyone whose `memory.provider` still names it
+ (on `hermes update`, and once at agent start when `security.allow_lazy_installs` is on).
+ 
++## Maintenance jobs
++
++A job is work on the provider's own store that a user starts with one click: building a search index for the facts
++already stored after an embedding model is configured, say. The provider owns what it does and which model or index
++it uses; Hermes lists it under the provider's settings in the Desktop, runs it as `hermes memory action <id>` in a
++process of its own, and shows its output and result.
++
++```python
++def maintenance_actions(self, hermes_home: str) -> list:
++    # Quick: it runs when the settings page opens. ready False, with status saying why, when it cannot run yet.
++    return [{"id": "index", "label": "Index facts for search by meaning",
++             "description": "Embeds every stored fact that has no vector yet.",
++             "status": "80 of 120 facts indexed", "ready": True}]
++
++def run_maintenance_step(self, action_id: str, hermes_home: str) -> dict:
++    # One bounded step (one batch); Hermes calls it again until done and prints each status.
++    ...
++    return {"done": False, "status": "112 of 120 facts indexed"}
++    # last: {"done": True, "status": "120 of 120 facts indexed", "result": "Indexed 40 facts in 18 s."}
++```
++
++Both run on an uninitialized instance outside any session, with `hermes_home` passed in, and take and return JSON
++values only, so they work under `plugins.isolation: host`. A step that raises fails the job with its message; one
++that keeps returning the same status 20 times in a row is stopped. Only one job runs at a time per backend.
++
+ ## Config Schema
+ 
+ `get_config_schema()` returns a list of field descriptors used by `hermes memory setup`:
+diff --git a/website/docs/user-guide/features/memory-providers.md b/website/docs/user-guide/features/memory-providers.md
+index a7827a17..97f28f60 100644
+--- a/website/docs/user-guide/features/memory-providers.md
++++ b/website/docs/user-guide/features/memory-providers.md
+@@ -14,10 +14,18 @@ Hermes Agent ships with 2 external memory provider plugins (RetainDB and ByteRov
+ hermes memory setup      # interactive picker + configuration
+ hermes memory status     # check what's active
+ hermes memory off        # disable external provider
++hermes memory action     # list the provider's maintenance jobs; `hermes memory action <id>` runs one
+ ```
+ 
+ You can also select the active memory provider via `hermes plugins` → Provider Plugins → Memory Provider.
+ 
++A provider may offer one-click maintenance jobs for its store, such as building a search index for the facts it
++already holds after you configure an embedding model. In the desktop app they appear under the provider's settings
++(**Settings → Memory & Context**, below the provider's fields) with where each stands ("80 of 120 facts indexed"),
++a **Run** button, the job's output while it runs and its result. The job runs as `hermes memory action <id>` in a
++process of its own, so closing the settings page does not stop it. What a job does, and which model or index it
++uses, is up to the provider.
++
+ Or set manually in `~/.hermes/config.yaml`:
+ 
+ ```yaml
+diff --git a/website/docs/user-guide/features/web-dashboard.md b/website/docs/user-guide/features/web-dashboard.md
+index 138a7f6a..0dff1a5e 100644
+--- a/website/docs/user-guide/features/web-dashboard.md
++++ b/website/docs/user-guide/features/web-dashboard.md
+@@ -674,6 +674,8 @@ same auth gate as the rest of `/api/`.
+ | `POST /api/memory/reset` | Reset built-in memory. Body: `{target: all\|memory\|user}` |
+ | `POST /api/gateway/start` · `/stop` · `/restart` | Gateway lifecycle (backgrounded) |
+ | `POST /api/ops/doctor` · `/security-audit` · `/backup` · `/import` | Diagnostics & maintenance (backgrounded; tail via `/api/actions/{name}/status`) |
++| `GET /api/memory/actions` | The active memory provider's maintenance jobs: `{provider, state, actions: [{id, label, description, status, ready}]}` |
++| `POST /api/memory/actions` | Start one. Body: `{action: id}`; runs `hermes memory action <id>` (backgrounded; tail via `/api/actions/memory-action/status`). 409 while one runs or when the job is not ready |
+ | `GET /api/ops/hooks` | Configured shell hooks + allowlist status |
+ | `GET /api/ops/checkpoints` · `POST .../prune` | Inspect / prune the `/rollback` store |
+ | `POST /api/ops/hooks` · `DELETE /api/ops/hooks` | Create / remove a shell hook (consent-gated) |

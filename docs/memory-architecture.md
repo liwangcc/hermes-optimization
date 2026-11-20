@@ -78,6 +78,11 @@ task", procedures to skills), so the two do not disagree.
   `MEMORY.md` instead would be a second copy that nothing reconciles, paid for on every turn.
 - **`USER.md` can be off as well.** The two built-in stores are switched separately in
   Hermes. With `USER.md` off, what would go there goes to the store.
+- **Off is recommended, not required.** The catalog and `MEMORY.md` can stay on together; the
+  cost is one more block in every session's context, as large as what `MEMORY.md` holds. With
+  the proposed core change, the Desktop says `MEMORY.md` is optional while the catalog is on and
+  shows its estimated tokens per session next to the catalog's; it never switches anything off.
+  Pointers to facts never go into `MEMORY.md` either way: the write routing keeps fact ids out.
 
 Not measured in a controlled run: behavior with `MEMORY.md` off. In the author's own use,
 with the old entries split as above, turning it off showed no noticeable loss.
@@ -130,6 +135,17 @@ Fact store:
 - **remove** — confirmed-useless facts are deleted, with a durable archive of the original.
 - **trust feedback** — rate facts helpful / unhelpful so good ones rise and bad ones sink.
 - **review** — surface cleanup candidates periodically.
+
+A review proposes; it never forgets on its own. The rules of the proposed Desktop Memory Checkup
+([`upstream-memory-review/PR-DRAFT.md`](upstream-memory-review/PR-DRAFT.md)) are enforced in code on the model's
+reply, the same for every provider:
+
+- **Exempt from removal:** a fact the user tagged `protected` (no removal, no rewrite), and a fact under seven days
+  old (no removal; a rewrite is allowed). A proposal that breaks this is shown as a question, not as a change.
+- **Weight is order, not verdict:** bad feedback (0.5) outweighs an unconfirmed inference (0.3), which outweighs
+  never being recalled for 30 days (0.2). It decides what is reviewed first. Low use alone never justifies a removal.
+- **A removal needs evidence a person can check:** the other fact that repeats, replaces or contradicts it, or the
+  fact's own text showing it has expired.
 
 No hand-kept pointers:
 - `fact#N` is not written into the always-on layer. The plugin's opt-in **fact catalog**

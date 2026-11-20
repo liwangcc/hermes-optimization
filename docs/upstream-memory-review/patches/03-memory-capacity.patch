@@ -1,0 +1,1439 @@
+diff --git a/agent/memory_provider.py b/agent/memory_provider.py
+index c27bf9ff..4ae56c92 100644
+--- a/agent/memory_provider.py
++++ b/agent/memory_provider.py
+@@ -265,3 +265,14 @@ class MemoryProvider(ABC):
+         returns). Raise ``ValueError`` (a subclass such as ``json.JSONDecodeError`` counts, also under
+         ``plugins.isolation: host``) to refuse the save (the dashboard shows it as a 400)."""
+         raise NotImplementedError(f"memory provider {self.name} declares storage=provider but cannot write it")
++
++    # -- Memory reads for displays (``GET /api/memory``). Uninitialized instance: read the profile at
++    # ``hermes_home`` and nothing else, change nothing, no network. JSON values only. --
++
++    def usage_report(self, hermes_home: str) -> dict[str, Any]:
++        """What the store holds, for a capacity display; ``{}`` (the default) = not reported. Every key is
++        optional: ``items`` (active stored items), ``storage_bytes``, and ``budgets``, a list of
++        ``{"key", "label", "enabled", "used", "limit", "unit", "listed", "eligible"}`` for each budget the
++        provider itself enforces, counted the way it enforces it (``unit`` e.g. ``"estimated tokens"``;
++        ``listed`` of ``eligible`` items fit). Report no limit the provider does not enforce."""
++        return {}
+diff --git a/apps/desktop/src/app/command-center/maintenance.tsx b/apps/desktop/src/app/command-center/maintenance.tsx
+index 1617fc64..080a1cb7 100644
+--- a/apps/desktop/src/app/command-center/maintenance.tsx
++++ b/apps/desktop/src/app/command-center/maintenance.tsx
+@@ -28,27 +28,12 @@ import { confirm } from '@/store/confirm'
+ import { notify, notifyError } from '@/store/notifications'
+ import type { ActionStatusResponse } from '@/types/hermes'
+ 
++import { formatBytes } from '../settings/memory/memory-capacity'
+ import { MemoryLayersSummary } from '../settings/memory/memory-layers'
+ 
+ const ACTION_POLL_MS = 1200
+ const ACTION_POLL_LIMIT = 240 // ~5 minutes of polling before giving up.
+ 
+-function formatBytes(size: number): string {
+-  if (size <= 0) {
+-    return ''
+-  }
+-
+-  if (size >= 1024 * 1024) {
+-    return `${(size / (1024 * 1024)).toFixed(1)} MB`
+-  }
+-
+-  if (size >= 1024) {
+-    return `${(size / 1024).toFixed(1)} KB`
+-  }
+-
+-  return `${size} B`
+-}
+-
+ /** Maintenance panel — desktop parity for `hermes doctor` / `security audit` /
+  *  `backup` / `debug share` / `curator` / `memory` (the dashboard System page's
+  *  ops section). Spawn-based actions tail their logs inline via the shared
+diff --git a/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx b/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx
+new file mode 100644
+index 00000000..db7c5979
+--- /dev/null
++++ b/apps/desktop/src/app/settings/memory/memory-capacity.test.tsx
+@@ -0,0 +1,145 @@
++import { cleanup, render, screen, within } from '@testing-library/react'
++import { afterEach, describe, expect, it } from 'vitest'
++
++import type { MemoryLayers, ProviderMemoryLayer } from '@/types/memory-layers'
++
++import { MemoryCapacity } from './memory-capacity'
++import { MemoryLayersSummary } from './memory-layers'
++
++function layers(provider: ProviderMemoryLayer, over: Partial<MemoryLayers> = {}): MemoryLayers {
++  return {
++    user: { state: 'ok', chars: 550, char_limit: 1375, entries: 6 },
++    memory: { state: 'disabled', chars: 420, char_limit: 2200, entries: 3 },
++    provider,
++    ...over
++  }
++}
++
++const FACTS: ProviderMemoryLayer = {
++  state: 'ok',
++  name: 'holographic-semantic',
++  items: 56,
++  storage_bytes: 180224,
++  budgets: [
++    {
++      key: 'catalog',
++      label: 'Fact catalog',
++      unit: 'estimated tokens',
++      enabled: true,
++      used: 1170,
++      limit: 3000,
++      listed: 54,
++      eligible: 56
++    }
++  ]
++}
++
++// The ListRow whose title is `title`, so assertions read one layer, not the card.
++function row(title: string): HTMLElement {
++  const card = screen.getByTestId('memory-capacity')
++  const label = within(card).getByText(title)
++  const container = [...card.children].find(child => child.contains(label))
++
++  if (!(container instanceof HTMLElement)) {
++    throw new Error(`no row titled ${title}`)
++  }
++
++  return container
++}
++
++afterEach(cleanup)
++
++describe('memory capacity', () => {
++  it('shows each layer on its own: the built-in files against their caps, the store as a count and a size', () => {
++    render(<MemoryCapacity layers={layers(FACTS)} />)
++
++    expect(within(row('USER.md')).getByText('550 / 1,375 characters · 40%')).toBeTruthy()
++    expect(within(row('USER.md')).getByText('6 entries')).toBeTruthy()
++    expect(within(row('Fact store')).getByText('56 active facts · 176.0 KB')).toBeTruthy()
++  })
++
++  it('gives the fact store no ceiling: no percentage and no meter', () => {
++    render(<MemoryCapacity layers={layers(FACTS)} />)
++
++    expect(row('Fact store').textContent).not.toContain('%')
++    expect(within(row('Fact store')).queryByRole('progressbar')).toBeNull()
++    // Meters exist only where something enforces a limit: USER.md's cap and the provider's catalog budget.
++    expect(screen.getAllByRole('progressbar')).toHaveLength(2)
++  })
++
++  it('shows the catalog by the provider\'s own budget, and says it is an estimate', () => {
++    render(<MemoryCapacity layers={layers(FACTS)} />)
++
++    const catalog = row('Fact catalog')
++
++    expect(within(catalog).getByText('1,170 / 3,000 estimated tokens · 39%')).toBeTruthy()
++    expect(within(catalog).getByText(/54 of 56 eligible facts listed/)).toBeTruthy()
++    expect(within(catalog).getByText(/not what a model was sent or billed/)).toBeTruthy()
++  })
++
++  it('says off, empty, unreadable and not reported apart, never as zero', () => {
++    const cases: [ProviderMemoryLayer, string, RegExp][] = [
++      [{ state: 'disabled', name: '' }, 'Off', /No memory provider is active/],
++      [{ state: 'empty', name: 'p', items: 0 }, 'Empty', /p holds no facts yet/],
++      [{ state: 'unavailable', name: 'p' }, 'Unreadable', /p could not be read/],
++      [{ state: 'unsupported', name: 'p' }, 'Not reported', /p does not report what it stores/]
++    ]
++
++    for (const [provider, pill, description] of cases) {
++      render(<MemoryCapacity layers={layers(provider)} />)
++      expect(within(row('Fact store')).getByText(pill)).toBeTruthy()
++      expect(within(row('Fact store')).getByText(description)).toBeTruthy()
++      expect(row('Fact store').textContent).not.toMatch(/\d/)
++      cleanup()
++    }
++  })
++
++  it('keeps a switched-off file distinct from an empty and an unreadable one', () => {
++    render(
++      <MemoryCapacity
++        layers={layers(FACTS, { user: { state: 'unavailable', chars: 0, char_limit: 1375, entries: 0 } })}
++      />
++    )
++
++    // Off: what is on disk is named, and no usage percentage is claimed for a layer no session loads.
++    expect(within(row('MEMORY.md')).getByText('Off')).toBeTruthy()
++    expect(within(row('MEMORY.md')).getByText(/not loaded into sessions. 3 entries/)).toBeTruthy()
++    expect(row('MEMORY.md').textContent).not.toContain('%')
++    expect(within(row('USER.md')).getByText('Unreadable')).toBeTruthy()
++    cleanup()
++
++    render(
++      <MemoryCapacity layers={layers(FACTS, { memory: { state: 'empty', chars: 0, char_limit: 2200, entries: 0 } })} />
++    )
++    expect(within(row('MEMORY.md')).getByText('Empty')).toBeTruthy()
++  })
++
++  it('shows a budget that is switched off as off, not as 0 used', () => {
++    const off = { ...FACTS, budgets: [{ ...FACTS.budgets![0], enabled: false, used: 0 }] }
++
++    render(<MemoryCapacity layers={layers(off)} />)
++
++    expect(within(row('Fact catalog')).getByText('Off')).toBeTruthy()
++    expect(row('Fact catalog').textContent).not.toMatch(/\d/)
++  })
++
++  it('appears in the Memory Layers summary, which then says which built-in file is switched off', () => {
++    render(
++      <MemoryLayersSummary
++        status={{ active: 'holographic-semantic', providers: [], builtin_files: { memory: 420, user: 550 }, layers: layers(FACTS) }}
++      />
++    )
++
++    expect(within(row('USER.md')).getByText('550 / 1,375 characters · 40%')).toBeTruthy()
++    // Maintenance passes no config draft: the pill follows the backend instead of claiming "On by default".
++    expect(screen.getByText('USER.md only')).toBeTruthy()
++    expect(screen.queryByText('On by default')).toBeNull()
++  })
++
++  it('reads a backend that predates the report as not reported, not as empty', () => {
++    render(<MemoryCapacity layers={undefined} />)
++
++    expect(within(row('Memory usage')).getByText('Not reported')).toBeTruthy()
++    expect(screen.queryByText('USER.md')).toBeNull()
++  })
++})
+diff --git a/apps/desktop/src/app/settings/memory/memory-capacity.tsx b/apps/desktop/src/app/settings/memory/memory-capacity.tsx
+new file mode 100644
+index 00000000..3947d65c
+--- /dev/null
++++ b/apps/desktop/src/app/settings/memory/memory-capacity.tsx
+@@ -0,0 +1,170 @@
++import type { ReactNode } from 'react'
++
++import { Progress } from '@/components/ui/progress'
++import { useI18n } from '@/i18n'
++import type { MemoryCapacityTranslations } from '@/i18n/types_memory_capacity'
++import type {
++  BuiltinMemoryLayer,
++  MemoryBudget,
++  MemoryLayers,
++  MemoryLayerState,
++  ProviderMemoryLayer
++} from '@/types/memory-layers'
++
++import { ListRow, Pill } from '../primitives'
++
++type Capacity = MemoryCapacityTranslations
++
++const STATE_TONE: Record<Exclude<MemoryLayerState, 'ok'>, 'destructive' | 'muted'> = {
++  disabled: 'muted',
++  empty: 'muted',
++  unavailable: 'destructive',
++  unsupported: 'muted'
++}
++
++const count = (value: number) => value.toLocaleString()
++
++export function formatBytes(size: number): string {
++  if (size <= 0) {
++    return ''
++  }
++
++  if (size >= 1024 * 1024) {
++    return `${(size / (1024 * 1024)).toFixed(1)} MB`
++  }
++
++  if (size >= 1024) {
++    return `${(size / 1024).toFixed(1)} KB`
++  }
++
++  return `${size} B`
++}
++
++function StatePill({ c, state }: { c: Capacity; state: Exclude<MemoryLayerState, 'ok'> }) {
++  return <Pill tone={STATE_TONE[state]}>{c.state[state]}</Pill>
++}
++
++/** Used against a limit something enforces. No limit, no bar and no percentage. */
++function Meter({ label, limit, used }: { label: string; limit: number; used: number }) {
++  if (limit <= 0) {
++    return <span className="text-[length:var(--conversation-caption-font-size)]">{label}</span>
++  }
++
++  return (
++    <div className="grid w-full min-w-40 gap-1">
++      <span className="text-[length:var(--conversation-caption-font-size)] text-(--ui-text-secondary)">
++        {label} · {Math.round((used / limit) * 100)}%
++      </span>
++      <Progress aria-label={label} destructive={used > limit} size="sm" value={used / limit} />
++    </div>
++  )
++}
++
++function BuiltinRow({ c, layer, title }: { c: Capacity; layer: BuiltinMemoryLayer; title: string }) {
++  const description: Record<MemoryLayerState, ReactNode> = {
++    ok: c.entries(layer.entries),
++    disabled: layer.entries > 0 ? `${c.disabledDesc} ${c.entries(layer.entries)}.` : c.disabledDesc,
++    empty: c.emptyDesc,
++    unavailable: c.unavailableDesc,
++    unsupported: c.unavailableDesc
++  }
++
++  return (
++    <ListRow
++      action={
++        layer.state === 'ok' ? (
++          <Meter label={c.chars(count(layer.chars), count(layer.char_limit))} limit={layer.char_limit} used={layer.chars} />
++        ) : (
++          <StatePill c={c} state={layer.state} />
++        )
++      }
++      description={description[layer.state]}
++      title={<span className="font-mono">{title}</span>}
++    />
++  )
++}
++
++function BudgetRow({ budget, c }: { budget: MemoryBudget; c: Capacity }) {
++  const listed =
++    budget.listed !== undefined && budget.eligible !== undefined
++      ? `${c.budgetListed(count(budget.listed), count(budget.eligible))}. `
++      : ''
++
++  return (
++    <ListRow
++      action={
++        budget.enabled ? (
++          <Meter
++            label={c.budgetUsed(count(budget.used), count(budget.limit), budget.unit ?? '')}
++            limit={budget.limit}
++            used={budget.used}
++          />
++        ) : (
++          <StatePill c={c} state="disabled" />
++        )
++      }
++      description={budget.enabled ? `${listed}${c.budgetNote}` : undefined}
++      title={budget.label ?? budget.key ?? ''}
++    />
++  )
++}
++
++function ProviderRow({ c, layer }: { c: Capacity; layer: ProviderMemoryLayer }) {
++  const description: Record<MemoryLayerState, string> = {
++    ok: c.factStoreDesc,
++    disabled: c.noProviderDesc,
++    empty: c.providerEmptyDesc(layer.name),
++    unavailable: c.providerUnavailableDesc(layer.name),
++    unsupported: c.providerUnsupportedDesc(layer.name)
++  }
++
++  const reported = [
++    layer.items !== undefined ? c.facts(count(layer.items)) : '',
++    // A size, never a fill level: the store has no ceiling to measure it against.
++    layer.storage_bytes !== undefined ? formatBytes(layer.storage_bytes) : ''
++  ].filter(Boolean)
++
++  return (
++    <ListRow
++      action={
++        layer.state === 'ok' ? (
++          <span className="text-[length:var(--conversation-caption-font-size)] text-(--ui-text-secondary)">
++            {reported.join(' · ')}
++          </span>
++        ) : (
++          <StatePill c={c} state={layer.state} />
++        )
++      }
++      description={description[layer.state]}
++      title={c.factStore}
++    />
++  )
++}
++
++/** How much each memory layer carries: USER.md and MEMORY.md against their
++ *  character caps, the provider's store as a count and a size, and any budget
++ *  the provider enforces. `layers` is undefined on a backend that predates the
++ *  report, which reads as not reported rather than as empty. */
++export function MemoryCapacity({ layers }: { layers: MemoryLayers | undefined }) {
++  const { t } = useI18n()
++  const c = t.memoryCapacity
++
++  if (!layers) {
++    return (
++      <div data-testid="memory-capacity">
++        <ListRow action={<StatePill c={c} state="unsupported" />} description={c.olderBackendDesc} title={c.usage} />
++      </div>
++    )
++  }
++
++  return (
++    <div className="grid gap-1" data-testid="memory-capacity">
++      <BuiltinRow c={c} layer={layers.user} title="USER.md" />
++      <BuiltinRow c={c} layer={layers.memory} title="MEMORY.md" />
++      <ProviderRow c={c} layer={layers.provider} />
++      {(layers.provider.budgets ?? []).map((budget, index) => (
++        <BudgetRow budget={budget} c={c} key={budget.key ?? index} />
++      ))}
++    </div>
++  )
++}
+diff --git a/apps/desktop/src/app/settings/memory/memory-layers.tsx b/apps/desktop/src/app/settings/memory/memory-layers.tsx
+index 3785bf8e..1528b451 100644
+--- a/apps/desktop/src/app/settings/memory/memory-layers.tsx
++++ b/apps/desktop/src/app/settings/memory/memory-layers.tsx
+@@ -7,10 +7,13 @@ import { useI18n } from '@/i18n'
+ import type { MemoryLayersTranslations } from '@/i18n/types_memory_layers'
+ import { $memoryStatusRevision } from '@/store/memory-status'
+ import type { MemoryProviderStatus, MemoryStatusResponse } from '@/types/hermes'
++import type { MemoryLayers } from '@/types/memory-layers'
+ 
+ import { isExternalMemoryProvider } from '../helpers'
+ import { ListRow, Pill } from '../primitives'
+ 
++import { MemoryCapacity } from './memory-capacity'
++
+ const STATUS_TONE: Record<MemoryProviderStatus, 'destructive' | 'success' | 'warn'> = {
+   missing: 'destructive',
+   needs_config: 'warn',
+@@ -89,6 +92,11 @@ function activeDescription(m: MemoryLayersTranslations, row: null | ProviderRow)
+   return row.status === 'ready' ? m.providerDesc(row.name) : m.providerNotReadyDesc(row.name)
+ }
+ 
++// Where no config draft is at hand (Maintenance), the backend's own answer says which files are switched on.
++function builtinFromLayers(layers?: MemoryLayers): BuiltinToggles | undefined {
++  return layers && { memory: layers.memory.state !== 'disabled', user: layers.user.state !== 'disabled' }
++}
++
+ function builtinPill(m: MemoryLayersTranslations, builtin?: BuiltinToggles) {
+   if (!builtin) {
+     return <Pill tone="success">{m.onByDefault}</Pill>
+@@ -150,7 +158,12 @@ export function MemoryLayersSummary({ builtin, onRetry, provider, status, status
+           title={m.statusUnavailable}
+         />
+       ) : null}
+-      <ListRow action={builtinPill(m, builtin)} description={m.builtinDesc} title={m.builtinLayer} />
++      <ListRow
++        action={builtinPill(m, builtin ?? builtinFromLayers(status?.layers))}
++        description={m.builtinDesc}
++        title={m.builtinLayer}
++      />
++      {status ? <MemoryCapacity layers={status.layers} /> : null}
+     </div>
+   )
+ }
+diff --git a/apps/desktop/src/i18n/ar.ts b/apps/desktop/src/i18n/ar.ts
+index 589e4d0c..5bcc80e2 100644
+--- a/apps/desktop/src/i18n/ar.ts
++++ b/apps/desktop/src/i18n/ar.ts
+@@ -9,6 +9,7 @@ import { arCommon } from './ar_common'
+ import { arConnectors } from './ar_connectors'
+ import { arDiagnostics } from './ar_diagnostics'
+ import { arFirstRun } from './ar_first_run'
++import { arMemoryCapacity } from './ar_memory_capacity'
+ import { arSettings } from './ar_settings'
+ import { defineLocale, type TranslationOverrides } from './define-locale'
+ 
+@@ -93,6 +94,7 @@ export const arOverrides = {
+       signInFailed: 'تعذّر الاتصال. انقر لإعادة المحاولة'
+     }
+   },
++  memoryCapacity: arMemoryCapacity,
+   sharedMetrics: arCommon.sharedMetrics,
+   firstRun: arFirstRun,
+   externalOpenFailed: arChrome.externalOpenFailed,
+diff --git a/apps/desktop/src/i18n/ar_memory_capacity.ts b/apps/desktop/src/i18n/ar_memory_capacity.ts
+new file mode 100644
+index 00000000..63df321d
+--- /dev/null
++++ b/apps/desktop/src/i18n/ar_memory_capacity.ts
+@@ -0,0 +1,27 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const arMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'استخدام الذاكرة',
++  factStore: 'مخزن الحقائق',
++  chars: (used, limit) => `${used} / ${limit} حرف`,
++  entries: count => `${count} إدخال`,
++  facts: count => `${count} حقيقة نشطة`,
++  state: {
++    disabled: 'متوقف',
++    empty: 'فارغ',
++    unavailable: 'تعذّرت القراءة',
++    unsupported: 'غير مُبلَّغ عنه'
++  },
++  disabledDesc: 'متوقف: يبقى محتواه على القرص ولا يُحمَّل في الجلسات.',
++  emptyDesc: 'لم يُخزَّن شيء بعد.',
++  unavailableDesc: 'الملف موجود لكن تعذّرت قراءته.',
++  factStoreDesc: 'تُستدعى عند الحاجة. لا يوجد حد للحجم ليمتلئ: المراجعة تُبقيه دقيقًا لا صغيرًا.',
++  noProviderDesc: 'لا يوجد مزوّد ذاكرة نشط، لذلك لا يوجد مخزن حقائق.',
++  providerEmptyDesc: name => `لا يحتوي ${name} على أي حقائق بعد.`,
++  providerUnavailableDesc: name => `تعذّرت قراءة ${name}.`,
++  providerUnsupportedDesc: name => `لا يبلّغ ${name} عمّا يخزّنه.`,
++  olderBackendDesc: 'هذا الإصدار من Hermes لا يبلّغ عن استخدام الذاكرة. حدّث Hermes لعرضه.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `أُدرجت ${listed} من ${eligible} حقيقة مؤهلة`,
++  budgetNote: 'هذا تقدير المزوّد نفسه لهذا النص، وليس ما أُرسل إلى النموذج أو ما تمت فوترته.'
++}
+diff --git a/apps/desktop/src/i18n/de.ts b/apps/desktop/src/i18n/de.ts
+index efaf0c9d..1159a710 100644
+--- a/apps/desktop/src/i18n/de.ts
++++ b/apps/desktop/src/i18n/de.ts
+@@ -11,6 +11,7 @@ import { deErrorLayers } from './de_error_layers'
+ import { deFirstRun } from './de_first_run'
+ import { deGatewayHost } from './de_gateway_host'
+ import { deLocalModels } from './de_local_models'
++import { deMemoryCapacity } from './de_memory_capacity'
+ import { deMemoryLayers } from './de_memory_layers'
+ import { deModelMenu } from './de_model_menu'
+ import { deModelSettings } from './de_model_settings'
+@@ -34,6 +35,7 @@ export const deOverrides = {
+     lookupFailed: "Diese Gruppe konnte auf dem Gateway nicht gefunden werden. Versuche es erneut.",
+     missing: "Dieser Gruppenchat existiert nicht mehr."
+   },
++  memoryCapacity: deMemoryCapacity,
+   sharedMetrics: deSharedMetrics,
+   firstRun: deFirstRun,
+   intro: introDe,
+diff --git a/apps/desktop/src/i18n/de_memory_capacity.ts b/apps/desktop/src/i18n/de_memory_capacity.ts
+new file mode 100644
+index 00000000..5cf26d91
+--- /dev/null
++++ b/apps/desktop/src/i18n/de_memory_capacity.ts
+@@ -0,0 +1,30 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const deMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'Speichernutzung',
++  factStore: 'Faktenspeicher',
++  chars: (used, limit) => `${used} / ${limit} Zeichen`,
++  entries: count => (count === 1 ? '1 Eintrag' : `${count} Einträge`),
++  facts: count => `${count} aktive Fakten`,
++  state: {
++    disabled: 'Aus',
++    empty: 'Leer',
++    unavailable: 'Nicht lesbar',
++    unsupported: 'Nicht gemeldet'
++  },
++  disabledDesc: 'Ausgeschaltet: Der Inhalt bleibt auf der Festplatte und wird nicht in Sitzungen geladen.',
++  emptyDesc: 'Noch nichts gespeichert.',
++  unavailableDesc: 'Die Datei existiert, konnte aber nicht gelesen werden.',
++  factStoreDesc:
++    'Wird abgerufen, wenn es passt. Es gibt keine Größengrenze, die sich füllt: Eine Überprüfung hält ihn korrekt, nicht klein.',
++  noProviderDesc: 'Kein Speicheranbieter ist aktiv, daher gibt es keinen Faktenspeicher.',
++  providerEmptyDesc: name => `${name} enthält noch keine Fakten.`,
++  providerUnavailableDesc: name => `${name} konnte nicht gelesen werden.`,
++  providerUnsupportedDesc: name => `${name} meldet nicht, was es speichert.`,
++  olderBackendDesc:
++    'Diese Hermes-Version meldet keine Speichernutzung. Aktualisiere Hermes, um sie zu sehen.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `${listed} von ${eligible} geeigneten Fakten aufgeführt`,
++  budgetNote:
++    'Die eigene Schätzung des Anbieters für diesen Text. Sie ist nicht das, was an ein Modell gesendet oder abgerechnet wurde.'
++}
+diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
+index 3474ae69..99eb4a9a 100644
+--- a/apps/desktop/src/i18n/en.ts
++++ b/apps/desktop/src/i18n/en.ts
+@@ -18,6 +18,7 @@ import { enExternalOpenFailed } from './en_external_open'
+ import { enFirstRun } from './en_first_run'
+ import { enGatewayHost } from './en_gateway_host'
+ import { enLocalModels } from './en_local_models'
++import { enMemoryCapacity } from './en_memory_capacity'
+ import { enMemoryLayers } from './en_memory_layers'
+ import { enModelMenu } from './en_model_menu'
+ import { enModelSettings } from './en_model_settings'
+@@ -38,6 +39,7 @@ import type { Translations } from './types'
+ export const en: Translations = {
+   externalOpenFailed: enExternalOpenFailed,
+   sharedMetrics: enSharedMetrics,
++  memoryCapacity: enMemoryCapacity,
+   appTour: enAppTour,
+   firstRun: enFirstRun,
+   // English editorial copy stays in the shipped JSONL; other locales override it.
+diff --git a/apps/desktop/src/i18n/en_memory_capacity.ts b/apps/desktop/src/i18n/en_memory_capacity.ts
+new file mode 100644
+index 00000000..5117209e
+--- /dev/null
++++ b/apps/desktop/src/i18n/en_memory_capacity.ts
+@@ -0,0 +1,27 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const enMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'Memory usage',
++  factStore: 'Fact store',
++  chars: (used, limit) => `${used} / ${limit} characters`,
++  entries: count => (count === 1 ? '1 entry' : `${count} entries`),
++  facts: count => `${count} active facts`,
++  state: {
++    disabled: 'Off',
++    empty: 'Empty',
++    unavailable: 'Unreadable',
++    unsupported: 'Not reported'
++  },
++  disabledDesc: 'Switched off: what it holds stays on disk and is not loaded into sessions.',
++  emptyDesc: 'Nothing stored yet.',
++  unavailableDesc: 'The file exists but could not be read.',
++  factStoreDesc: 'Recalled when relevant. It has no size limit to fill: a review keeps it accurate, not small.',
++  noProviderDesc: 'No memory provider is active, so there is no fact store.',
++  providerEmptyDesc: name => `${name} holds no facts yet.`,
++  providerUnavailableDesc: name => `${name} could not be read.`,
++  providerUnsupportedDesc: name => `${name} does not report what it stores.`,
++  olderBackendDesc: 'This Hermes version does not report memory usage. Update Hermes to see it.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `${listed} of ${eligible} eligible facts listed`,
++  budgetNote: 'The provider’s own estimate of this text. It is not what a model was sent or billed.'
++}
+diff --git a/apps/desktop/src/i18n/es.ts b/apps/desktop/src/i18n/es.ts
+index 5743b2de..462e4da0 100644
+--- a/apps/desktop/src/i18n/es.ts
++++ b/apps/desktop/src/i18n/es.ts
+@@ -12,6 +12,7 @@ import { esErrorLayers } from './es_error_layers'
+ import { esFirstRun } from './es_first_run'
+ import { esGatewayHost } from './es_gateway_host'
+ import { esLocalModels } from './es_local_models'
++import { esMemoryCapacity } from './es_memory_capacity'
+ import { esMemoryLayers } from './es_memory_layers'
+ import { esModelMenu } from './es_model_menu'
+ import { esModelSettings } from './es_model_settings'
+@@ -34,6 +35,7 @@ export const esOverrides = {
+     lookupFailed: "No se pudo encontrar este grupo en la pasarela. Inténtalo de nuevo.",
+     missing: "Este chat de grupo ya no existe."
+   },
++  memoryCapacity: esMemoryCapacity,
+   sharedMetrics: esSharedMetrics,
+   firstRun: esFirstRun,
+   intro: introEs,
+diff --git a/apps/desktop/src/i18n/es_memory_capacity.ts b/apps/desktop/src/i18n/es_memory_capacity.ts
+new file mode 100644
+index 00000000..e78e2f20
+--- /dev/null
++++ b/apps/desktop/src/i18n/es_memory_capacity.ts
+@@ -0,0 +1,29 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const esMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'Uso de la memoria',
++  factStore: 'Almacén de hechos',
++  chars: (used, limit) => `${used} / ${limit} caracteres`,
++  entries: count => (count === 1 ? '1 entrada' : `${count} entradas`),
++  facts: count => `${count} hechos activos`,
++  state: {
++    disabled: 'Desactivado',
++    empty: 'Vacío',
++    unavailable: 'Ilegible',
++    unsupported: 'No informado'
++  },
++  disabledDesc: 'Desactivado: su contenido sigue en el disco y no se carga en las sesiones.',
++  emptyDesc: 'Aún no hay nada guardado.',
++  unavailableDesc: 'El archivo existe, pero no se pudo leer.',
++  factStoreDesc:
++    'Se recuerdan cuando son relevantes. No hay un límite de tamaño que llenar: la revisión lo mantiene preciso, no pequeño.',
++  noProviderDesc: 'No hay ningún proveedor de memoria activo, así que no hay almacén de hechos.',
++  providerEmptyDesc: name => `${name} aún no contiene hechos.`,
++  providerUnavailableDesc: name => `No se pudo leer ${name}.`,
++  providerUnsupportedDesc: name => `${name} no informa de lo que almacena.`,
++  olderBackendDesc: 'Esta versión de Hermes no informa del uso de la memoria. Actualiza Hermes para verlo.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `${listed} de ${eligible} hechos aptos listados`,
++  budgetNote:
++    'Es la estimación del propio proveedor para este texto. No es lo que se envió a un modelo ni lo que se facturó.'
++}
+diff --git a/apps/desktop/src/i18n/fr.ts b/apps/desktop/src/i18n/fr.ts
+index 2a40909b..9ef67628 100644
+--- a/apps/desktop/src/i18n/fr.ts
++++ b/apps/desktop/src/i18n/fr.ts
+@@ -12,6 +12,7 @@ import { frErrorLayers } from './fr_error_layers'
+ import { frFirstRun } from './fr_first_run'
+ import { frGatewayHost } from './fr_gateway_host'
+ import { frLocalModels } from './fr_local_models'
++import { frMemoryCapacity } from './fr_memory_capacity'
+ import { frMemoryLayers } from './fr_memory_layers'
+ import { frModelMenu } from './fr_model_menu'
+ import { frModelSettings } from './fr_model_settings'
+@@ -34,6 +35,7 @@ export const frOverrides = {
+     lookupFailed: "Impossible de retrouver ce groupe sur la passerelle. Réessayez.",
+     missing: "Cette discussion de groupe n’existe plus."
+   },
++  memoryCapacity: frMemoryCapacity,
+   sharedMetrics: frSharedMetrics,
+   firstRun: frFirstRun,
+   intro: introFr,
+diff --git a/apps/desktop/src/i18n/fr_memory_capacity.ts b/apps/desktop/src/i18n/fr_memory_capacity.ts
+new file mode 100644
+index 00000000..ec217198
+--- /dev/null
++++ b/apps/desktop/src/i18n/fr_memory_capacity.ts
+@@ -0,0 +1,30 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const frMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'Utilisation de la mémoire',
++  factStore: 'Base de faits',
++  chars: (used, limit) => `${used} / ${limit} caractères`,
++  entries: count => (count === 1 ? '1 entrée' : `${count} entrées`),
++  facts: count => `${count} faits actifs`,
++  state: {
++    disabled: 'Désactivé',
++    empty: 'Vide',
++    unavailable: 'Illisible',
++    unsupported: 'Non communiqué'
++  },
++  disabledDesc: 'Désactivé : son contenu reste sur le disque et n’est pas chargé dans les sessions.',
++  emptyDesc: 'Rien n’est encore enregistré.',
++  unavailableDesc: 'Le fichier existe mais n’a pas pu être lu.',
++  factStoreDesc:
++    'Rappelés quand ils sont pertinents. Il n’y a pas de limite de taille à remplir : la revue sert à la garder exacte, pas petite.',
++  noProviderDesc: 'Aucun fournisseur de mémoire n’est actif : il n’y a donc pas de base de faits.',
++  providerEmptyDesc: name => `${name} ne contient encore aucun fait.`,
++  providerUnavailableDesc: name => `${name} n’a pas pu être lu.`,
++  providerUnsupportedDesc: name => `${name} n’indique pas ce qu’il stocke.`,
++  olderBackendDesc:
++    'Cette version de Hermes n’indique pas l’utilisation de la mémoire. Mettez Hermes à jour pour la voir.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `${listed} faits listés sur ${eligible} éligibles`,
++  budgetNote:
++    'Estimation de ce texte par le fournisseur lui-même. Ce n’est pas ce qui a été envoyé à un modèle ni facturé.'
++}
+diff --git a/apps/desktop/src/i18n/ja.ts b/apps/desktop/src/i18n/ja.ts
+index 8e8af148..6b4eb7a1 100644
+--- a/apps/desktop/src/i18n/ja.ts
++++ b/apps/desktop/src/i18n/ja.ts
+@@ -13,6 +13,7 @@ import { jaErrorLayers } from './ja_error_layers'
+ import { jaFirstRun } from './ja_first_run'
+ import { jaGatewayHost } from './ja_gateway_host'
+ import { jaLocalModels } from './ja_local_models'
++import { jaMemoryCapacity } from './ja_memory_capacity'
+ import { jaMemoryLayers } from './ja_memory_layers'
+ import { jaModelMenu } from './ja_model_menu'
+ import { jaModelSettings } from './ja_model_settings'
+@@ -42,6 +43,7 @@ export const jaOverrides = {
+     copyUrl: 'リンクをコピー',
+     close: '閉じる'
+   },
++  memoryCapacity: jaMemoryCapacity,
+   sharedMetrics: jaSharedMetrics,
+   firstRun: jaFirstRun,
+   intro: introJa,
+diff --git a/apps/desktop/src/i18n/ja_memory_capacity.ts b/apps/desktop/src/i18n/ja_memory_capacity.ts
+new file mode 100644
+index 00000000..56d82c6d
+--- /dev/null
++++ b/apps/desktop/src/i18n/ja_memory_capacity.ts
+@@ -0,0 +1,28 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const jaMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'メモリ使用量',
++  factStore: 'ファクトストア',
++  chars: (used, limit) => `${used} / ${limit} 文字`,
++  entries: count => `${count} 件`,
++  facts: count => `有効なファクト ${count} 件`,
++  state: {
++    disabled: 'オフ',
++    empty: '空',
++    unavailable: '読み取り不可',
++    unsupported: '報告なし'
++  },
++  disabledDesc: 'オフです。内容はディスクに残りますが、セッションには読み込まれません。',
++  emptyDesc: 'まだ何も保存されていません。',
++  unavailableDesc: 'ファイルはありますが、読み取れませんでした。',
++  factStoreDesc:
++    '関連するときに想起されます。埋まる上限はありません。レビューの目的は小さくすることではなく、正確に保つことです。',
++  noProviderDesc: '有効なメモリプロバイダーがないため、ファクトストアはありません。',
++  providerEmptyDesc: name => `${name} にはまだファクトがありません。`,
++  providerUnavailableDesc: name => `${name} を読み取れませんでした。`,
++  providerUnsupportedDesc: name => `${name} は保存内容を報告しません。`,
++  olderBackendDesc: 'このバージョンの Hermes はメモリ使用量を報告しません。Hermes を更新すると表示されます。',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `対象のファクト ${eligible} 件中 ${listed} 件を掲載`,
++  budgetNote: 'プロバイダー自身によるこのテキストの見積もりです。モデルに送信された量や課金額ではありません。'
++}
+diff --git a/apps/desktop/src/i18n/ru.ts b/apps/desktop/src/i18n/ru.ts
+index ba9a2430..00e7797a 100644
+--- a/apps/desktop/src/i18n/ru.ts
++++ b/apps/desktop/src/i18n/ru.ts
+@@ -10,6 +10,7 @@ import { ruCronControl } from './ru_cron_control'
+ import { ruErrorCodes } from './ru_error_codes'
+ import { ruFirstRun } from './ru_first_run'
+ import { ruGatewayHost } from './ru_gateway_host'
++import { ruMemoryCapacity } from './ru_memory_capacity'
+ import { ruMemoryLayers } from './ru_memory_layers'
+ import { ruModelMenu } from './ru_model_menu'
+ import { ruModelSettings } from './ru_model_settings'
+@@ -34,6 +35,7 @@ export const ruOverrides = {
+   },
+   catalog: ruCatalog,
+   connectors: ruConnectors.connectors,
++  memoryCapacity: ruMemoryCapacity,
+   sharedMetrics: ruSharedMetrics,
+   firstRun: ruFirstRun,
+   sessionImport: ruConnectors.sessionImport,
+diff --git a/apps/desktop/src/i18n/ru_memory_capacity.ts b/apps/desktop/src/i18n/ru_memory_capacity.ts
+new file mode 100644
+index 00000000..04335b87
+--- /dev/null
++++ b/apps/desktop/src/i18n/ru_memory_capacity.ts
+@@ -0,0 +1,28 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const ruMemoryCapacity: MemoryCapacityTranslations = {
++  usage: 'Использование памяти',
++  factStore: 'Хранилище фактов',
++  chars: (used, limit) => `${used} / ${limit} символов`,
++  entries: count => `Записей: ${count}`,
++  facts: count => `Активных фактов: ${count}`,
++  state: {
++    disabled: 'Выкл.',
++    empty: 'Пусто',
++    unavailable: 'Не читается',
++    unsupported: 'Нет данных'
++  },
++  disabledDesc: 'Выключено: содержимое остаётся на диске и не загружается в сессии.',
++  emptyDesc: 'Пока ничего не сохранено.',
++  unavailableDesc: 'Файл существует, но прочитать его не удалось.',
++  factStoreDesc:
++    'Вспоминается, когда это уместно. Предела размера, который можно заполнить, нет: проверка нужна для точности, а не для уменьшения.',
++  noProviderDesc: 'Нет активного провайдера памяти, поэтому хранилища фактов нет.',
++  providerEmptyDesc: name => `В ${name} пока нет фактов.`,
++  providerUnavailableDesc: name => `Не удалось прочитать ${name}.`,
++  providerUnsupportedDesc: name => `${name} не сообщает, что хранит.`,
++  olderBackendDesc: 'Эта версия Hermes не сообщает об использовании памяти. Обновите Hermes, чтобы увидеть его.',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `В списке ${listed} из ${eligible} подходящих фактов`,
++  budgetNote: 'Это собственная оценка провайдера для этого текста, а не то, что было отправлено модели или оплачено.'
++}
+diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
+index 959f89f0..cc6cb94a 100644
+--- a/apps/desktop/src/i18n/types.ts
++++ b/apps/desktop/src/i18n/types.ts
+@@ -22,6 +22,7 @@ import type { GatewayGroupOpenCopy, SkillDeepLinkCopy } from './types_deep_links
+ import type { ExternalOpenFailedCopy } from './types_external_open'
+ import type { FirstRunCopy } from './types_first_run'
+ import type { GatewayHostTranslations } from './types_gateway_host'
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
+ import type { MemoryLayersTranslations } from './types_memory_layers'
+ import type { ModelMenuTranslations } from './types_model_menu'
+ import type { ModelSettingsTranslations } from './types_model_settings'
+@@ -95,6 +96,7 @@ interface ModeOptionCopy {
+ export interface Translations extends NoticeTranslations {
+   /** Shared-metrics consent: first-run dialog + Settings › Safety toggles. */
+   sharedMetrics: SharedMetricsTranslations
++  memoryCapacity: MemoryCapacityTranslations
+   appTour: AppTourTranslations
+   firstRun: FirstRunCopy
+   externalOpenFailed: ExternalOpenFailedCopy
+diff --git a/apps/desktop/src/i18n/types_memory_capacity.ts b/apps/desktop/src/i18n/types_memory_capacity.ts
+new file mode 100644
+index 00000000..1a68cdef
+--- /dev/null
++++ b/apps/desktop/src/i18n/types_memory_capacity.ts
+@@ -0,0 +1,27 @@
++// Memory capacity by layer, in the Memory Layers summary (Settings > Memory &
++// Context, Command Center > Maintenance); `Translations.memoryCapacity`.
++export interface MemoryCapacityTranslations {
++  usage: string
++  factStore: string
++  chars: (used: string, limit: string) => string
++  entries: (count: number) => string
++  facts: (count: string) => string
++  state: {
++    disabled: string
++    empty: string
++    unavailable: string
++    unsupported: string
++  }
++  disabledDesc: string
++  emptyDesc: string
++  unavailableDesc: string
++  factStoreDesc: string
++  noProviderDesc: string
++  providerEmptyDesc: (name: string) => string
++  providerUnavailableDesc: (name: string) => string
++  providerUnsupportedDesc: (name: string) => string
++  olderBackendDesc: string
++  budgetUsed: (used: string, limit: string, unit: string) => string
++  budgetListed: (listed: string, eligible: string) => string
++  budgetNote: string
++}
+diff --git a/apps/desktop/src/i18n/zh-hant.ts b/apps/desktop/src/i18n/zh-hant.ts
+index 476dd9b7..56c12e9a 100644
+--- a/apps/desktop/src/i18n/zh-hant.ts
++++ b/apps/desktop/src/i18n/zh-hant.ts
+@@ -11,6 +11,7 @@ import { zhHantCommon } from './zh-hant_common'
+ import { zhHantConnectors } from './zh-hant_connectors'
+ import { zhHantDiagnostics } from './zh-hant_diagnostics'
+ import { zhHantFirstRun } from './zh-hant_first_run'
++import { zhHantMemoryCapacity } from './zh-hant_memory_capacity'
+ import { zhHantSettings } from './zh-hant_settings'
+ 
+ export const zhHantOverrides = {
+@@ -111,6 +112,7 @@ export const zhHantOverrides = {
+     copyUrl: '複製連結',
+     close: '關閉'
+   },
++  memoryCapacity: zhHantMemoryCapacity,
+   sharedMetrics: {
+     consentTitle: '分享使用統計？',
+     dialogTitle: '使用統計',
+diff --git a/apps/desktop/src/i18n/zh-hant_memory_capacity.ts b/apps/desktop/src/i18n/zh-hant_memory_capacity.ts
+new file mode 100644
+index 00000000..8e81a964
+--- /dev/null
++++ b/apps/desktop/src/i18n/zh-hant_memory_capacity.ts
+@@ -0,0 +1,27 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const zhHantMemoryCapacity: MemoryCapacityTranslations = {
++  usage: '記憶用量',
++  factStore: '事實庫',
++  chars: (used, limit) => `${used} / ${limit} 字元`,
++  entries: count => `${count} 筆`,
++  facts: count => `${count} 筆有效事實`,
++  state: {
++    disabled: '關閉',
++    empty: '空',
++    unavailable: '無法讀取',
++    unsupported: '未回報'
++  },
++  disabledDesc: '已關閉：內容仍保留在磁碟上，但不會載入工作階段。',
++  emptyDesc: '尚未儲存任何內容。',
++  unavailableDesc: '檔案存在，但無法讀取。',
++  factStoreDesc: '在相關時被回憶。它沒有需要填滿的容量上限：複查是為了保持準確，而不是為了變小。',
++  noProviderDesc: '目前沒有啟用記憶提供者，因此沒有事實庫。',
++  providerEmptyDesc: name => `${name} 尚未儲存任何事實。`,
++  providerUnavailableDesc: name => `無法讀取 ${name}。`,
++  providerUnsupportedDesc: name => `${name} 不回報它儲存了什麼。`,
++  olderBackendDesc: '此版本的 Hermes 不回報記憶用量。更新 Hermes 後即可查看。',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `符合條件的 ${eligible} 筆事實中已列出 ${listed} 筆`,
++  budgetNote: '這是提供者對這段文字的自行估算，不是實際傳送給模型或計費的數量。'
++}
+diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
+index c14e1eb1..0cf36adf 100644
+--- a/apps/desktop/src/i18n/zh.ts
++++ b/apps/desktop/src/i18n/zh.ts
+@@ -12,6 +12,7 @@ import { zhErrorLayers } from './zh_error_layers'
+ import { zhFirstRun } from './zh_first_run'
+ import { zhGatewayHost } from './zh_gateway_host'
+ import { zhLocalModels } from './zh_local_models'
++import { zhMemoryCapacity } from './zh_memory_capacity'
+ import { zhMemoryLayers } from './zh_memory_layers'
+ import { zhModelMenu } from './zh_model_menu'
+ import { zhModelSettings } from './zh_model_settings'
+@@ -40,6 +41,7 @@ export const zhOverrides = {
+     copyUrl: '复制链接',
+     close: '关闭'
+   },
++  memoryCapacity: zhMemoryCapacity,
+   sharedMetrics: zhSharedMetrics,
+   firstRun: zhFirstRun,
+   intro: introZh,
+diff --git a/apps/desktop/src/i18n/zh_memory_capacity.ts b/apps/desktop/src/i18n/zh_memory_capacity.ts
+new file mode 100644
+index 00000000..38b22f5b
+--- /dev/null
++++ b/apps/desktop/src/i18n/zh_memory_capacity.ts
+@@ -0,0 +1,27 @@
++import type { MemoryCapacityTranslations } from './types_memory_capacity'
++
++export const zhMemoryCapacity: MemoryCapacityTranslations = {
++  usage: '记忆用量',
++  factStore: '事实库',
++  chars: (used, limit) => `${used} / ${limit} 字符`,
++  entries: count => `${count} 条`,
++  facts: count => `${count} 条有效事实`,
++  state: {
++    disabled: '关闭',
++    empty: '空',
++    unavailable: '无法读取',
++    unsupported: '未报告'
++  },
++  disabledDesc: '已关闭：内容仍保留在磁盘上，但不会载入会话。',
++  emptyDesc: '尚未存储任何内容。',
++  unavailableDesc: '文件存在，但无法读取。',
++  factStoreDesc: '在相关时被回忆。它没有需要填满的容量上限：复查是为了保持准确，而不是为了变小。',
++  noProviderDesc: '当前没有启用记忆提供方，因此没有事实库。',
++  providerEmptyDesc: name => `${name} 还没有存储任何事实。`,
++  providerUnavailableDesc: name => `无法读取 ${name}。`,
++  providerUnsupportedDesc: name => `${name} 不报告它存储了什么。`,
++  olderBackendDesc: '此版本的 Hermes 不报告记忆用量。更新 Hermes 后即可查看。',
++  budgetUsed: (used, limit, unit) => `${used} / ${limit} ${unit}`,
++  budgetListed: (listed, eligible) => `符合条件的 ${eligible} 条事实中已列出 ${listed} 条`,
++  budgetNote: '这是提供方对这段文本的自行估算，不是实际发送给模型或计费的数量。'
++}
+diff --git a/apps/desktop/src/types/hermes.ts b/apps/desktop/src/types/hermes.ts
+index 91c8fc26..40813b2c 100644
+--- a/apps/desktop/src/types/hermes.ts
++++ b/apps/desktop/src/types/hermes.ts
+@@ -2,6 +2,8 @@ import type { ConnectionRequestPayload, FreeTierChallengePayload, ToolLabel } fr
+ 
+ import type { ToolResultMetadata } from '@/lib/tool-result-metadata'
+ 
++import type { MemoryLayers } from './memory-layers'
++
+ export type StoredToolCallLabels = Record<string, ToolLabel[]>
+ 
+ export interface ConfigFieldSchema {
+@@ -1899,6 +1901,8 @@ export interface MemoryStatusResponse {
+     status: MemoryProviderStatus
+   }[]
+   builtin_files: { memory: number; user: number }
++  /** Capacity by layer; absent from a backend older than the report. */
++  layers?: MemoryLayers
+ }
+ 
+ /** `GET /api/curator` — background skill-curator status. */
+diff --git a/apps/desktop/src/types/memory-layers.ts b/apps/desktop/src/types/memory-layers.ts
+new file mode 100644
+index 00000000..6a27ac91
+--- /dev/null
++++ b/apps/desktop/src/types/memory-layers.ts
+@@ -0,0 +1,41 @@
++// Memory capacity by layer: `GET /api/memory` → `layers`.
++
++/** Never all "zero": `disabled` is switched off, `empty` holds nothing,
++ *  `unavailable` could not be read, `unsupported` reports nothing. */
++export type MemoryLayerState = 'disabled' | 'empty' | 'ok' | 'unavailable' | 'unsupported'
++
++/** USER.md or MEMORY.md against the character cap Hermes enforces on writes. */
++export interface BuiltinMemoryLayer {
++  state: MemoryLayerState
++  chars: number
++  char_limit: number
++  entries: number
++}
++
++/** A budget the provider itself enforces, counted the way it enforces it. */
++export interface MemoryBudget {
++  key?: string
++  label?: string
++  /** e.g. "estimated tokens": the provider's own count, not model input. */
++  unit?: string
++  enabled: boolean
++  used: number
++  limit: number
++  listed?: number
++  eligible?: number
++}
++
++/** The active provider's store. No ceiling: only what the provider reports. */
++export interface ProviderMemoryLayer {
++  state: MemoryLayerState
++  name: string
++  items?: number
++  storage_bytes?: number
++  budgets?: MemoryBudget[]
++}
++
++export interface MemoryLayers {
++  user: BuiltinMemoryLayer
++  memory: BuiltinMemoryLayer
++  provider: ProviderMemoryLayer
++}
+diff --git a/hermes_cli/web_routers/memory_layers.py b/hermes_cli/web_routers/memory_layers.py
+new file mode 100644
+index 00000000..1f0dd45e
+--- /dev/null
++++ b/hermes_cli/web_routers/memory_layers.py
+@@ -0,0 +1,95 @@
++"""Memory capacity by layer, the ``layers`` of ``GET /api/memory``: USER.md, MEMORY.md and the provider's store.
++
++Only reads. Each layer carries its own state and only the limits something enforces.
++"""
++
++from __future__ import annotations
++
++import logging
++from typing import Any, Optional
++
++from hermes_cli.web_deps import late
++from hermes_cli.web_server_memory import _normalize_memory_provider_name
++
++_log = logging.getLogger("hermes_cli.web_server")
++
++# Late-bound so a test's monkeypatch on the owning module wins at call time.
++_load_memory_provider = late("_load_memory_provider", "hermes_cli.web_server_memory")
++get_hermes_home = late("get_hermes_home", "hermes_cli.config")
++builtin_memory_layers = late("builtin_memory_layers", "tools.memory_tool")
++
++_BUDGET_TEXT, _BUDGET_INT = ("key", "label", "unit"), ("used", "limit", "listed", "eligible")
++
++
++def _is_int(value: Any) -> bool:
++    return isinstance(value, int) and not isinstance(value, bool)
++
++
++def layer_state(enabled: bool, readable: bool, count: Optional[int]) -> str:
++    """``disabled`` (switched off), ``unavailable`` (could not be read), ``empty`` or ``ok``: never all "zero"."""
++    if not enabled:
++        return "disabled"
++    if not readable:
++        return "unavailable"
++    return "ok" if count else "empty"
++
++
++def active_provider(config: dict[str, Any]) -> str:
++    section = config.get("memory")
++    return _normalize_memory_provider_name(section.get("provider")) if isinstance(section, dict) else ""
++
++
++def provider_read(active: str, method: str) -> tuple[str, dict[str, Any]]:
++    """``(state, report)`` of the active provider's optional read *method*: ``disabled`` (no provider is
++    configured), ``unavailable`` (it did not load, or the read failed), ``unsupported`` (it reports nothing)."""
++    if not active:
++        return "disabled", {}
++    provider = _load_memory_provider(active, register_skills=False)
++    if provider is None:
++        return "unavailable", {}
++    try:
++        report = getattr(provider, method)(str(get_hermes_home()))
++    except Exception:  # health: allow BLE001 -- a plugin's read may raise anything; the layer then reads as unavailable
++        _log.warning("memory provider %s failed in %s()", active, method, exc_info=True)
++        return "unavailable", {}
++    return ("ok", report) if isinstance(report, dict) and report else ("unsupported", {})
++
++
++def _budget(raw: Any) -> Optional[dict[str, Any]]:
++    """One provider-enforced budget, or None when it does not say how much of what is used."""
++    if not isinstance(raw, dict) or not _is_int(raw.get("used")) or not _is_int(raw.get("limit")):
++        return None
++    budget: dict[str, Any] = {"enabled": raw.get("enabled") is not False}
++    budget.update({k: str(raw[k]) for k in _BUDGET_TEXT if raw.get(k)})
++    budget.update({k: raw[k] for k in _BUDGET_INT if _is_int(raw.get(k))})
++    return budget
++
++
++def builtin_layers(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
++    """USER.md and MEMORY.md as the store reads them, each with its ``state``."""
++    layers = builtin_memory_layers(config)
++    for layer in layers.values():
++        layer["state"] = layer_state(layer["enabled"], layer["readable"], len(layer["entries"]))
++    return layers
++
++
++def memory_layers(config: dict[str, Any]) -> dict[str, dict[str, Any]]:
++    """USER.md, MEMORY.md and the provider's store, each with its own state and only the limits something
++    enforces: the built-in files' character caps, and whatever budgets the provider reports."""
++    layers: dict[str, dict[str, Any]] = {
++        name: {"state": layer["state"], "chars": layer["chars"], "char_limit": layer["char_limit"],
++               "entries": len(layer["entries"])}
++        for name, layer in builtin_layers(config).items()
++    }
++    active = active_provider(config)
++    state, report = provider_read(active, "usage_report")
++    provider: dict[str, Any] = {"state": state, "name": active}
++    if state == "ok":
++        provider.update({k: report[k] for k in ("items", "storage_bytes") if _is_int(report.get(k))})
++        budgets = [b for b in map(_budget, report.get("budgets") or []) if b]
++        if budgets:
++            provider["budgets"] = budgets
++        if provider.get("items") == 0:
++            provider["state"] = "empty"
++    layers["provider"] = provider
++    return layers
+diff --git a/hermes_cli/web_routers/ops.py b/hermes_cli/web_routers/ops.py
+index 59c914a0..d8ef7848 100644
+--- a/hermes_cli/web_routers/ops.py
++++ b/hermes_cli/web_routers/ops.py
+@@ -34,6 +34,7 @@ from hermes_cli.web_routers._common import (
+     spawn_profile_action,
+ )
+ from hermes_cli.web_routers.files import stream_upload_to_path
++from hermes_cli.web_routers.memory_layers import memory_layers
+ 
+ _log = logging.getLogger("hermes_cli.web_server")
+ router = APIRouter()
+@@ -524,7 +525,8 @@ async def get_memory_status(profile: Optional[str] = None):
+         for fname, key in _MEMORY_FILES:
+             path = mem_dir / fname
+             files[key] = path.stat().st_size if path.exists() else 0
+-        return {"active": active, "providers": _discover_memory_provider_statuses(), "builtin_files": files}
++        return {"active": active, "providers": _discover_memory_provider_statuses(), "builtin_files": files,
++                "layers": memory_layers(cfg)}
+ 
+     return await config_scoped_to_thread(profile, _run)
+ 
+diff --git a/locales/_keys.desktop.json b/locales/_keys.desktop.json
+index 097f2029..fe155621 100644
+--- a/locales/_keys.desktop.json
++++ b/locales/_keys.desktop.json
+@@ -1958,6 +1958,27 @@
+     "language.saving",
+     "language.searchPlaceholder",
+     "language.switchTo",
++    "memoryCapacity.budgetListed",
++    "memoryCapacity.budgetNote",
++    "memoryCapacity.budgetUsed",
++    "memoryCapacity.chars",
++    "memoryCapacity.disabledDesc",
++    "memoryCapacity.emptyDesc",
++    "memoryCapacity.entries",
++    "memoryCapacity.factStore",
++    "memoryCapacity.factStoreDesc",
++    "memoryCapacity.facts",
++    "memoryCapacity.noProviderDesc",
++    "memoryCapacity.olderBackendDesc",
++    "memoryCapacity.providerEmptyDesc",
++    "memoryCapacity.providerUnavailableDesc",
++    "memoryCapacity.providerUnsupportedDesc",
++    "memoryCapacity.state.disabled",
++    "memoryCapacity.state.empty",
++    "memoryCapacity.state.unavailable",
++    "memoryCapacity.state.unsupported",
++    "memoryCapacity.unavailableDesc",
++    "memoryCapacity.usage",
+     "messaging.addListEntry",
+     "messaging.advanced",
+     "messaging.appliedLive",
+diff --git a/tests/hermes_cli/test_web_memory_layers.py b/tests/hermes_cli/test_web_memory_layers.py
+new file mode 100644
+index 00000000..9a17c0a7
+--- /dev/null
++++ b/tests/hermes_cli/test_web_memory_layers.py
+@@ -0,0 +1,157 @@
++"""``GET /api/memory`` capacity by layer, against a real temp ``HERMES_HOME``: synthetic MEMORY.md / USER.md and a
++synthetic provider plugin loaded through real discovery."""
++
++import json
++
++import hermes_yaml as yaml
++import pytest
++
++from hermes_cli import plugins as plugins_mod
++
++_LAYERSPROV = '''
++import json
++from pathlib import Path
++
++from agent.memory_provider import MemoryProvider
++
++
++class LayersProv(MemoryProvider):
++    """Reports what <hermes_home>/layersprov.json says it holds."""
++
++    @property
++    def name(self):
++        return "layersprov"
++
++    def is_available(self):
++        return True
++
++    def initialize(self, session_id, **kwargs):
++        pass
++
++    def get_tool_schemas(self):
++        return []
++
++    def usage_report(self, hermes_home):
++        data = json.loads(Path(hermes_home, "layersprov.json").read_text(encoding="utf-8"))
++        if data.get("broken"):
++            raise RuntimeError("store is locked")
++        return data.get("usage", {})
++
++
++def register(ctx):
++    ctx.register_memory_provider(LayersProv())
++'''
++
++_PLAINPROV = '''
++from agent.memory_provider import MemoryProvider
++
++
++class PlainProv(MemoryProvider):
++    """A provider written before the optional reads existed."""
++
++    @property
++    def name(self):
++        return "plainprov"
++
++    def is_available(self):
++        return True
++
++    def initialize(self, session_id, **kwargs):
++        pass
++
++    def get_tool_schemas(self):
++        return []
++
++
++def register(ctx):
++    ctx.register_memory_provider(PlainProv())
++'''
++
++_USAGE = {"items": 4, "storage_bytes": 180224, "budgets": [
++    {"key": "catalog", "label": "Fact catalog", "enabled": True, "used": 1170, "limit": 3000,
++     "unit": "estimated tokens", "listed": 3, "eligible": 4},
++    {"key": "made-up", "label": "no numbers"},  # says neither how much nor of what: not shown
++]}
++
++
++def _write_home(home, *, provider="layersprov", memory=None, data=None, user="Prefers replies in Chinese\n§\nWorks at Acme",
++                notes="Deploy from the release branch"):
++    (home / "memories").mkdir(parents=True, exist_ok=True)
++    (home / "memories" / "USER.md").write_text(user, encoding="utf-8")
++    (home / "memories" / "MEMORY.md").write_text(notes, encoding="utf-8")
++    for name, source in (("layersprov", _LAYERSPROV), ("plainprov", _PLAINPROV)):
++        (home / "plugins" / name).mkdir(parents=True, exist_ok=True)
++        (home / "plugins" / name / "__init__.py").write_text(source, encoding="utf-8")
++    (home / "layersprov.json").write_text(json.dumps(data if data is not None else {"usage": _USAGE}), encoding="utf-8")
++    (home / "config.yaml").write_text(yaml.safe_dump({"memory": {"provider": provider, **(memory or {})}}), encoding="utf-8")
++
++
++@pytest.fixture
++def home(_isolate_hermes_home):
++    from hermes_constants import get_hermes_home
++
++    plugins_mod._reset_plugin_managers_for_tests()
++    yield get_hermes_home()
++    plugins_mod._reset_plugin_managers_for_tests()
++
++
++@pytest.fixture
++def client(home):
++    from starlette.testclient import TestClient
++    from hermes_cli.web_server import _SESSION_HEADER_NAME, _SESSION_TOKEN, app
++
++    return TestClient(app, headers={_SESSION_HEADER_NAME: _SESSION_TOKEN})
++
++
++def test_each_layer_reports_its_own_usage_and_only_limits_something_enforces(home, client):
++    _write_home(home, memory={"user_char_limit": 500},
++                user="likes tea\n§\n  works remotely  \n§\nlikes tea\n§\n\n")  # a duplicate, padding, an empty entry
++    from tools.memory_tool import ENTRY_DELIMITER, load_on_disk_store
++
++    layers = client.get("/api/memory").json()["layers"]
++    store = load_on_disk_store()  # the store writes are checked against
++    assert layers["user"] == {"state": "ok", "chars": len(ENTRY_DELIMITER.join(store.user_entries)),
++                              "char_limit": 500, "entries": 2}
++    assert layers["user"]["chars"] < len((home / "memories" / "USER.md").read_text(encoding="utf-8"))  # not the file size
++    assert layers["memory"] == {"state": "ok", "chars": len("Deploy from the release branch"), "char_limit": 2200, "entries": 1}
++    # The provider's own numbers, passed on as given; a budget without numbers is not a budget.
++    assert layers["provider"] == {"state": "ok", "name": "layersprov", "items": 4, "storage_bytes": 180224, "budgets": [
++        {"enabled": True, "key": "catalog", "label": "Fact catalog", "unit": "estimated tokens", "used": 1170,
++         "limit": 3000, "listed": 3, "eligible": 4}]}
++    assert not {"limit", "char_limit", "percent"} & set(layers["provider"])  # no ceiling is invented for the store
++
++
++def test_off_empty_unreadable_and_unsupported_are_different_answers(home, client):
++    _write_home(home, memory={"memory_enabled": False}, user="", data={"usage": {"items": 0}})
++    (home / "memories" / "USER.md").unlink()
++    layers = client.get("/api/memory").json()["layers"]
++    assert layers["memory"]["state"] == "disabled" and layers["memory"]["chars"] > 0  # off, with what is on disk
++    assert layers["user"] == {"state": "empty", "chars": 0, "char_limit": 1375, "entries": 0}
++    assert layers["provider"] == {"state": "empty", "name": "layersprov", "items": 0}
++
++    (home / "memories" / "USER.md").write_bytes(b"\xff\xfe not utf-8 \xff")
++    (home / "layersprov.json").write_text(json.dumps({"broken": True}), encoding="utf-8")
++    layers = client.get("/api/memory").json()["layers"]
++    assert layers["user"]["state"] == "unavailable"
++    assert layers["provider"] == {"state": "unavailable", "name": "layersprov"}  # the provider's read failed
++
++
++@pytest.mark.parametrize("provider, expected", [
++    ("", {"state": "disabled", "name": ""}),  # no provider: no fact store
++    ("plainprov", {"state": "unsupported", "name": "plainprov"}),  # a provider without the optional read
++    ("no-such-provider", {"state": "unavailable", "name": "no-such-provider"}),  # configured but not loadable
++])
++def test_a_provider_that_reports_nothing_is_not_an_empty_store(home, client, provider, expected):
++    _write_home(home, provider=provider)
++    data = client.get("/api/memory").json()
++    assert data["layers"]["provider"] == expected
++    assert {"active", "providers", "builtin_files"} <= set(data)  # what older clients read is still there
++
++
++def test_each_profile_reports_its_own_layers(home, client):
++    _write_home(home)
++    _write_home(home / "profiles" / "work", provider="", user="Work profile: writes Rust", notes="")
++    work = client.get("/api/memory?profile=work").json()["layers"]
++    assert work["user"]["chars"] == len("Work profile: writes Rust") and work["provider"]["state"] == "disabled"
++    default = client.get("/api/memory?profile=default").json()["layers"]
++    assert default["user"]["entries"] == 2 and default["provider"]["name"] == "layersprov"
+diff --git a/tools/memory_tool.py b/tools/memory_tool.py
+index d90a7bdd..2787d2db 100644
+--- a/tools/memory_tool.py
++++ b/tools/memory_tool.py
+@@ -61,6 +61,23 @@ def load_on_disk_store() -> MemoryStore:
+     return store
+ 
+ 
++def builtin_memory_layers(config: Optional[dict[str, Any]] = None) -> dict[str, dict[str, Any]]:
++    """``{"memory" | "user": {"enabled", "readable", "entries", "chars", "char_limit"}}`` as the store would
++    load them: the same parse, de-duplication and count writes are refused by. A read for displays and
++    reviews, so unlike ``load_on_disk_store`` it creates no directory, logs nothing and scans nothing.
++    ``readable`` is False when the file exists but cannot be decoded."""
++    section = get_builtin_memory_config(config)
++    enabled = dict(zip(("memory", "user"), get_builtin_memory_store_flags(config)))
++    limits = {"memory": int(section.get("memory_char_limit", 2200)), "user": int(section.get("user_char_limit", 1375))}
++    layers = {}
++    for target in ("memory", "user"):
++        raw, readable = MemoryStore._read_raw_checked(MemoryStore._path_for(target))
++        entries = list(dict.fromkeys(MemoryStore._parse_entries(raw)))
++        layers[target] = {"enabled": enabled[target], "readable": readable, "entries": entries,
++                          "chars": len(ENTRY_DELIMITER.join(entries)), "char_limit": limits[target]}
++    return layers
++
++
+ def _pin_matched_entries(store: MemoryStore, payload: dict[str, Any]) -> Optional[str]:
+     """Record on each staged replace/remove the FULL entry its old_text selects now. Approval
+     then applies to exactly the entry the approver reviewed and refuses if it changed:
+diff --git a/website/docs/developer-guide/memory-provider-plugin.md b/website/docs/developer-guide/memory-provider-plugin.md
+index 68562232..39945991 100644
+--- a/website/docs/developer-guide/memory-provider-plugin.md
++++ b/website/docs/developer-guide/memory-provider-plugin.md
+@@ -428,6 +428,24 @@ def write_config_fields(self, values: dict, hermes_home: str) -> None:
+ Declaring `storage=STORAGE_PROVIDER` without `write_config_fields` makes a save return 501; a
+ provider that fails to load returns 503; an unknown `storage` value shows no panel and refuses saves.
+ 
++### Memory reads for displays
++
++Optional methods let Hermes show what a provider stores. Each runs on an uninitialized instance,
++reads the profile at `hermes_home` and nothing else, changes nothing, makes no network call and
++returns JSON values. The default is `{}`: not supported, which the Desktop shows as "not reported",
++never as an empty store.
++
++```python
++def usage_report(self, hermes_home: str) -> dict:
++    # Every key is optional. A budget is a limit the provider itself enforces, counted the way it
++    # enforces it; report no limit you do not enforce.
++    return {"items": 56, "storage_bytes": 180224, "budgets": [
++        {"key": "catalog", "label": "Fact catalog", "enabled": True, "used": 1170, "limit": 3000,
++         "unit": "estimated tokens", "listed": 54, "eligible": 56}]}
++```
++
++`usage_report` feeds `layers.provider` of `GET /api/memory`.
++
+ ## Save Config
+ 
+ ```python
+diff --git a/website/docs/user-guide/features/memory.md b/website/docs/user-guide/features/memory.md
+index 3d0291dc..dcfd7179 100644
+--- a/website/docs/user-guide/features/memory.md
++++ b/website/docs/user-guide/features/memory.md
+@@ -224,6 +224,14 @@ On January 5th, 2026, the user asked me to look at their project which is
+ located at ~/code/api. I discovered it uses Go version 1.22 and...
+ ```
+ 
++### How full memory is, in the desktop app
++
++**Settings → Memory & Context** and **Command Center → Maintenance** show how much each layer carries: `USER.md` and
++`MEMORY.md` against their character limits, and the active provider's store as a count and a size. A provider's store
++has no limit to fill, so it gets no percentage; a budget the provider itself enforces (a generated catalog, for
++example) is shown against that budget, by the provider's own estimate. A layer that is switched off, empty, unreadable
++or not reported says which.
++
+ ## Duplicate Prevention
+ 
+ The memory system automatically rejects exact duplicate entries. If you try to add content that already exists, it returns success with a "no duplicate added" message.
+diff --git a/website/docs/user-guide/features/web-dashboard.md b/website/docs/user-guide/features/web-dashboard.md
+index 138a7f6a..8ba177c4 100644
+--- a/website/docs/user-guide/features/web-dashboard.md
++++ b/website/docs/user-guide/features/web-dashboard.md
+@@ -669,7 +669,7 @@ same auth gate as the rest of `/api/`.
+ | `GET /api/credentials/pool` | List pooled rotation keys (redacted) |
+ | `POST /api/credentials/pool` | Add a key. Body: `{provider, api_key, label?}` |
+ | `DELETE /api/credentials/pool/{provider}/{index}` | Remove a key (1-based index) |
+-| `GET /api/memory` | Active provider + available providers + built-in file sizes |
++| `GET /api/memory` | Active provider + available providers + built-in file sizes + `layers`: USER.md and MEMORY.md against their character caps, and what the provider reports about its store. Each layer has a `state` (`ok`, `empty`, `disabled`, `unavailable`, `unsupported`) |
+ | `PUT /api/memory/provider` | Select a provider (empty = built-in only) |
+ | `POST /api/memory/reset` | Reset built-in memory. Body: `{target: all\|memory\|user}` |
+ | `POST /api/gateway/start` · `/stop` · `/restart` | Gateway lifecycle (backgrounded) |
