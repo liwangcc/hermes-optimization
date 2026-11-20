@@ -9,7 +9,7 @@
 | 文件 | 作用 | Hermes 能不能改 |
 |---|---|---|
 | `RUNBOOK-HERMES.md`（本文件） | 执行依据 | 不能。需要改就停下来报告 |
-| [`ISSUES.md`](ISSUES.md) / `issues/` | 先发的三份 Issue 草稿 | 生成投稿正文时另存到 `posted/` |
+| [`ISSUES.md`](ISSUES.md) / `issues/` | 先发的三份征询草稿：两份 Issue，一条 #5320 下的评论 | 生成投稿正文时另存到 `posted/` |
 | `PR-DRAFT.md` | 独立 PR 的英文正文（含占位符） | 同上 |
 | `patches/01–07-*.patch` | 每个主库 PR 的代码 | 不能 |
 | `SUBMISSION.md` | 背景和理由（给人看的） | 不能 |
@@ -149,7 +149,7 @@ git apply --3way $DOCS/patches/<patch>
 
 ### 4.4 提交（本地）
 
-提交信息的第一行就是第 5 节的 `<title>`，正文写一句「See #ISSUE-x」（用实际的 issue 编号）。提交作者是用户本人（S0.1 确认过的身份）。
+提交信息的第一行就是第 5 节的 `<title>`，正文写一句「Refs #编号」：PR3 用 `#5320`，PR7 用 Issue B 的实际编号。指向别人的 issue 时不写 `Closes` 或 `Fixes`。提交作者是用户本人（S0.1 确认过的身份）。
 
 ### 4.5 推送和开 PR（需批准 → 对外）
 
@@ -173,7 +173,7 @@ git apply --3way $DOCS/patches/<patch>
 |---|---|---|---|---|---|---|
 | A3（后续） | 1 | `refactor/desktop-profile-families` | `01-profile-families.patch` | `refactor(desktop): move the profile-keyed storage families out of session-states.ts` | 提醒方向获认可后，不阻塞 PR3 | — |
 | A4（后续） | 2 | `refactor/desktop-composer-offers` | `02-composer-offers.patch` | `refactor(desktop): pick the composer's one offer from a table` | 提醒方向获认可后，不阻塞 PR3 | — |
-| A-PR3 | 3 | `feat/memory-capacity-by-layer` | `03-memory-capacity.patch` | `feat(memory): show memory capacity by layer` | Issue A 对应反馈后 | `2-capacity.png` |
+| A-PR3 | 3 | `feat/memory-capacity-by-layer` | `03-memory-capacity.patch` | `feat(memory): show memory capacity by layer` | #5320 下的评论得到回应后 | `2-capacity.png` |
 | A-PR7 | 7 | `feat/memory-provider-jobs` | `07-memory-provider-jobs.patch` | `feat(memory): run a memory provider's maintenance jobs from the Desktop` | Issue B 对应反馈后 | `5-provider-job.png` |
 | B2 | 4 | `feat/memory-checkup` | `04-memory-checkup.patch` | `feat(memory): a read-only memory checkup the user starts` | PR3 合并后，且 B1 已完成 | `3-proposals.png`、`4-facts.png` |
 | B3 | 6 | `feat/memory-catalog-suggestion` | `06-catalog-suggestion.patch` | `feat(desktop): say when a provider's catalog makes MEMORY.md optional` | PR3、PR4 都合并后 | `6-catalog-suggestion.png` |
@@ -199,7 +199,7 @@ git apply --3way $DOCS/patches/<patch>
 
 ## 6. 占位符替换
 
-生成 `posted/` 正文时替换，不改已归档的原文：`<ADAPTER_SHA>` 或 `<SHA>` 用已验证可访问的固定提交；没有则去掉死链接。`#ISSUE-A`、`#ISSUE-B`、`#PR1` … `#PR7`、`#HOLO-ISSUE` 仅在真实编号存在时替换；还没有的用文字说明或删掉。跨仓库用 `owner/repo#编号`，同仓库用 `#编号`。
+生成 `posted/` 正文时替换，不改已归档的原文：`<ADAPTER_SHA>` 或 `<SHA>` 用已验证可访问的固定提交；没有则去掉死链接。`#ISSUE-B`、`#PR1` … `#PR7`、`#HOLO-ISSUE` 仅在真实编号存在时替换；还没有的用文字说明或删掉。没有 Issue A：PR3 的正文直接引用已有的 `#5320`，只用 `Refs`，不关闭它。暂缓切片正文里的 `#ISSUE-TBD` 表示讨论还不存在，轮到那个切片时再定，不得替换成 `#5320`。跨仓库用 `owner/repo#编号`，同仓库用 `#编号`。
 
 ---
 
@@ -209,14 +209,14 @@ git apply --3way $DOCS/patches/<patch>
 
 | 步骤 | 动作 | 前提 |
 |---|---|---|
-| A1 | 主库 Issue A：分层容量，询问是否先审 PR3 | 查重，用户批准对应正文 |
-| A2 | 主库 Issue B：独立的 provider jobs，询问是否审 PR7 | 查重，用户批准对应正文 |
-| A7 | 插件 Issue C：先问是否愿意看 HOLO-1 | 查重，用户批准对应正文；只链接已存在的主库 Issue |
-| A-PR3 | 单独准备、验证、提交容量 PR3 | 维护者明确愿意审这段；用户批准发布 |
+| A7 | 插件 Issue C：先问是否愿意看 HOLO-1。**第一个发** | 查重，用户批准对应正文；只链接已存在的主库 Issue |
+| A1 | 在主库 #5320 下发一条评论（`issues/A-capacity.md`），只问能否审「两个内置文件已用字符 / 写入上限」的 PR。不新开 Issue。**第二个发** | 查重，重读 #5320 的最新评论，用户批准对应正文 |
+| A2 | 主库 Issue B：独立的 provider jobs，询问是否审 PR7。**最后发** | 查重，用户批准对应正文；用户已决定适配器提交是否公开 |
+| A-PR3 | 单独准备、验证、提交容量 PR3。维护者只要内置文件、不要 provider 用量时，停下来报告，交回 Claude Code 重切 03 | 维护者在 #5320 明确愿意审这段；用户批准发布 |
 | A-PR7 | 单独准备、验证、提交 provider jobs PR7 | Issue B 对应的明确回应；用户批准发布 |
 | A-HOLO1 | 按 `RUNBOOK-HOLO.md` 准备 HOLO-1 | 插件维护者愿意审而非打算自行实现；用户批准发布 |
 
-不要求同一天发，也不把沉默当同意。PR1、2 只在确有需求时单开，不阻挡第一批。每份 PR 带自己的完整结果、复现命令和已知限制；有了真实链接再按需补交叉引用。
+三条不在同一天发，顺序是 A7 → A1 → A2，也不把沉默当同意。A1 的评论两周没有维护者回应时，报告用户，由用户决定是否改成单独的窄 Issue（标题和做法见 `ISSUES.md`）。PR1、2 只在确有需求时单开，不阻挡第一批。每份 PR 带自己的完整结果、复现命令和已知限制；有了真实链接再按需补交叉引用。
 
 ### 阶段 B
 
@@ -271,7 +271,7 @@ git apply --3way $DOCS/patches/<patch>
 | ID | 任务 | 谁做 | 什么时候提醒 | 什么时候取消 | 产出 |
 |---|---|---|---|---|---|
 | R1 | HOLO-1 代码和定向验证 | 已备妥 | 不再提醒写代码；待插件维护者反馈 | 对方表示自行实现 | HOLO-1 补丁与 `RUNBOOK-HOLO.md` |
-| R2 | HOLO-2 的代码：`usage_report`、`review_items` | Claude Code | 同时满足两条：PR3、PR4 都已合并或得到正面回应；插件 issue 里 `protected`、`unconfirmed` 两个字段有了答复。没有回复不算接口或字段达成共识 | 插件维护者表示要自己写；或 PR3、PR4 被拒 | 同 R1 |
+| R2 | HOLO-2 的代码：`usage_report`、`review_items` | Claude Code | 同时满足两条：PR3、PR4 都已合并或得到正面回应；插件维护者对 `protected`、`unconfirmed` 两个字段的含义有了答复。首个插件 Issue 不问这两个字段：第一条满足后，由用户批准在插件库另开一帖去问。没有回复不算接口或字段达成共识 | 插件维护者表示要自己写；或 PR3、PR4 被拒 | 同 R1 |
 | R3 | HOLO-3 的代码：一键建索引任务 | Claude Code | PR7 已合并或得到正面回应 | 插件维护者表示要自己写；或 PR7 被拒 | 同 R1 |
 | R4 | 真实模型验证（即 B1） | 用户或测试 agent | PR3 已合并或得到正面回应 | — | `validation/real-model.md` |
 | R5 | 把 PR6 重做成只依赖 PR3 的补丁 | Claude Code | PR4 被拒，或维护者明确表示不要体检进核心 | PR4 合并 | 新的 `06-*.patch` |

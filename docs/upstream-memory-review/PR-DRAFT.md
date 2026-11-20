@@ -5,23 +5,27 @@ Each Hermes PR is one patch in [`patches/`](patches/), made against upstream `ma
 catalog pins holographic 0.30.0); [`hermes-agent-memory-review.patch`](hermes-agent-memory-review.patch) is all seven
 as one file.
 
-| PR | Patch | Issue | Needs first | Files | Lines |
+| PR | Patch | Discussion | Needs first | Files | Lines |
 |---|---|---|---|---|---|
-| 1 | `01-profile-families.patch` | A | — | 3 | +29 −15 |
-| 2 | `02-composer-offers.patch` | A | — | 3 | +86 −19 |
-| 3 | `03-memory-capacity.patch` | A | — | 35 | +1006 −19 |
-| 4 | `04-memory-checkup.patch` | A | PR 3 | 42 | +2317 −6 |
-| 5 | `05-checkup-reminder.patch` | A | PRs 1, 2, 4 | 23 | +991 −16 |
-| 6 | `06-catalog-suggestion.patch` | A | PRs 3, 4 | 18 | +133 −22 |
-| 7 | `07-memory-provider-jobs.patch` | B | — (made on `main`) | 31 | +996 −13 |
+| 1 | `01-profile-families.patch` | none yet | — | 3 | +29 −15 |
+| 2 | `02-composer-offers.patch` | none yet | — | 3 | +86 −19 |
+| 3 | `03-memory-capacity.patch` | #5320 (a comment) | — | 35 | +1006 −19 |
+| 4 | `04-memory-checkup.patch` | #78307 | PR 3 | 42 | +2317 −6 |
+| 5 | `05-checkup-reminder.patch` | none yet | PRs 1, 2, 4 | 23 | +991 −16 |
+| 6 | `06-catalog-suggestion.patch` | none yet | PRs 3, 4 | 18 | +133 −22 |
+| 7 | `07-memory-provider-jobs.patch` | Issue B | — (made on `main`) | 31 | +996 −13 |
 
 Line counts include tests, docs, 9 locales and the generated key list. PR 7 touches no file PRs 1–6 create; after
 PR 4 has merged, its route ledger is regenerated (`scripts/gen_serve_handler_ledger.py`), the one generated file both
-change. Screenshot names below refer to the testkit’s generated output; inspect the images before attaching them. Replace `#ISSUE-A`, `#ISSUE-B`, `#PR1` … `#PR7` and `#HOLO-…` with the real links once they exist.
+change. Screenshot names below refer to the testkit’s generated output; inspect the images before attaching them. Replace `#ISSUE-B`, `#PR1` … `#PR7` and `#HOLO-…` with the real links once they exist.
+
+There is no Issue A of our own. PR 3 refers to the existing #5320 and PR 4 to #78307, and neither closes it.
+`#ISSUE-TBD` in the deferred PRs 1, 2, 5 and 6 stands for a discussion that does not exist yet: settle it when
+one of them is taken up, and never replace it with #5320.
 
 ---
 
-[Issue A draft: capacity by layer](issues/A-capacity.md)
+[Comment draft for #5320: usage against the write limit](issues/A-capacity.md)
 
 ## PR 1 — `refactor(desktop): move the profile-keyed storage families out of session-states.ts`
 
@@ -34,12 +38,12 @@ Branch: `refactor/desktop-profile-families`. Commit message: the title, then
 preview rail's tabs, the browser profile prefs, the queued launch pick). They move, unchanged, into
 `store/profile-families.ts` (`dropProfileFamilies`, `migrateProfileFamilies`), and `session-states.ts` calls them.
 `session-states.ts` is past the 2,000-line cap, so a new family could not be added there; the next one (the memory
-checkup reminder, #ISSUE-A) joins `profile-families.ts`. No behaviour change. `apps/desktop/AGENTS.md` names the new
+checkup reminder, #PR5) joins `profile-families.ts`. No behaviour change. `apps/desktop/AGENTS.md` names the new
 home.
 
 ### Related Issue
 
-Part of #ISSUE-A.
+Refs #ISSUE-TBD (the checkup reminder's discussion). Prepares #PR5.
 
 ### Type of Change
 
@@ -83,7 +87,7 @@ cap (root AGENTS.md: table-driven dispatch). Same order, same single owner acros
 
 ### Related Issue
 
-Part of #ISSUE-A.
+Refs #ISSUE-TBD (the checkup reminder's discussion). Prepares #PR5.
 
 ### Type of Change
 
@@ -136,7 +140,7 @@ is called through `load_memory_provider(name, register_skills=False)` inside a `
 
 ### Related Issue
 
-Part of #ISSUE-A.
+Refs #5320: the usage-visibility part only. It does not close that issue.
 
 ### Type of Change
 
@@ -223,7 +227,7 @@ adding one would overlap #131600.
 
 ### Related Issue
 
-Part of #ISSUE-A. Builds on #PR3.
+Refs #78307. Builds on #PR3.
 
 ### Type of Change
 
@@ -297,7 +301,7 @@ few milliseconds both write a due date a moment apart. They never replay a cycle
 
 ### Related Issue
 
-Closes #ISSUE-A.
+Refs #ISSUE-TBD (the checkup reminder's discussion).
 
 ### Type of Change
 
@@ -359,7 +363,7 @@ A backend without `tokens` gets the same row without the number.
 
 ### Related Issue
 
-Part of #ISSUE-A. Builds on #PR3.
+Refs #ISSUE-TBD. Builds on #PR3.
 
 ### Type of Change
 
