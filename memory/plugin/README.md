@@ -158,6 +158,58 @@ enough (they are search phrasings, not a title), and how often the agent fetches
 Self-check of the routing (catalog on and off), the catalog and `get`, with no Hermes checkout
 needed: `python memory/plugin/test_catalog.py`.
 
+## Memory checkup reads (need Hermes core support)
+
+Two read-only methods are the provider half of proposed Hermes core features (capacity and the memory checkup).
+They are called by the patched candidate core, and are unused on a core without those optional hooks.
+
+- `usage_report(hermes_home)` reports the active fact count, the store's size on disk (the file and its `-wal`),
+  and the fact catalog as a budget: tokens used against `catalog_max_tokens`, and listed against eligible facts.
+  The catalog numbers come from `_catalog_lines`, the same function that builds the catalog for the system prompt,
+  so what is shown is what is enforced. They are the base's `approx_tokens` estimate of the catalog lines, not what
+  a model was sent or billed. The store has no ceiling and none is reported. With the catalog off the budget says
+  `enabled: false` and counts nothing.
+- `review_items(hermes_home)` gives each fact with what a review may weigh: its age (`created_at`), recalls
+  (`retrieval_count`), trust (`trust_score`), and whether it is an inference nobody confirmed (the base's history
+  tables, when the store has them). Facts recall refuses to inject (credentials, instructions) are left out: they are
+  not sent to a model for review either. Facts below `min_trust_threshold` are included; they are what a review is for.
+- **Protection.** A fact whose own tags include `protected` (`fact_store update {fact_id, tags: "protected"}`) is
+  reported as protected. Core then never proposes removing or changing it. The tag is the user's; the plugin
+  never sets it.
+- **Read-only, enforced.** Both run on an instance that was never initialized and open the store with SQLite's
+  `mode=ro`, so a write through that connection fails. They create no file: a profile with no store yet reads as
+  `items: 0`, not as an error.
+- **What decides what.** The plugin only reports. The order of the review, the seven-day grace period for new facts
+  and the rule that low use alone never justifies a removal are core's, the same for every provider.
+- **Limits.** With `scope: user`, `chat` or `thread` there is one store per user or chat, not one file to read:
+  both methods return `{}` and core shows the provider as not reporting. An in-memory `db_path` reads the same way.
+
+Self-checked with the catalog, against a store file with the base's columns: `python memory/plugin/test_catalog.py`.
+
+The catalog budget carries `overlaps: ["memory"]`: it lists the facts in every session, so a Hermes core that reads
+it may suggest turning MEMORY.md off. Only a suggestion: both can stay on, at the cost of one more block of
+context each session, and the write routing already keeps fact ids out of MEMORY.md.
+
+## Desktop settings and the index job (need Hermes core support)
+
+- **Settings.** `config_schema.py` declares the wrapper's own keys (`semantic_enabled`, `semantic_url`,
+  `catalog_enabled`, and in the full config `semantic_tau`, `semantic_max_extra`, `catalog_max_tokens`) for the
+  Desktop's provider panel. They are read from and written to `plugins.hermes-memory-store` of the profile being
+  configured (`settings.py`), through the base provider's own writer, so the panel and `config.yaml` are one
+  setting. The base's keys stay in `config.yaml` and `hermes memory setup`. New values apply from the next session.
+- **Index job.** `maintenance_actions` offers "Index facts for semantic recall" (`sidecar_index.py`). Its status
+  comes from the sidecar's `/health`: facts indexed of facts stored, the model and the device. It is unavailable
+  when the sidecar does not answer, has not loaded a model, or reports a fact count that disagrees with the profile's.
+  Matching counts do not prove store identity: set the sidecar's `SEMANTIC_DB` to this profile's database.
+  When run, it asks the sidecar's `/sync` for 64 facts at a time until none is left and
+  ends with how many it embedded. On a core with the maintenance-jobs change this is a **Run** button under the
+  provider's settings; on that same core, `hermes memory action semantic-index` runs it. The settings and the address are
+  read when the job runs, not when the provider was built.
+- The model, the index and the vectors stay the sidecar's: nothing leaves the machine.
+
+Self-checked against a fake sidecar on 127.0.0.1: `python memory/plugin/test_catalog.py`; the sidecar's own sync:
+`python memory/sidecar/test_sync.py`.
+
 ## Rollback
 
 ```bash

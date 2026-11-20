@@ -46,6 +46,7 @@ SEMANTIC_DB=/path/to/memory_store.db python server.py
 | `SEMANTIC_DB` | `./memory_store.db` | holographic fact store (SQLite, read-only) |
 | `SEMANTIC_MODEL` | `./models/bge-m3` | local bge-m3 directory |
 | `SEMANTIC_PORT` | `8791` | listen port (bound to 127.0.0.1) |
+| `SEMANTIC_CACHE` | `./cache` | vector cache directory |
 
 Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 
@@ -53,7 +54,8 @@ Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 
 | method | path | body | returns |
 |---|---|---|---|
-| GET | `/health` | — | readiness, device, indexed fact count |
+| GET | `/health` | — | readiness, device, indexed fact count, the store's fact count |
+| POST | `/sync` | `{limit}` | index new/changed facts now (at most `limit`), drop deleted ones; returns `embedded`, `remaining`, `facts` |
 | POST | `/candidates` | `{query, tau, limit, min_trust}` | ranked cosine candidates above `tau` |
 | POST | `/embed` | `{texts: [...]}` | normalized vectors |
 
