@@ -9,6 +9,8 @@
 | 本文件 | 执行依据，第 5 节是 PR 正文 | 不能 |
 | `patches/holo-1-config-schema.patch` | HOLO-1 的代码，基于插件库 main `76689f9`（0.30.1） | 不能 |
 
+> 日常版发布快照的 Holographic 补丁基于 0.30.0，且多出简体中文标签；本手册的 HOLO-1 补丁仍是 0.30.1 的英文最小版。两者核心 diff 相同，不要互相替换；上游 PR 要带中文时，按 [`SUBMISSION.md`](SUBMISSION.md) 第 2 节的说明从发布补丁取 `_ZH` 段。
+
 [插件 Issue 草稿](issues/C-holographic-settings.md)先征询设置面板方向，**发 PR 用本手册第 5 节的正文**。
 
 ---

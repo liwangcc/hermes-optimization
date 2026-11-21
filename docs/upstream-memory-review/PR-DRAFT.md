@@ -5,6 +5,11 @@ Each Hermes PR is one patch in [`patches/`](patches/), made against upstream `ma
 catalog pins holographic 0.30.0); [`hermes-agent-memory-review.patch`](hermes-agent-memory-review.patch) is all seven
 as one file.
 
+The public reference adapter is `liwangcc/hermes-optimization@c4d265b`
+(`memory/plugin/holographic-semantic/`, version 0.5.0). Use that fixed commit in cross-references, not the moving
+`main`. The release snapshot is not a PR slice: the patches below still target the latest upstream `main` and must be
+rebased before posting.
+
 | PR | Patch | Discussion | Needs first | Files | Lines |
 |---|---|---|---|---|---|
 | 1 | `01-profile-families.patch` | none yet | — | 3 | +29 −15 |
@@ -527,7 +532,7 @@ GitHub links `owner/repo#N` both ways by itself; one link in each direction is e
 **In the Hermes PR (#PR3 / #PR4 / #PR7), once the plugin issue exists** — a comment, or a line in the body:
 
 > Consumers outside this repo: `holographic-semantic` implements these methods today
-> (liwangcc/hermes-optimization@`<SHA>`, `memory/plugin/holographic-semantic/`). For the catalog's holographic I
+> (liwangcc/hermes-optimization@`c4d265b`, `memory/plugin/holographic-semantic/`). For the catalog's holographic I
 > opened itpartypattaya/hermes-plugin-holographic#HOLO-ISSUE to settle the field meanings with its maintainer; this
 > PR stands on its own either way, and a provider that implements nothing shows as "not reported".
 

@@ -1,5 +1,7 @@
 # 投稿证据：不要把三种实验混为一谈
 
+> 本页只记投稿基线 `152fe189` / `76689f9`。日常版发布快照（Hermes `40d1e95f`→`eccd37ae`，Holographic `0.30.0`→`4cbd5b7`）的验证在 [INSTALL.md §8](../../../INSTALL.md) 和 [发布清单](../../release-manifest.md)；两套数字不要混写。
+
 ## 1. 固定补丁基线：Windows testkit
 
 Hermes `152fe18976002e9a987422b7c6102c805d61264b`；插件侧基线 `76689f954f500d49a7ef2eb73d0e868a5b43b53e`。命令入口为 [testkit](../testkit/README.md)，每个 PR 的选择器在 [`plan.py`](../testkit/plan.py)，完整步骤与计数见 [`windows-pr-checks.json`](windows-pr-checks.json)。

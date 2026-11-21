@@ -6,6 +6,10 @@
 > 不要和 [`../docs/upstream-memory-review/patches/`](../docs/upstream-memory-review/patches/) 混用：
 > 那里是上游投稿用的拆分补丁，对应的基线与这里不同。装日常版只用本目录的三个补丁。
 
+Holographic 的两份补丁不是同一基线：本目录是日常版 0.30.0（`ed73195f`）→ `4cbd5b7`，含简体中文标签；
+上游 HOLO-1 投稿补丁基于插件 main 0.30.1（`76689f9`），核心 diff 相同但不含中文标签。不要互相替换；
+上游 PR 需要中文时，从本目录补丁取 `config_schema.py` 的 `_ZH` 段。
+
 ## 固定基线
 
 | 项目 | 上游 | 基线提交 | 终点提交 | 补丁 | 规模 |

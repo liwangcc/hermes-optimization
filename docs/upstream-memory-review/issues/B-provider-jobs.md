@@ -22,7 +22,7 @@ Hermes only lists the jobs and calls the steps:
 - Nothing runs unless the user starts it. A provider that offers no jobs gets no new UI.
 - The provider owns what a job does, its model, its index and how it resumes. No provider or model name is added to core.
 
-There is a concrete consumer. `holographic-semantic`, a standalone adapter I maintain outside this repo, implements both methods for its local embedding index. It is not published yet; I can publish it alongside the PR. The catalog's Holographic plugin does not need the adapter or its local embedding service. It could offer a job over its own embedding path if its maintainer wants one.
+There is a concrete consumer. `holographic-semantic`, a standalone adapter I maintain outside this repo, implements both methods for its local embedding index. It is published with a fixed snapshot at `liwangcc/hermes-optimization@c4d265b` (`memory/plugin/holographic-semantic/`, version 0.5.0). The catalog's Holographic plugin does not need the adapter or its local embedding service. It could offer a job over its own embedding path if its maintainer wants one.
 
 ## Evidence so far
 

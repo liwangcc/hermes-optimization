@@ -12,7 +12,7 @@
 
 - **C 先发。** 改动最小（5 个文件，约 200 行），不依赖主库的任何新接口，补丁已经备好；用户在该库有合并过的 PR，维护者回应也快。
 - **A 第二。** 它接在已有的 open issue 上，问题最窄。#5320 下维护者还没有表态，评论可能没人回。建议等两周；仍无回应时，由用户决定是否改成单独的窄 Issue：正文不变，标题用 `Desktop: show MEMORY.md / USER.md usage against the write limit`，开头引用 #5320 和 #145574。
-- **B 最后。** 它新增两个钩子、两条路由和一个子命令，是三项里最大的请求，而目前唯一的使用方是还没公开的适配器。发之前先由用户决定适配器提交是否公开：公开后把草稿里「It is not published yet」那句换成固定 SHA 的链接；不公开就保留原句。
+- **B 最后。** 它新增两个钩子、两条路由和一个子命令，是三项里最大的请求。唯一的使用方 `holographic-semantic` 已随本仓库 `main` 公开（`liwangcc/hermes-optimization@c4d265b`，`memory/plugin/holographic-semantic/`，0.5.0）；B 稿里的「It is not published yet」已换成这个固定链接。发之前仍要重搜两仓库的现有讨论，并确认链接里的方法没有在发布后改名。
 
 三条不在同一天发。明确愿意审某个切片后，再按 [投稿计划](SUBMISSION.md) 准备对应 PR。愿意看不等于承诺合并，沉默也不算同意。
 
