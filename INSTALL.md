@@ -56,8 +56,8 @@ git apply         "$PATCHES/hermes-agent-ledger-fix.patch"
 第二个补丁只重新生成 `tests/hermes_cli/serve_handler_ledger.json`：日常版新增了两个
 memory handler，却没有同步账本，干净检出上 `test_serve_handler_ledger.py` 会失败。它不改业务代码。
 
-补丁覆盖：核心 `agent/`、`hermes_cli/`、`tools/`，Desktop（`apps/desktop/`），中英日韩等
-本地化（`apps/desktop/src/i18n/`、`locales/`），测试与 `website/docs/`。
+补丁覆盖：核心 `agent/`、`hermes_cli/`、`tools/`，Desktop（`apps/desktop/`），多语言本地化
+（英、简中、繁中、日、德、法、西、俄、阿），测试与 `website/docs/`。
 
 ## 3. 准备 Python 运行环境并构建 Desktop
 
@@ -92,13 +92,13 @@ cd apps/desktop && pnpm run build && cd ../..
 在固定提交上克隆，应用设置补丁，再放进 Hermes 的插件目录：
 
 ```bash
-git clone https://github.com/itpartypattaya/hermes-plugin-holographic.git /tmp/holographic
-git -C /tmp/holographic checkout ed73195df846913d34f4aea54335718e56d841fb
-git -C /tmp/holographic apply --check "$PATCHES/holographic-ed73195f-4cbd5b79.patch"
-git -C /tmp/holographic apply         "$PATCHES/holographic-ed73195f-4cbd5b79.patch"
+git clone https://github.com/itpartypattaya/hermes-plugin-holographic.git "$HOME/holographic-src"
+git -C "$HOME/holographic-src" checkout ed73195df846913d34f4aea54335718e56d841fb
+git -C "$HOME/holographic-src" apply --check "$PATCHES/holographic-ed73195f-4cbd5b79.patch"
+git -C "$HOME/holographic-src" apply         "$PATCHES/holographic-ed73195f-4cbd5b79.patch"
 
 rm -rf "$HERMES_HOME/plugins/holographic"
-cp -R /tmp/holographic "$HERMES_HOME/plugins/holographic"
+cp -R "$HOME/holographic-src" "$HERMES_HOME/plugins/holographic"
 hermes plugins enable holographic
 ```
 
