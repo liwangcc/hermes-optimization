@@ -22,9 +22,13 @@ open-source projects, whose licenses are respected:
 
 ## Hermes Agent
 - Project: https://github.com/NousResearch/hermes-agent
+- License: MIT, Copyright (c) 2025 Nous Research
 - Use: the host agent framework. The memory provider plugin API
-  (`plugins.memory.import_provider_module`) and the skills format come from
-  Hermes Agent.
+  (`plugins.memory.import_provider_module`), the Desktop settings contract, and the
+  skills format come from Hermes Agent.
+- `patches/hermes-agent-*.patch` are modifications of the Hermes Agent source at the
+  fixed commits listed in `patches/README.md`, distributed under the same MIT license
+  with the original copyright notice. They are not an official Hermes release.
 
 The eval methodology, the hybrid fusion logic, the Chinese-oriented tuning, and
 the sidecar serving/caching/fallback code are original work in this repository,

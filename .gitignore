@@ -8,8 +8,18 @@ venv/
 # Local model weights & caches (download yourself, do not commit)
 memory/sidecar/models/
 memory/sidecar/cache/
+services/
 *.npz
 *.npy
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# Patch leftovers
+*.orig
+*.rej
 
 # Personal data — NEVER commit your real fact store or credentials
 *.db

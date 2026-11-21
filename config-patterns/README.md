@@ -28,12 +28,28 @@ memory:
 plugins:
   hermes-memory-store:
     semantic_enabled: true
-    semantic_url: http://127.0.0.1:8791
+    semantic_url: http://127.0.0.1:8791   # managed local deploy fills this
     semantic_tau: 0.55
     semantic_max_extra: 3
     semantic_total_cap: 7
     semantic_timeout_ms: 400
+    catalog_enabled: true                  # optional: #id=label catalog + fact_store get
+    catalog_max_tokens: 3000
 ```
+
+Cloud embeddings are the other mode (mutually exclusive with the local channel):
+
+```yaml
+plugins:
+  hermes-memory-store:
+    embeddings: true
+    embedding_url: https://api.openai.com/v1
+    embedding_model: text-embedding-3-small
+    embedding_min_score: 0.3               # optional floor; empty = no floor
+```
+
+The key is saved per endpoint by the Desktop connection form (or referenced through
+`embedding_key_env` / `OPENAI_API_KEY`); never put it in `config.yaml`.
 
 ## Providers: pin context length only on the default route
 

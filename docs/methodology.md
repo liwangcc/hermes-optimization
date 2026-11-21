@@ -53,8 +53,9 @@ When adding semantic recall to a memory system, do not disturb:
 ## 6. Lean skills over confirmation ritual
 
 Behavioral skills should confirm *decisions*, not re-check *facts* the runtime can
-verify. A heavy pre-emptive confirmation ritual is overhead, not safety. See
-[`../skills/`](../skills/README.md).
+verify. A heavy pre-emptive confirmation ritual is overhead, not safety. This repository
+no longer ships workflow skills — it is focused on memory — but the principle still
+applies to any skill you keep in `$HERMES_HOME/skills/`.
 
 ## 7. Sanitize before sharing
 

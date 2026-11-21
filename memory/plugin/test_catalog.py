@@ -214,8 +214,9 @@ def test_usage_report_tells_off_empty_and_unsupported_apart():
     with tempfile.TemporaryDirectory() as tmp:
         off = _provider({"catalog_max_tokens": 50}, FACTS).usage_report(tmp)  # no store file yet, catalog off
         assert off == {"items": 0, "budgets": [{"key": "catalog", "label": "Fact catalog", "enabled": False,
-                                                "used": 0, "limit": 50, "unit": "estimated tokens",
-                                                "overlaps": ["memory"]}]}
+                                                "used": 0, "field": "catalog_max_tokens", "limit": 50,
+                                                "unit": "estimated tokens", "overlaps": ["memory"],
+                                                "translations": {"zh": {"label": "事实目录", "unit": "估算 token"}}}]}
         assert not (Path(tmp) / "memory_store.db").exists()  # reading created nothing
         _stored(Path(tmp), STORED)
         assert "listed" not in _provider({}, FACTS).usage_report(tmp)["budgets"][0]  # off: nothing is listed
@@ -244,7 +245,11 @@ def _settings_env(section):
     constants = types.ModuleType("hermes_constants")
     constants.set_hermes_home_override = lambda home: homes.append(home) or len(homes)
     constants.reset_hermes_home_override = lambda token: None
-    sys.modules["hermes_constants"] = constants
+    config = types.ModuleType("hermes_cli.config")
+    config.load_env = lambda: {}
+    cli = types.ModuleType("hermes_cli")
+    cli.config = config
+    sys.modules.update({"hermes_constants": constants, "hermes_cli": cli, "hermes_cli.config": config})
     sys.modules["fakeholo"]._load_plugin_config = lambda: dict(section)
     _Base.save_config = lambda self, values, hermes_home: saved.append((values, hermes_home))
     return homes, saved
@@ -254,7 +259,7 @@ def test_the_desktop_panel_reads_and_writes_the_profile_it_is_given():
     p = _provider({}, FACTS)
     homes, saved = _settings_env({"semantic_enabled": True, "semantic_tau": 0.6, "scope": "profile"})
     assert p.read_config_fields("/homes/work") == {"values": {"semantic_enabled": True, "semantic_tau": 0.6},
-                                                   "placeholders": {}}  # only our keys; absent = the default
+                                                   "placeholders": {}, "connection_state": "local"}  # only our keys; absent = the default
     assert homes == ["/homes/work"]  # the profile being configured, not this process's own
     p.write_config_fields({"catalog_enabled": True, "semantic_tau": None, "scope": "user"}, "/homes/work")
     # a cleared field goes back to its default; a key that is not ours is never written from this panel
@@ -301,8 +306,8 @@ def test_the_index_job_says_where_it_stands_and_runs_batch_by_batch():
         sidecar = _FakeSidecar(total=5)
         p = _provider({}, FACTS)
         _settings_env({"semantic_url": sidecar.url})
-        [job] = p.maintenance_actions(tmp)
-        assert job["id"] == "semantic-index" and job["ready"] is True
+        job = next(j for j in p.maintenance_actions(tmp) if j["id"] == "semantic-index")
+        assert job["ready"] is True
         assert job["status"].startswith("0 of 5 facts indexed (bge-m3 on cpu).") and "turn it on above" in job["status"]
         steps = [p.run_maintenance_step("semantic-index", tmp) for _ in range(3)]
         assert [s["status"] for s in steps] == ["2 of 5 facts indexed", "4 of 5 facts indexed", "5 of 5 facts indexed"]
@@ -322,11 +327,11 @@ def test_the_index_job_cannot_start_while_the_sidecar_cannot_do_it():
         p = _provider({}, FACTS)
         for sidecar, why in ((_FakeSidecar(total=9), "holds 5"), (_FakeSidecar(total=5, ok=False), "no weights")):
             _settings_env({"semantic_url": sidecar.url, "semantic_enabled": True})
-            [job] = p.maintenance_actions(tmp)
+            job = next(j for j in p.maintenance_actions(tmp) if j["id"] == "semantic-index")
             assert job["ready"] is False and why in job["status"], job  # another store; a model not loaded
             sidecar.server.shutdown()
         _settings_env({"semantic_url": "http://127.0.0.1:9"})  # nothing listens there
-        [job] = p.maintenance_actions(tmp)
+        job = next(j for j in p.maintenance_actions(tmp) if j["id"] == "semantic-index")
         assert job["ready"] is False and "not answering" in job["status"]
 
 

@@ -1,0 +1,3 @@
+# Patch files are applied with `git apply`; keep their bytes exactly as generated.
+# A CRLF checkout would change every context line and make the patch fail.
+*.patch -text

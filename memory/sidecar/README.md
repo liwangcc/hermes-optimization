@@ -4,6 +4,13 @@ A localhost-only HTTP service that loads **bge-m3** locally and serves normalize
 sentence embeddings to the `holographic-semantic` wrapper. It is the "fuel" for
 semantic recall: the wrapper decides *how* to use vectors; this service produces them.
 
+> **Manual / CLI path.** The 0.5.0 wrapper can deploy a profile-managed service for you
+> (Settings → Memory → embedding model → local → deploy). That path pins the model
+> commit and the Python runtime (`memory/plugin/holographic-semantic/local-runtime.txt`)
+> and keeps everything under `$HERMES_HOME/services/memory-embeddings/`. This directory
+> is for CLI-only installs, custom CUDA setups, and debugging the protocol. Both speak
+> the same endpoints; a running manual BGE-M3 sidecar is reused by the managed path.
+
 - **Local & offline.** The model is loaded from disk; no network egress at runtime.
 - **GPU if available.** CUDA + fp16 when present, otherwise CPU. A warmup encode
   avoids the first-query CUDA cold start.

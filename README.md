@@ -6,6 +6,19 @@
 
 这是一个 **power-user 设置指南 + 可运行组件**，不是 Hermes 本体。我把日常调优里真正有价值、且能通用化的部分抽出来分享：方法、代码、评测都能照着跑，但**不含任何个人配置、密钥或私有数据**——所有示例值都是占位符。
 
+## 完整安装（日常版 2026-11）
+
+想直接装上和我日常一致的版本，从 **[INSTALL.md](INSTALL.md)** 开始。它给出固定基线、补丁应用顺序、Desktop 构建、插件安装、模型部署、验证和回滚步骤。
+
+| 组件 | 固定版本 | 本仓库位置 |
+|---|---|---|
+| Hermes Agent | `40d1e95f` → `eccd37ae`（`v0.23.2+canary` + 6 commits） | [`patches/`](patches/README.md) |
+| Holographic | 0.30.0（`ed73195f` → `4cbd5b7`） | [`patches/`](patches/README.md) |
+| `holographic-semantic` | 0.5.0（16 个源文件，含依赖锁和模型清单） | [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/) |
+
+**模型权重不随仓库分发**：bge-m3 约 2.14 GiB，BGE-small-zh 约 92 MiB，MiniLM 约 463 MiB，由安装程序按固定
+提交下载并逐文件校验 SHA-256。详见 [INSTALL.md §6](INSTALL.md#6-本地向量模型权重不在仓库里)。
+
 ## 这是什么 / 不是什么
 
 - ✅ **是**：一套建立在现有开源项目之上的**集成 + 调优 + 评测**层。旗舰是「本地 bge-m3 语义记忆增强」，配可复现评测。
@@ -52,9 +65,12 @@
 
 | 路径 | 内容 |
 |---|---|
-| [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（侧车 + wrapper + 评测） |
-| [`memory/sidecar/`](memory/sidecar/README.md) | 本地 bge-m3 HTTP 服务（GPU fp16、离线、缓存、fail-safe） |
-| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` provider（零改动继承上游，一键回滚） |
+| [`INSTALL.md`](INSTALL.md) | **完整安装**：固定基线、补丁顺序、Desktop 构建、模型部署、验证与回滚 |
+| [`patches/`](patches/README.md) | Hermes 与 Holographic 的日常版补丁、校验和、应用顺序 |
+| [`docs/release-manifest.md`](docs/release-manifest.md) | 本次发布的文件清单、排除项与提交前扫描结果 |
+| [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（受管侧车 / 手工侧车 + wrapper + 评测） |
+| [`memory/sidecar/`](memory/sidecar/README.md) | 手工 bge-m3 HTTP 服务（GPU fp16、离线、缓存、fail-safe） |
+| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` 0.5.0：云端/本地向量、连接向导、目录、阈值初始化、索引任务 |
 | [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现（`results.json` 为实测输出） |
 | [`memory/threshold-calib/`](memory/threshold-calib/README.md) | 准入阈值校准工具 + 干跑证据（不透明行，可复算） |
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |
@@ -64,25 +80,34 @@
 | [`issue95-evidence/`](issue95-evidence/METRICS.md) | 关键词进向量门禁证据：公开合成集 + 真实库不透明行（零文本） |
 | [`docs/upstream-memory-review/`](docs/upstream-memory-review/SUBMISSION.md) | 上游投稿：记忆容量 / provider 维护任务 / 桌面设置的补丁与验证 |
 
-## 快速开始（语义记忆）
+## 快速开始
+
+完整安装走 [INSTALL.md](INSTALL.md)。最短路径：
 
 ```bash
-# 1. 装基础 holographic 插件（见其仓库），下载 bge-m3 权重
-huggingface-cli download BAAI/bge-m3 --local-dir memory/sidecar/models/bge-m3
+# 1. Hermes 固定基线 + 补丁
+git clone https://github.com/NousResearch/hermes-agent.git
+cd hermes-agent && git checkout 40d1e95f37e409f9f618f32c170661c66b86a4f4
+git apply /path/to/hermes-optimization/patches/hermes-agent-40d1e95f-eccd37ae.patch
+git apply /path/to/hermes-optimization/patches/hermes-agent-ledger-fix.patch
 
-# 2. 起侧车（指向你的 holographic 事实库）
-cd memory/sidecar && pip install -r requirements.txt
-SEMANTIC_DB=/path/to/memory_store.db python server.py
+# 2. Holographic 0.30.0 + 设置补丁，放进插件目录
+#    （见 INSTALL.md §4；补丁文件 patches/holographic-ed73195f-4cbd5b79.patch）
 
-# 3. 装 wrapper 插件并启用
-cp -r memory/plugin/holographic-semantic "$HERMES_HOME/plugins/"
+# 3. wrapper + 启用
+cp -R memory/plugin/holographic-semantic "$HERMES_HOME/plugins/"
+hermes plugins enable holographic-semantic
 hermes config set memory.provider holographic-semantic
 hermes config set plugins.hermes-memory-store.semantic_enabled true
 
-# 回滚（一条命令回到未改动的上游）
+# 4. Desktop 设置 → 记忆 → 向量模型 → 本地 → 选择模型 → 一键部署
+#    权重由安装程序下载，仓库不含模型
+
+# 回滚（一条命令回到未改动的上游 provider）
 hermes config set memory.provider holographic
 ```
 
+不用 Desktop、想手工起侧车：见 [`memory/sidecar/README.md`](memory/sidecar/README.md)。
 只想看评测、不装插件：`cd memory/eval && BGE_MODEL=/path/to/bge-m3 python run_eval.py`。
 
 ## 设计原则
@@ -98,7 +123,10 @@ hermes config set memory.provider holographic
 ## 许可与致谢
 
 本仓库原创部分采用 [MIT](LICENSE)。借用的项目及其许可见 [NOTICE](NOTICE)：
-holographic（MIT）、bge-m3（MIT）、Hermes Agent。模型权重与上游插件**不在此 redistribute**，请自行获取。
+holographic（MIT）、bge-m3（MIT）、Hermes Agent（MIT）。模型权重与上游插件**不在此 redistribute**，请自行获取。
+
+[`patches/`](patches/README.md) 是 Hermes Agent 与 Holographic 固定基线的修改版补丁，分发时保留原版权与
+MIT 许可声明；补丁的起点、终点和校验和都写在补丁清单里。
 
 ---
 

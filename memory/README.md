@@ -27,10 +27,13 @@ query ──► base holographic prefetch (lexical, unchanged) ──┐
 ```
 
 - **`sidecar/`** — local bge-m3 HTTP service (GPU fp16, offline, cached, fail-safe).
-  Produces vectors; read-only on the fact DB.
+  Produces vectors; read-only on the fact DB. The 0.5.0 wrapper can also deploy its own
+  profile-managed service (same protocol, pinned weights under
+  `$HERMES_HOME/services/memory-embeddings/`); this directory remains the manual / CLI path.
 - **`plugin/holographic-semantic/`** — subclasses the holographic provider *unchanged*
   and appends up to N semantic facts to `prefetch`. Any sidecar problem falls back to
-  the base result; recall never blocks. One-command rollback.
+  the base result; recall never blocks. One-command rollback. It also owns the Desktop
+  connection wizard, local model deployment, index job and threshold calibration.
 - **`eval/`** — a self-contained, synthetic Chinese-heavy eval reproducing the tuning.
 
 ## What actually matters: how facts are *admitted* on meaning

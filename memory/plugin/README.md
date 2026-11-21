@@ -1,21 +1,55 @@
 # holographic-semantic plugin
 
-A memory provider that **subclasses the holographic provider unchanged** and adds a
-semantic recall channel backed by the local sidecar, a short write-routing rule in the
-system prompt, and an opt-in fact catalog. The original holographic plugin
-is never modified, so upstream updates flow through automatically.
+`holographic-semantic` 0.5.0：一个**不修改 Holographic 本体**的 memory provider 包装层。加载时继承
+上游 provider，在它之上加：
+
+- 本地或云端的向量召回通道（侧车失败/超时自动退回词法召回，永不阻塞对话）；
+- Desktop 的「向量模型」设置页：云端连接向导、本地模型一键部署、索引任务、阈值初始化；
+- 可选的**事实目录**（`#id=label` 放进系统提示，配 `fact_store get`）；
+- 固定的**写入路由**（新事实默认进 `fact_store`，关于用户且每个会话都需要的进 `USER.md`）；
+- 只读的记忆复查接口（容量、复查条目），供打了补丁的 Hermes 调用。
+
+## 前置
+
+这套 0.5.0 与下面两个固定版本配套，安装顺序见仓库根目录的 [`INSTALL.md`](../../INSTALL.md)：
+
+- Hermes Agent `40d1e95f` + [`patches/hermes-agent-40d1e95f-eccd37ae.patch`](../../patches/README.md)
+  （Desktop 设置面板、provider jobs、记忆复查、本地化）；
+- Holographic `0.30.0`（`ed73195f`）+ [`patches/holographic-ed73195f-4cbd5b79.patch`](../../patches/README.md)
+  （设置 schema）。
+
+只装 wrapper、不装这两个补丁，Desktop 面板和设置 schema 会对不上。
 
 ## Install
 
-1. Install the base [holographic](https://github.com/itpartypattaya/hermes-plugin-holographic)
-   plugin and the [sidecar](../sidecar/README.md) first.
-2. Copy `holographic-semantic/` into your Hermes plugins directory (e.g. `$HERMES_HOME/plugins/`).
-3. Select the provider and enable the semantic channel:
+1. 按 `INSTALL.md` 装好固定基线的 Hermes 和打了补丁的 Holographic 0.30.0。
+2. 把本目录复制到 Hermes 插件目录：
+   ```bash
+   cp -R memory/plugin/holographic-semantic "$HERMES_HOME/plugins/"
+   hermes plugins enable holographic-semantic
+   ```
+3. 选择 provider：
+   ```bash
+   hermes config set memory.provider holographic-semantic
+   ```
 
-```bash
-hermes config set memory.provider holographic-semantic
-hermes config set plugins.hermes-memory-store.semantic_enabled true
-```
+本地向量默认关闭。启用方式二选一：
+
+- **Desktop（推荐）**：设置 → 记忆与上下文 → 持久记忆 → 向量模型 → **本地 → 选择模型 → 一键部署并连接**。
+  权重按 `local_models.py` 固定的提交下载到
+  `$HERMES_HOME/services/memory-embeddings/model-<提交前 12 位>/`，逐个校验大小和 SHA-256；
+  不会把模型放进仓库或配置目录。
+- **手工侧车 / 云端**：手工侧车见 [`../sidecar/README.md`](../sidecar/README.md)，把
+  `semantic_url` 指过去；云端走 Desktop 的连接向导，或设置
+  `embeddings true` + `embedding_url` / `embedding_model`。
+
+本地可选模型（权重不在仓库里）：
+
+| 模型 | 语言 | 维度 | 权重 | 固定提交 |
+|---|---|---|---|---|
+| `bge-m3`（默认） | 多语言 | 1024 | 约 2.14 GiB | `BAAI/bge-m3@5617a9f61b02` |
+| `bge-small-zh` | 中文 | 512 | 约 92 MiB | `BAAI/bge-small-zh-v1.5@7999e1d33597` |
+| `multilingual-minilm` | 多语言，前 128 token | 384 | 约 463 MiB | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@e8f8c211226b` |
 
 ## Config
 
@@ -23,15 +57,24 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 
 | key | default | meaning |
 |---|---|---|
-| `semantic_enabled` | `false` | master switch |
-| `semantic_url` | `http://127.0.0.1:8791` | sidecar address |
-| `semantic_tau` | `0.55` | cosine admission threshold (eval-tuned) |
+| `semantic_enabled` | `false` | 本地语义召回总开关 |
+| `semantic_url` | `http://127.0.0.1:8791` | 侧车地址（受管部署会自动填写） |
+| `semantic_tau` | `0.55` | 本地余弦准入阈值（可用「初始化阈值」校准） |
 | `semantic_max_extra` | `3` | max facts appended beyond base recall |
 | `semantic_total_cap` | `7` | hard cap on total injected facts |
 | `semantic_timeout_ms` | `400` | sidecar HTTP budget; exceed → lexical only |
+| `embeddings` | `false` | 云端向量通道（Holographic 自带），与本地二选一 |
+| `embedding_url` | `https://api.openai.com/v1` | 云端 OpenAI 兼容端点 |
+| `embedding_model` | `text-embedding-3-small` | 云端向量模型 |
+| `embedding_api_key` | — | Desktop 保存的端点密钥；仓库和示例里没有真值 |
+| `embedding_min_score` | 空 | 云端语义召回下限；空 = 不设下限 |
 | `catalog_enabled` | `false` | fact catalog in the system prompt + `fact_store get` |
 | `catalog_max_tokens` | `3000` | hard budget of the catalog lines; over it the lowest trust is left out |
 | `catalog_label_tokens` | `30` | a fact longer than this is listed by its keywords (or opening words) |
+
+Desktop 面板与 `config.yaml` 是同一份设置：面板通过 base provider 的 writer 写
+`plugins.hermes-memory-store`，从下一个会话起生效。密钥只保存为「某地址对应的变量」，不会写进
+`config.yaml`。
 
 ## Behavior
 
@@ -190,22 +233,29 @@ The catalog budget carries `overlaps: ["memory"]`: it lists the facts in every s
 it may suggest turning MEMORY.md off. Only a suggestion: both can stay on, at the cost of one more block of
 context each session, and the write routing already keeps fact ids out of MEMORY.md.
 
-## Desktop settings and the index job (need Hermes core support)
+## Desktop settings and the jobs (with the patched Hermes)
 
 - **Settings.** `config_schema.py` declares the wrapper's own keys (`semantic_enabled`, `semantic_url`,
-  `catalog_enabled`, and in the full config `semantic_tau`, `semantic_max_extra`, `catalog_max_tokens`) for the
-  Desktop's provider panel. They are read from and written to `plugins.hermes-memory-store` of the profile being
-  configured (`settings.py`), through the base provider's own writer, so the panel and `config.yaml` are one
-  setting. The base's keys stay in `config.yaml` and `hermes memory setup`. New values apply from the next session.
-- **Index job.** `maintenance_actions` offers "Index facts for semantic recall" (`sidecar_index.py`). Its status
-  comes from the sidecar's `/health`: facts indexed of facts stored, the model and the device. It is unavailable
-  when the sidecar does not answer, has not loaded a model, or reports a fact count that disagrees with the profile's.
-  Matching counts do not prove store identity: set the sidecar's `SEMANTIC_DB` to this profile's database.
-  When run, it asks the sidecar's `/sync` for 64 facts at a time until none is left and
-  ends with how many it embedded. On a core with the maintenance-jobs change this is a **Run** button under the
-  provider's settings; on that same core, `hermes memory action semantic-index` runs it. The settings and the address are
-  read when the job runs, not when the provider was built.
-- The model, the index and the vectors stay the sidecar's: nothing leaves the machine.
+  `catalog_enabled`, `semantic_tau`, `semantic_max_extra`, `catalog_max_tokens`, `embedding_min_score`) and the
+  cloud connection fields (`embedding_url`, `embedding_model`, `embedding_api_key`). They are read from and written to
+  `plugins.hermes-memory-store` of the profile being configured (`settings.py`), through the base provider's own
+  writer, so the panel and `config.yaml` are one setting. The base's keys stay in `config.yaml` and
+  `hermes memory setup`. New values apply from the next session.
+- **Local deployment job.** `maintenance_actions` offers "部署本地向量模型" (`managed_local.py`): checks disk, creates
+  the pinned Python runtime from `local-runtime.txt`, downloads the pinned weights from `local_models.py`, verifies
+  every file's size and SHA-256, starts the loopback service, and tests the connection with one fixed sentence.
+  A running manual BGE-M3 sidecar is reused instead of starting a second service.
+- **Index job.** "为已有事实建立语义索引" (`sidecar_index.py`) asks the sidecar's `/sync` for 64 facts at a time until
+  none is left. Its status comes from `/health`: facts indexed of facts stored, the model and the device. It is
+  unavailable when the sidecar does not answer, has not loaded a model, or reports a fact count that disagrees with
+  the profile's. Matching counts do not prove store identity: set the sidecar's `SEMANTIC_DB` to this profile's DB.
+- **Threshold job.** "初始化阈值" (`threshold_job.py` + `threshold_calib.py`) draws probes from this profile's own
+  facts, admits by the rule of the mode in use (local cosine `semantic_tau`; cloud `Meaning.standout` +
+  `embedding_min_score`), and proposes one value from two draws. Nothing is written until the user confirms it.
+  Fewer than 20 facts, or a model that cannot separate related from unrelated, proposes nothing and says why.
+- **CLI equivalents**: `hermes memory action` lists the jobs; `hermes memory action semantic-setup-local`,
+  `semantic-index`, `semantic-threshold` run one to the end.
+- The model, the index and the vectors stay local: nothing leaves the machine in local mode.
 
 Self-checked against a fake sidecar on 127.0.0.1: `python memory/plugin/test_catalog.py`; the sidecar's own sync:
 `python memory/sidecar/test_sync.py`.

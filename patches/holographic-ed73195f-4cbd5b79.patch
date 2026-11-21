@@ -1,0 +1,309 @@
+diff --git a/README.md b/README.md
+index 9d863266a017f9380f7742bf87ba23255366eee6..9df6b6f6beaeda8b646beb6d8f25eddec00e67be 100644
+--- a/README.md
++++ b/README.md
+@@ -790,6 +790,10 @@ plugins:
+     embedding_key_env: OPENAI_API_KEY           # the NAME of a variable (e.g. in ~/.hermes/.env), never the key
+ ```
+ 
++The Hermes Desktop edits these keys in its memory provider settings (`config_schema.py`), in the config.yaml of the
++profile it is configuring. A blank field is unset, so the default applies; a key pasted where the variable's name goes
++is refused, not saved.
++
+ | Endpoint | `embedding_url` | `embedding_model` | Key |
+ |---|---|---|---|
+ | OpenAI | `https://api.openai.com/v1` | `text-embedding-3-small` | `OPENAI_API_KEY` |
+diff --git a/__init__.py b/__init__.py
+index d6d49497520af57d7abf97c91615fb11a004a213..081520e5d4e3246d7af6d55734802232e0f8061b 100644
+--- a/__init__.py
++++ b/__init__.py
+@@ -30,6 +30,7 @@ from typing import Any, Dict, List
+ from agent.memory_provider import MemoryProvider
+ from tools.registry import tool_error
+ from utils import is_truthy_value
++from . import config_fields
+ from . import embeddings
+ from . import holographic as hrr
+ from . import rerank
+@@ -910,6 +911,14 @@ class HolographicMemoryProvider(MemoryProvider):
+         finally:
+             reset_hermes_home_override(token)
+ 
++    def read_config_fields(self, hermes_home: str) -> dict:
++        """The Desktop panel's settings (config_schema.py) as *hermes_home* stores them."""
++        return {"values": config_fields.stored(hermes_home, _load_plugin_config), "placeholders": {}}
++
++    def write_config_fields(self, values: dict, hermes_home: str) -> None:
++        self.save_config(config_fields.to_save(values, config_fields.stored(hermes_home, _load_plugin_config)),
++                         hermes_home)
++
+     def get_config_schema(self):
+         """Setup fields. ``default`` is the value saved now (falling back to the factory default), so re-running
+         ``hermes memory setup`` keeps the current database and switches instead of resetting them."""
+diff --git a/config_fields.py b/config_fields.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d78d07bcc837653ba37171f21945ce72976cfd5e
+--- /dev/null
++++ b/config_fields.py
+@@ -0,0 +1,33 @@
++"""read_config_fields / write_config_fields: the Desktop's memory provider panel (config_schema.py) reads and writes
++plugins.hermes-memory-store of the profile it configures, through the writer `hermes memory setup` uses."""
++
++from __future__ import annotations
++
++from typing import Callable
++
++from .embeddings import _RE_ENV_NAME, _RE_KEY_PREFIX
++
++
++def stored(hermes_home: str, load: Callable[[], dict]) -> dict:
++    """The panel's keys as *hermes_home* stores them, not the profile this process runs; a null is unset. Only a
++    Hermes with the panel calls this, and only it has the module the schema imports."""
++    from hermes_constants import reset_hermes_home_override, set_hermes_home_override
++
++    from .config_schema import CONFIG_SCHEMA
++
++    token = set_hermes_home_override(hermes_home)
++    try:
++        section = load()
++    finally:
++        reset_hermes_home_override(token)
++    return {f.key: section[f.key] for f in CONFIG_SCHEMA.fields if section.get(f.key) is not None}
++
++
++def to_save(values: dict, stored_now: dict) -> dict:
++    """The submitted fields as setup writes them. A cleared one (None) that is stored is written empty, which the
++    plugin reads as unset (the merging writer cannot drop a key); one never stored is left out, not written as null.
++    An API key pasted where its variable's name goes is refused before it reaches config.yaml."""
++    name = values.get("embedding_key_env")
++    if isinstance(name, str) and (not _RE_ENV_NAME.fullmatch(name) or _RE_KEY_PREFIX.match(name)):
++        raise ValueError("API key variable must be the name of an environment variable, not the key itself")
++    return {key: value for key, value in values.items() if value is not None or key in stored_now}
+diff --git a/config_schema.py b/config_schema.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca96ad752efadf93dc4b78fb0d75d79dca685c05
+--- /dev/null
++++ b/config_schema.py
+@@ -0,0 +1,130 @@
++"""Desktop settings for search by meaning. Hermes renders this schema in its memory provider panel and hands reads and
++writes to read_config_fields / write_config_fields (config_fields.py): plugins.hermes-memory-store in the config.yaml of
++the profile being configured, the section `hermes memory setup` writes. The other settings stay with setup.
++
++Hermes reads this file from disk and never imports it as part of the package: it may import only the pure-data module.
++A blank field is unset, so the plugin's own default applies; the placeholder shows it.
++"""
++
++from dataclasses import replace
++
++from plugins.memory.config_schema import (
++    KIND_BOOL,
++    KIND_NUMBER,
++    KIND_SELECT,
++    STORAGE_PROVIDER,
++    ProviderConfigSchema,
++    ProviderField,
++    ProviderFieldOption,
++)
++
++_MORE = "Search by meaning"
++
++
++_ZH = {
++    "embeddings": {
++        "label": "按语义搜索",
++        "description": "开启后，会将事实文本、消息和事实库搜索词发往下方的向量接口。从新会话起生效。关闭后，下一个可写会话会删除该接口生成的存储向量。",
++    },
++    "embedding_url": {
++        "label": "向量 API 地址",
++        "description": "支持 OpenAI 兼容的向量接口。公网地址使用 HTTPS，本机或内网地址可以使用 HTTP。",
++    },
++    "embedding_model": {
++        "label": "向量模型",
++        "description": "填入接口实际提供的模型 ID。更换模型后，事实需要重新生成向量。",
++    },
++    "embedding_key_env": {
++        "label": "密钥环境变量",
++        "description": "填入变量名，例如 OPENAI_API_KEY，实际密钥保存在该配置的凭据中。无需密钥的本地服务可使用一个未设置的变量名。",
++    },
++    "embedding_prefetch_facts": {
++        "label": "仅凭语义召回的事实数",
++        "group": "语义搜索",
++        "description": "每轮开始前，可单凭语义加入的事实数。设为 0 时，语义仅用于关键词结果重排和事实库搜索。",
++    },
++    "embedding_dimensions": {
++        "label": "向量维度",
++        "group": "语义搜索",
++        "description": "留空使用模型原生维度。仅支持缩短向量的模型接受指定维度。",
++    },
++    "embedding_timeout": {
++        "label": "请求超时",
++        "group": "语义搜索",
++        "description": "单次请求可用的时间，范围为 0.5 至 6 秒。",
++    },
++    "embedding_min_score": {
++        "label": "最低相似度",
++        "group": "语义搜索",
++        "description": "仅凭语义召回时的相似度下限，范围为 -1 到 1。留空表示不设下限。",
++    },
++    "embedding_weight": {
++        "label": "语义权重",
++        "group": "语义搜索",
++        "description": "语义相似度在混合评分中的权重，范围为 0 到 0.8。",
++    },
++    "embedding_space": {
++        "label": "向量空间标识",
++        "group": "语义搜索",
++        "description": "同一地址和模型 ID 背后更换了模型时，可更改此标识，重新生成事实向量。",
++    },
++    "embedding_catch_up_seconds": {
++        "label": "每轮补建时间",
++        "group": "语义搜索",
++        "description": "每轮结束后为已有事实补建向量的时间，范围为 2 至 60 秒。",
++    },
++}
++
++CONFIG_SCHEMA = ProviderConfigSchema(
++    name="holographic",
++    label="Holographic",
++    storage=STORAGE_PROVIDER,
++    fields=(
++        ProviderField(
++            "embeddings", "Search by meaning", KIND_BOOL, default="false", inline=True,
++            description="ONLINE: fact texts, messages and fact_store search queries are sent to the embeddings API "
++                        "below, so a question worded differently from a fact can still find it. Off: no network "
++                        "calls, and the next writable session deletes stored vectors. Applies from the next session."),
++        ProviderField(
++            "embedding_url", "Embeddings API", placeholder="https://api.openai.com/v1", inline=True,
++            description="OpenAI-compatible (https; plain http only to localhost or a private address, e.g. Ollama)."),
++        ProviderField(
++            "embedding_model", "Embedding model", placeholder="text-embedding-3-small", inline=True,
++            description="Changing it makes every fact's vector again."),
++        ProviderField(
++            "embedding_key_env", "API key variable", placeholder="OPENAI_API_KEY", inline=True,
++            description="Name of the environment variable (e.g. in .env) that holds the API key; the key itself is "
++                        "never written to config. A local endpoint needs none."),
++        ProviderField(
++            "embedding_prefetch_facts", "Facts recalled on meaning alone", KIND_SELECT, default="1", group=_MORE,
++            options=tuple(ProviderFieldOption(n, n) for n in "0123"),
++            description="Before a turn, when they stand far out (0 = meaning only reorders facts that share words, "
++                        "and fact_store search uses it)."),
++        ProviderField(
++            "embedding_dimensions", "Vector size", KIND_NUMBER, group=_MORE,
++            description="Ask the model for vectors of this size; blank = the model's own. A model that cannot "
++                        "shorten its vectors rejects it."),
++        ProviderField(
++            "embedding_timeout", "Timeout", KIND_NUMBER, placeholder="3.0", group=_MORE,
++            description="Seconds one request may take (0.5-6)."),
++        ProviderField(
++            "embedding_min_score", "Minimum similarity", KIND_NUMBER, group=_MORE,
++            description="Optional floor (-1 to 1) for a fact recalled on meaning alone; blank = none."),
++        ProviderField(
++            "embedding_weight", "Weight of meaning", KIND_NUMBER, placeholder="0.3", group=_MORE,
++            description="How much meaning counts in the blended score (0-0.8)."),
++        ProviderField(
++            "embedding_space", "Vector space label", group=_MORE,
++            description="A label of your own: change it when the server starts serving another model under the same "
++                        "address and name, and every vector is made again."),
++        ProviderField(
++            "embedding_catch_up_seconds", "Vector time after a turn", KIND_NUMBER, placeholder="8", group=_MORE,
++            description="Seconds the fact vectors after a turn may take (2-60)."),
++    ),
++)
++
++CONFIG_SCHEMA = replace(
++    CONFIG_SCHEMA,
++    translations={"zh": {"label": "Holographic"}},
++    fields=tuple(replace(field, translations={"zh": _ZH[field.key]}) for field in CONFIG_SCHEMA.fields),
++)
+diff --git a/tests/test_holographic_config_schema.py b/tests/test_holographic_config_schema.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..561f21fe9b5792ee721b4a5a81ffe524a2a75a63
+--- /dev/null
++++ b/tests/test_holographic_config_schema.py
+@@ -0,0 +1,86 @@
++"""The Desktop's memory provider panel for search by meaning: config_schema.py, read_config_fields, write_config_fields.
++
++Hermes loads config_schema.py by path from where the plugin is installed and hands reads and writes to the provider
++with the home of the profile being configured. What the panel saves must land in that profile's
++plugins.hermes-memory-store, be what search by meaning then runs with, and never put an API key into config.yaml.
++"""
++from __future__ import annotations
++
++import shutil
++from pathlib import Path
++
++import hermes_yaml as yaml
++import pytest
++
++from hermes_plugin_holographic import HolographicMemoryProvider
++
++REPO = Path(__file__).resolve().parent.parent
++
++
++def test_hermes_loads_the_schema_from_where_the_plugin_is_installed(_isolated_hermes_home):
++    from plugins.memory.config_schema import STORAGE_PROVIDER, get_provider_config_schema
++
++    plugin = _isolated_hermes_home / "plugins" / "holographic"  # as `hermes plugins install` lays it out
++    plugin.mkdir(parents=True)
++    for name in ("__init__.py", "config_schema.py"):  # the loader runs only config_schema.py, never the package
++        shutil.copy(REPO / name, plugin / name)
++
++    schema = get_provider_config_schema("holographic")
++
++    assert schema is not None and schema.storage == STORAGE_PROVIDER
++    assert "embeddings" in {field.key for field in schema.inline_fields()}
++
++
++def test_a_save_lands_in_that_profile_and_is_what_search_by_meaning_runs_with(tmp_path, monkeypatch,
++                                                                              _isolated_hermes_home):
++    profile = tmp_path / "work"
++    profile.mkdir()
++    (profile / "config.yaml").write_text("model:\n  default: keep-me\nplugins:\n  hermes-memory-store:\n"
++                                         "    scope: user\n")
++
++    HolographicMemoryProvider(config={}).write_config_fields({  # natives, as Hermes coerces the form
++        "embeddings": True, "embedding_url": "http://127.0.0.1:11434/v1", "embedding_model": "bge-m3",
++        "embedding_key_env": None, "embedding_prefetch_facts": "2", "embedding_dimensions": None,
++        "embedding_timeout": 5, "embedding_weight": 0.5, "embedding_space": "local",
++    }, str(profile))
++
++    raw = yaml.safe_load((profile / "config.yaml").read_text())
++    assert raw["model"]["default"] == "keep-me"
++    section = raw["plugins"]["hermes-memory-store"]
++    assert section["scope"] == "user"
++    assert "embedding_key_env" not in section and "embedding_dimensions" not in section  # blank, never stored
++    assert not (_isolated_hermes_home / "config.yaml").exists()  # the profile this process runs is untouched
++
++    monkeypatch.setenv("HERMES_HOME", str(profile))
++    on = HolographicMemoryProvider()._embedding
++    assert (on.url, on.model, on.key_env, on.recall_facts, on.dimensions, on.timeout, on.weight, on.space) == (
++        "http://127.0.0.1:11434/v1", "bge-m3", "OPENAI_API_KEY", 2, None, 5, 0.5, "local")
++
++
++def test_the_panel_reads_that_profile_and_a_cleared_field_goes_back_to_its_default(tmp_path, monkeypatch):
++    profile = tmp_path / "work"
++    profile.mkdir()
++    (profile / "config.yaml").write_text("plugins:\n  hermes-memory-store:\n    embeddings: on\n"
++                                         "    embedding_model: old-model\n    db_path: custom.db\n")
++    provider = HolographicMemoryProvider(config={})
++
++    values = provider.read_config_fields(str(profile))["values"]
++    assert values == {"embeddings": True, "embedding_model": "old-model"}  # YAML's on; only the panel's keys
++
++    provider.write_config_fields({"embedding_model": None}, str(profile))
++
++    assert provider.read_config_fields(str(profile))["values"] == {"embeddings": True}
++    monkeypatch.setenv("HERMES_HOME", str(profile))
++    assert HolographicMemoryProvider()._embedding.model == "text-embedding-3-small"
++
++
++@pytest.mark.parametrize("pasted", ["sk-proj-abc123", "OPENAI API KEY"])
++def test_an_api_key_pasted_as_the_variable_name_never_reaches_config(_isolated_hermes_home, pasted):
++    before = "plugins:\n  hermes-memory-store:\n    embeddings: off\n"
++    (_isolated_hermes_home / "config.yaml").write_text(before)
++
++    with pytest.raises(ValueError):
++        HolographicMemoryProvider(config={}).write_config_fields({"embedding_key_env": pasted},
++                                                                 str(_isolated_hermes_home))
++
++    assert (_isolated_hermes_home / "config.yaml").read_text() == before

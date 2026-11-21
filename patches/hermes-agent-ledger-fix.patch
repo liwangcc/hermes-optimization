@@ -1,0 +1,28 @@
+diff --git a/tests/hermes_cli/serve_handler_ledger.json b/tests/hermes_cli/serve_handler_ledger.json
+--- a/tests/hermes_cli/serve_handler_ledger.json
++++ b/tests/hermes_cli/serve_handler_ledger.json
+@@ -2,7 +2,7 @@
+  "counts": {
+   "http": {
+    "keep-host-wide": 1,
+-   "undecided": 352
++   "undecided": 354
+   },
+   "rpc": {
+    "authority": 112,
+@@ -130,6 +130,7 @@
+   {"current_path": "hermes_cli.web_routers.files:proxy_remote_media", "decision": "undecided", "handler": "GET /api/media/proxy", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.ops:get_memory_status", "decision": "undecided", "handler": "GET /api/memory", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_actions:list_memory_actions", "decision": "undecided", "handler": "GET /api/memory/actions", "kind": "http", "ref": ""},
++  {"current_path": "hermes_cli.web_routers.memory_actions:memory_action_status", "decision": "undecided", "handler": "GET /api/memory/actions/status", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_providers:get_memory_provider_config", "decision": "undecided", "handler": "GET /api/memory/providers/{name}/config", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.memory_oauth:memory_oauth_status", "decision": "undecided", "handler": "GET /api/memory/providers/{provider}/oauth/status", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.messaging:get_messaging_platforms", "decision": "undecided", "handler": "GET /api/messaging/platforms", "kind": "http", "ref": ""},
+@@ -282,6 +283,7 @@
+   {"current_path": "hermes_cli.web_routers.mcp:test_mcp_server", "decision": "undecided", "handler": "POST /api/mcp/servers/{name}/test", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_actions:run_memory_action", "decision": "undecided", "handler": "POST /api/memory/actions", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_checkup:checkup_memory", "decision": "undecided", "handler": "POST /api/memory/checkup", "kind": "http", "ref": ""},
++  {"current_path": "hermes_cli.web_routers.memory_providers:connect_memory_provider", "decision": "undecided", "handler": "POST /api/memory/providers/{name}/connect", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.memory_providers:setup_memory_provider", "decision": "undecided", "handler": "POST /api/memory/providers/{name}/setup", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.memory_oauth:start_memory_oauth", "decision": "undecided", "handler": "POST /api/memory/providers/{provider}/oauth/start", "kind": "http", "ref": ""},
+   {"current_path": "hermes_cli.web_routers.ops:reset_memory", "decision": "undecided", "handler": "POST /api/memory/reset", "kind": "http", "ref": ""},
