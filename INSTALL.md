@@ -205,7 +205,12 @@ hermes plugins list | grep -i holo
 | 包装插件自检 | `python memory/plugin/test_catalog.py` | 10 项全部 ok |
 | 手工侧车同步 | `python memory/sidecar/test_sync.py` | 4 项全部 ok |
 | 阈值校准工具 | `cd memory/threshold-calib && pytest -q` | 20 passed, 55 skipped（缺 vendored 快照的用例按设计跳过） |
+| 旧投稿 testkit 自检 | `cd docs/upstream-memory-review/testkit && python -m unittest -v test_run` | 6 tests OK |
 | Holographic 设置补丁测试 | 见下方命令 | 5 passed |
+
+`test_catalog.py` 这次按插件 0.5.0 的 `usage_report` / `maintenance_actions` 输出更新过断言（新增
+`catalog_max_tokens`、`connection_state`、`semantic-index` job），不是插件行为变化。旧投稿 testkit
+只测投稿编排器，与插件运行时无耦合，保留原样即可。
 
 Holographic 的 5 个用例需要把 Hermes 检出和插件测试环境放在一起。Windows + pytest 9 还要避开一个
 测试收集器的坑：仓库根目录本身是包（有 `__init__.py`），直接 `pytest tests/...` 会把根 `__init__.py`
