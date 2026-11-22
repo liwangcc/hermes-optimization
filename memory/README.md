@@ -25,13 +25,13 @@ query ──► base holographic prefetch ────────────�
 ```
 
 - **`sidecar/`** — local bge-m3 HTTP service (GPU fp16, offline, cached, fail-safe).
-  Produces vectors and reads the fact DB. The 0.6.0 wrapper can also deploy its own
+  Produces vectors and reads the fact DB. The 0.6.1 wrapper can also deploy its own
   profile-managed service (same protocol, pinned weights under
   `$HERMES_HOME/services/memory-embeddings/`); this directory remains the manual / CLI path.
 - **`plugin/holographic-semantic/`** — subclasses the holographic provider and checks the
   single closest fact above the trust floor for `prefetch`. Greetings and short messages skip
   the sidecar. Sidecar failures fall back to the base result. The wrapper also provides the
-  Desktop connection wizard, local deployment, indexing and calibration.
+  Desktop connection wizard, local deployment, indexing and model-specific threshold recommendations.
 - **`eval/`** — a self-contained, synthetic Chinese-heavy eval reproducing the tuning.
 
 ## Earlier evaluations of semantic admission
@@ -75,7 +75,7 @@ about 3 GB of VRAM. The top-level README records the keyword comparison and scal
 
 | knob | value | rationale |
 |---|---|---|
-| `semantic_tau` | 0.55 | eval-tuned cosine floor; lower = more recall, more noise |
+| `semantic_tau` | model recommendation (default 0.55) | local deployment applies the new model's preset when the model changes |
 | fact text | `content + " " + tags` | stored tags carry the curated keywords |
 | `semantic_total_cap` | 7 | maximum total after appending a semantic fact |
 | `semantic_timeout_ms` | 400 | fail-open budget; exceed → lexical only |

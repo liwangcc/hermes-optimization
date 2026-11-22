@@ -1,0 +1,21 @@
+{
+  "seed": "novel-terms-decision-01",
+  "arms": ["baseline", "novel_terms"],
+  "passes_per_arm": 1,
+  "strata": {
+    "comqa": {"facts": 64, "positive": 64, "negative": 64},
+    "squad_es": {"facts": 96, "positive": 96, "negative": 96}
+  },
+  "design": {
+    "comqa": "Community-authored English questions. One distinct paraphrase per answer cluster for the fact text, another for keywords, a third for evaluation. Use an additional 64 withheld clusters as negatives, each with a unique named answer absent from every stored fact.",
+    "squad_es": "Spanish questions about English excerpts, one previously unseen article per fact. Keep one positive with its gold answer inside the displayed excerpt and one original impossible question. English and Spanish support keywords come from a third, disjoint answered question. Reject overlap with the old article, ID and question sets.",
+    "selection": "Fixed hash order, published labels and source text only. No lexical or vector search for selection. The two disjoint stores form one evaluation. Each positive represents a different fact. Negatives in SQuAD use the original paragraph labels.",
+    "selection_sources": "The question writers and translators predate this experiment. ComQA clusters use their public training partition. All four previous SQuAD article sets are excluded."
+  },
+  "sources": {
+    "comqa_train.json": ["https://qa.mpi-inf.mpg.de/comqa/comqa_train.json", "aa25b2747221a6147737066fa7f8509414a6333e6eebb20d7970fc50166eba9c"],
+    "train-v2.0-es.json": ["https://raw.githubusercontent.com/ccasimiro88/TranslateAlignRetrieve/c84784219785c1fc05884b26081d9b7b4156c019/SQuAD-es-v2.0/train-v2.0-es.json", "6d5a2001fc9508449284114017c4fadce6bbe460dcb1656e89b780c125370c85"],
+    "squad2-train.json": ["https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json", "68dcfbb971bd3e96d5b46c7177b16c1a4e7d4bdef19fb204502738552dede002"],
+    "squad2-dev.json": ["https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json", "80a5225e94905956a6446d296ca1093975c4d3b3260f1d6c8f68bc2ab77182d8"]
+  }
+}

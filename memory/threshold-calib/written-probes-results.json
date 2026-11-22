@@ -1,0 +1,292 @@
+{
+ "synthetic": {
+  "suite": "synthetic",
+  "lang": "zh",
+  "facts": 30,
+  "labelled_asked": 47,
+  "written_probes": 34,
+  "chit": 10,
+  "thresholds": {
+   "labelled": {
+    "N": {
+     "tau": 0.52,
+     "correct": 28,
+     "incorrect": 8,
+     "unanswerable": 2
+    },
+    "Z": {
+     "tau": 0.58,
+     "correct": 17,
+     "incorrect": 2,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.5,
+      0.53
+     ],
+     [
+      0.55,
+      0.55
+     ]
+    ],
+    "probes": 47,
+    "negatives": 11
+   },
+   "written": {
+    "N": {
+     "tau": 0.6,
+     "correct": 31,
+     "incorrect": 1,
+     "unanswerable": 1
+    },
+    "Z": {
+     "tau": 0.63,
+     "correct": 28,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.58,
+      0.61
+     ]
+    ],
+    "probes": 78,
+    "negatives": 44
+   },
+   "written, no hold-outs": {
+    "N": {
+     "tau": 0.5,
+     "correct": 34,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "Z": {
+     "tau": 0.46,
+     "correct": 34,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.46,
+      0.53
+     ]
+    ],
+    "probes": 44,
+    "negatives": 10
+   },
+   "written, less word overlap": {
+    "N": {
+     "tau": 0.58,
+     "correct": 18,
+     "incorrect": 2,
+     "unanswerable": 2
+    },
+    "Z": {
+     "tau": 0.63,
+     "correct": 14,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.58,
+      0.58
+     ]
+    ],
+    "probes": 48,
+    "negatives": 29
+   },
+   "written, more word overlap": {
+    "N": {
+     "tau": 0.61,
+     "correct": 15,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "Z": {
+     "tau": 0.59,
+     "correct": 15,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.59,
+      0.62
+     ]
+    ],
+    "probes": 40,
+    "negatives": 25
+   }
+  },
+  "distributions": {
+   "labelled": {
+    "closest_is_answer": "29/36",
+    "median_cosine_when_right": 0.5923,
+    "median_cosine_no_answer": 0.4678,
+    "no_answer_at_0.55": "1/11",
+    "median_word_overlap": 0.1082
+   },
+   "written": {
+    "closest_is_own_fact": "34/34",
+    "median_cosine_when_right": 0.6976,
+    "median_cosine_held_out": 0.5195,
+    "held_out_at_0.55": "5/34",
+    "median_cosine_chit": 0.372,
+    "median_word_overlap": 0.5,
+    "less_overlap_median_word_overlap": 0.375,
+    "more_overlap_median_word_overlap": 0.625,
+    "less_overlap_median_cosine_when_right": 0.6814,
+    "more_overlap_median_cosine_when_right": 0.7276
+   }
+  }
+ },
+ "household_zh": {
+  "suite": "household",
+  "lang": "zh",
+  "facts": 199,
+  "labelled_asked": 104,
+  "written_probes": 199,
+  "chit": 10,
+  "thresholds": {
+   "labelled": {
+    "N": {
+     "tau": 0.61,
+     "correct": 38,
+     "incorrect": 3,
+     "unanswerable": 3
+    },
+    "Z": {
+     "tau": 0.66,
+     "correct": 30,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.6,
+      0.61
+     ]
+    ],
+    "probes": 104,
+    "negatives": 46
+   },
+   "written": {
+    "N": {
+     "tau": 0.65,
+     "correct": 187,
+     "incorrect": 5,
+     "unanswerable": 5
+    },
+    "Z": {
+     "tau": 0.68,
+     "correct": 173,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.65,
+      0.65
+     ]
+    ],
+    "probes": 408,
+    "negatives": 209
+   },
+   "written, no hold-outs": {
+    "N": {
+     "tau": 0.56,
+     "correct": 199,
+     "incorrect": 1,
+     "unanswerable": 1
+    },
+    "Z": {
+     "tau": 0.58,
+     "correct": 198,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.55,
+      0.56
+     ],
+     [
+      0.58,
+      0.58
+     ]
+    ],
+    "probes": 209,
+    "negatives": 10
+   },
+   "written, less word overlap": {
+    "N": {
+     "tau": 0.65,
+     "correct": 100,
+     "incorrect": 1,
+     "unanswerable": 1
+    },
+    "Z": {
+     "tau": 0.68,
+     "correct": 87,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.65,
+      0.65
+     ]
+    ],
+    "probes": 228,
+    "negatives": 119
+   },
+   "written, more word overlap": {
+    "N": {
+     "tau": 0.68,
+     "correct": 86,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "Z": {
+     "tau": 0.68,
+     "correct": 86,
+     "incorrect": 0,
+     "unanswerable": 0
+    },
+    "N_bands": [
+     [
+      0.67,
+      0.68
+     ]
+    ],
+    "probes": 190,
+    "negatives": 100
+   }
+  },
+  "distributions": {
+   "labelled": {
+    "closest_is_answer": "55/58",
+    "median_cosine_when_right": 0.6679,
+    "median_cosine_no_answer": 0.5544,
+    "no_answer_at_0.55": "24/46",
+    "median_word_overlap": 0.3333
+   },
+   "written": {
+    "closest_is_own_fact": "199/199",
+    "median_cosine_when_right": 0.73,
+    "median_cosine_held_out": 0.5471,
+    "held_out_at_0.55": "92/199",
+    "median_cosine_chit": 0.517,
+    "median_word_overlap": 0.6667,
+    "less_overlap_median_word_overlap": 0.5714,
+    "more_overlap_median_word_overlap": 0.75,
+    "less_overlap_median_cosine_when_right": 0.7176,
+    "more_overlap_median_cosine_when_right": 0.7458
+   }
+  }
+ }
+}

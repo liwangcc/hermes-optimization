@@ -1,0 +1,31 @@
+{
+ "hash_format": "SHA-256 of the file bytes as written (UTF-8, LF)",
+ "files": {
+  "question-text-synthetic.json": {
+   "sha256": "89695181f06153fdf286365481d32b42326cfddf82d62e6281c64143b583933a",
+   "facts": 30,
+   "questions": 34
+  },
+  "question-text-household-zh.json": {
+   "sha256": "a4a4cadc3b0b1e2fc60a04a06ce90507d0771c0f8aef53dccd3b1ac970f51aec",
+   "facts": 199,
+   "questions": 199
+  }
+ },
+ "frozen": "2026-11-22, before any score with these questions",
+ "writer": "one general-purpose subagent on the smallest model (haiku), single pass, no question changed after its format check",
+ "isolation": "the writer read both fact-text files (30 + 199 facts) and no question, label or result. The plan was one writer per fact; that was dropped for quota, so a question may have been worded with other facts in view despite rule 5.",
+ "rules": [
+  "one short question with an explicit subject, answerable from this fact alone, no pronoun standing for the subject",
+  "at most one more question, worded clearly differently and answerable from the same fact",
+  "no attribute or condition the fact does not hold",
+  "in the fact's own language, at most 40 characters, no ASCII comma, two questions of a fact differ",
+  "each fact on its own: no wording chosen with the other facts in view"
+ ],
+ "vector_text": {
+  "keywords": "content + ' ' + tags (the sidecar's text)",
+  "keywords+questions": "the same, then ' ' and the questions joined by a space",
+  "questions-as-keywords": "the questions appended to the fact's keywords, so tags, the word index and the vector text all carry them"
+ },
+ "limit": "a question that is in its own fact's vector text cannot serve as a calibration probe for that fact"
+}

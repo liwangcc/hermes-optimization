@@ -7,9 +7,9 @@
 | 1 | [C：Holographic 设置面板](issues/C-holographic-settings.md) | 插件库，新 Issue | 接不接这个纯设置补丁，还是对方自己做 | HOLO-1 |
 | 2 | [A：内置文件用量](issues/A-capacity.md) | 主库 #5320 下的一条评论 | 能否审一个只显示两个内置文件「已用字符 / 写入上限」的 PR | PR3 |
 | 3 | [B：提供者的维护任务](issues/B-provider-jobs.md) | 主库，新 Issue | 能否审一个 PR：两个可选方法，加 CLI 和 Desktop 入口 | PR7 |
-| 独立 | [D：语义准入的双档余量](issues/D-recall-margin-shown.md) | 插件库，新 Issue | 肯不肯在门禁上测「纯提升」方案；「取舍最优」和「判别器复核」作为可选项要不要看 | HOLO-4，见 [`RUNBOOK-HOLO-4.md`](RUNBOOK-HOLO-4.md) |
+| 独立 | [D：语义准入](issues/D-recall-margin-shown.md)，**已于 2026-11-22 发为插件库 #121**；后续是 [#121 下的一条更正评论](../../memory/threshold-calib/upstream-check/ISSUE-121-COMMENT.md) | 插件库 #121 下的评论 | 更正：双档余量在 bge-m3 上噪声上涨，撤回；问能不能提「余量放宽加小模型复核」的 PR | HOLO-5，见 [`upstream-check/RUNBOOK.md`](../../memory/threshold-calib/upstream-check/RUNBOOK.md)。HOLO-4（双档余量）不再提 |
 
-D 是 2026-11-21 新增的另一条线（语义召回的准入规则），只涉及插件库，和上面三条没有依赖，不排进它们的顺序；只要求不和别的帖子同一天发。
+D 是 2026-11-21 新增的另一条线（语义召回的准入规则），只涉及插件库，和上面三条没有依赖，不排进它们的顺序；只要求不和别的帖子同一天发。2026-11-22 发出后，用官方探针在 bge-m3 上直接跑，#121 主推的双档余量噪声 93 → 95，过不了门禁；「小模型复核」做成补丁后两个题池都通过。#121 不删不改，只在下面发评论更正，评论和 PR 的正文、步骤都在 `memory/threshold-calib/upstream-check/`。
 
 ## 为什么是这个顺序
 

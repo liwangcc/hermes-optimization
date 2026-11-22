@@ -1,0 +1,35 @@
+{
+ "hash_format": "SHA-256 of the file bytes as written (UTF-8, LF)",
+ "files": {
+  "lexical-keywords-synthetic.json": {
+   "sha256": "4c4553431ae0232905c25f4c8e48ea90b5b2df115dbe4b137860bc6ed26b4b40",
+   "facts": 30,
+   "keywords": 236
+  },
+  "lexical-keywords-household-zh.json": {
+   "sha256": "82c925ef805b164aa3470a69c358cbe6dcae41834addc0fa971c2074ddc589db",
+   "facts": 199,
+   "keywords": 1580
+  }
+ },
+ "frozen": "2026-11-22, before any run with these keywords",
+ "writer": "one general-purpose subagent (claude-fable-5-2), single pass; one keyword fixed after its own format check",
+ "writer_inputs": {
+  "synthetic fact texts (fact_id -> content)": 30,
+  "household zh fact texts (name -> content)": 199
+ },
+ "writer_reads": "the two fact-text files only; no question, label or result",
+ "rules": [
+  "3 to 8 keywords per fact, never more than 8",
+  "bilingual: Chinese and English in every fact's keywords (standard term in the other language, synonym, broader term)",
+  "no colloquial wording, no question word or question fragment, no sentence; noun terms or phrases only",
+  "no keyword is a substring of its fact's text (case-insensitive)",
+  "at most 40 characters, no comma or semicolon inside, no repeat within a fact",
+  "written from the fact's own content only"
+ ],
+ "compared_with": {
+  "synthetic": "issue95-evidence/synthetic/blind_keywords.json sha256 eef343b0689afd7e356fa5e7839323e8571ee077316ca2630688682338426607",
+  "household zh": "vendor/holographic-0.30.0/tools/issue95_keywords/household.json [zh]"
+ },
+ "decision_rule": "worth having = on every question set fewer displayed non-target facts and no target lost; a target lost is reported as a trade"
+}

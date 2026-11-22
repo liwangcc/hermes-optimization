@@ -18,7 +18,7 @@
 Hermes 主补丁的覆盖面：核心 14 个文件（`agent/`、`hermes_cli/`、`tools/`、`plugins/memory/`）、
 Desktop 81 个文件（含 `apps/desktop/src/i18n/` 的各语言文案）、`locales/` 1 个、测试 6 个、文档 4 个。
 
-### `holographic-semantic` 0.6.0（16 个源文件）
+### `holographic-semantic` 0.6.1（16 个源文件）
 
 `memory/plugin/holographic-semantic/`：
 
@@ -27,11 +27,12 @@ Desktop 81 个文件（含 `apps/desktop/src/i18n/` 的各语言文案）、`loc
 `README.md`、`settings.py`、`setup_common.py`、`sidecar_index.py`、`threshold_calib.py`、
 `threshold_job.py`。
 
-0.6.0 采用方案二。本地语义只检查信任线以上余弦最高的候选，沿用基座的重复窗口、可召回性、人名和查询长度检查。
-本地阈值校准也只按第 1 名判定。侧车提供相同的 HTTP 接口，并继续接受请求里的 `limit`。
+本地语义沿用方案二，只检查信任线以上余弦最高的候选，并采用基座的重复窗口、可召回性、人名和查询长度检查。
+0.6.1 将本地「一键初始化阈值」改为按固定模型给推荐值。首次部署和切换模型时写入推荐值，重部署同一模型时保留当前值。
+云端阈值任务仍用事实片段探针。
 
-其中 `local-runtime.in` / `local-runtime.txt` 是 Windows 运行环境的依赖锁（带每个包的 SHA-256），
-不是模型权重；`local_models.py` 只存模型的固定提交、文件大小和 SHA-256，权重在安装时下载。
+`local-runtime.in` / `local-runtime.txt` 记录 Windows 运行环境的依赖和校验值。
+`local_models.py` 记录模型的固定提交、文件大小、SHA-256 和推荐阈值。权重在安装时下载。
 
 ### 文档与自检
 
@@ -39,9 +40,9 @@ Desktop 81 个文件（含 `apps/desktop/src/i18n/` 的各语言文案）、`loc
 |---|---|
 | `README.md` | 默认入口指向 `INSTALL.md`，补上日常版基线与模型说明 |
 | `memory/README.md` | 受管侧车 / 手工侧车的分工 |
-| `memory/plugin/README.md` | 0.6.0 的安装、配置、本地语义准入、任务与回滚 |
+| `memory/plugin/README.md` | 0.6.1 的安装、配置、本地推荐阈值、任务与回滚 |
 | `memory/sidecar/README.md` | 标注为手工 / CLI 路径 |
-| `memory/plugin/test_catalog.py` | 保留原有 10 项自检，新增 7 项覆盖本地语义准入、旧配置加载及校准 |
+| `memory/plugin/test_catalog.py` | 21 项包装插件自检，覆盖本地语义准入、旧配置加载、模型切换和阈值建议 |
 | `config-patterns/README.md` | 云端 / 本地配置范式 |
 | `docs/methodology.md` | 去掉已删除的 `skills/` 链接 |
 | `NOTICE` | 补 Hermes MIT 许可与补丁归属 |
@@ -76,7 +77,7 @@ find . -type f \( -name '*.pyc' -o -name '*.db' -o -name '*.sqlite*' -o -name '*
 find . -type f -not -path './.git/*' -size +5M
 → 0 个
 
-grep -rnE "52827|C:[\\/]Users|D:[\\/]hermes|/home/[a-z]" --include='*.py' --include='*.md' \
+grep -rnE "<username>|C:[\\/]Users|D:[\\/]hermes|/home/[a-z]" --include='*.py' --include='*.md' \
   --include='*.yaml' --include='*.json' --include='*.txt' .
 → 0 个
 
@@ -100,4 +101,4 @@ c23b9673ee64e9eda2722cb877a2a8b2ff3d296354ca6f527eb045fe42b439a0  holographic-ed
 Python 测试 60 passed，Desktop UI 9 files / 50 tests、Electron 126 tests，插件自检 10 项、
 侧车同步 4 项、阈值工具 20 passed / 55 skipped、Holographic 设置 5 passed。
 
-0.6.0 包装插件自检 17 项通过，Ruff 0.15.22 检查通过。
+0.6.1 包装插件自检 21 项通过，Ruff 0.15.22 检查通过。本地阈值建议和云端片段校准通过 Core 沙盒冒烟，云端使用本地接口替身。

@@ -156,12 +156,12 @@ def _stop_replaced(receipt: dict, keep: str) -> None:
     receipt's own port that runs this plugin's server; a manual sidecar is never touched."""
     import psutil
 
-    url = receipt.get("url")
+    url, owner = receipt.get("url"), receipt.get("store_id")
     port = _port(url) if isinstance(url, str) and url != keep else None
-    if port is None:
+    if port is None or not isinstance(owner, str):
         return
     try:
-        if _request(url, "/health").get("store_id") != receipt.get("store_id"):
+        if _request(url, "/health").get("store_id") != owner:
             return  # the port went to something else since: not ours to stop
         for hit in psutil.net_connections("tcp4"):
             if hit.status != psutil.CONN_LISTEN or hit.laddr != (_HOST, port) or hit.pid is None:
@@ -183,7 +183,7 @@ def _receipt(root: Path) -> dict:
 
 
 def deployed(home: str, url: str) -> LocalModel | None:
-    """The model setup deployed at *url* for this profile; None for a manual sidecar or another address."""
+    """The model setup verified at *url* for this profile, if recorded."""
     receipt = _receipt(_root(Path(home)))
     if receipt.get("url") != url:
         return None
@@ -314,11 +314,28 @@ def deploy(home: str, db: Path, address: str, model: LocalModel, *, save) -> Gen
     with setup_lock(home):
         yield progress(f"Checking the local {model.label} service…", f"正在检查本地 {model.label} 服务…")
         previous = _receipt(root)
+        previous_id = (previous.get("model_id") or DEFAULT) if previous else None
+        same_model = previous_id == model.id
+        values: dict[str, bool | float] = {"semantic_enabled": True, "embeddings": False}
+        if not same_model:
+            values["semantic_tau"] = model.recommended_tau
+
+        def connect(receipt: dict) -> None:
+            _write_receipt(root, {**receipt, "model_id": model.id, "rev": model.rev, "dim": model.dim})
+            try:
+                save({**values, "semantic_url": receipt["url"]}, home)
+            except Exception:
+                _write_receipt(root, previous)
+                raise
+
         # the configured address first, then the manual sidecar's own: switching back to BGE-M3 finds it again
         for candidate in dict.fromkeys((address, _LEGACY_URL)):
             if health := _ready(candidate, db, profile, model):
                 _check_embedding(candidate, model)
-                save({"semantic_url": candidate, "semantic_enabled": True, "embeddings": False}, home)
+                owner = health.get("store_id")
+                same_service = same_model and previous.get("url") == candidate and previous.get("store_id") == owner
+                receipt = previous if same_service else {}
+                connect({**receipt, "url": candidate, "store_id": owner})
                 _stop_replaced(previous, candidate)
                 device = _device(health)
                 yield result(f"Connected to the existing {model.label} service ({device}). New sessions can use it.",
@@ -331,20 +348,14 @@ def deploy(home: str, db: Path, address: str, model: LocalModel, *, save) -> Gen
         address = f"http://{_HOST}:{port}"
         yield progress(f"Starting and testing {model.label}…", f"正在启动并试连 {model.label}…")
         proc = _launch(root, python, weights, db, port, model)
-        wrote_receipt = False
         try:
             health = _wait_ready(proc, address, db, profile, model)
             _check_embedding(address, model)
             receipt = {"url": address, "store_id": _store_id(db), "runtime": python.parents[1].name,
-                       "model": "managed" if weights.parent == root else "legacy",
-                       "model_id": model.id, "rev": model.rev, "dim": model.dim}
-            _write_receipt(root, receipt)
-            wrote_receipt = True
-            save({"semantic_url": address, "semantic_enabled": True, "embeddings": False}, home)
+                       "model": "managed" if weights.parent == root else "legacy"}
+            connect(receipt)
         except Exception:
             _stop_started(proc)
-            if wrote_receipt:
-                _write_receipt(root, previous)
             raise
         _stop_replaced(previous, address)
         device = _device(health)

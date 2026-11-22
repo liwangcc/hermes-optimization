@@ -6,15 +6,29 @@
 
 这是一个 **power-user 设置指南 + 可运行组件**，不是 Hermes 本体。我把日常调优里真正有价值、且能通用化的部分抽出来分享：方法、代码、评测都能照着跑，但**不含任何个人配置、密钥或私有数据**——所有示例值都是占位符。
 
-## 完整安装（日常版 2026-11）
+## 怎么选：纯净版 / 纯净增强版 / 日常版
 
-想直接装上和我日常一致的版本，从 **[INSTALL.md](INSTALL.md)** 开始。它给出固定基线、补丁应用顺序、Desktop 构建、插件安装、模型部署、验证和回滚步骤。
+语义召回先选取舍，再决定装哪套：
+
+| 版本 | 取舍 | 适合谁 | 在哪 |
+|---|---|---|---|
+| **上游纯净版** | 精度优先。holographic 默认统计离群门（zbar，margin 1.0），噪声极低；小库上按意思召回很少 | 怕噪声、要稳的多数用户 | [holographic 上游](https://github.com/itpartypattaya/hermes-plugin-holographic)，开箱即用 |
+| **纯净增强版（主推）** | 不抬高噪声的前提下提召回：低余量候选经本地小模型复核确认才放行，噪声/混淆不增，官方门禁两个题池全过 | 想要更多召回、又不愿牺牲精度 | 补丁与门禁证据 [`memory/threshold-calib/upstream-check/`](memory/threshold-calib/upstream-check/README.md)，投稿记录 [`docs/upstream-memory-review/`](docs/upstream-memory-review/SUBMISSION.md) |
+| **日常版（自选）** | 召回优先。cos≥0.55 + 双语口语关键词 + 余弦追加，recall 更高，但会带回非目标事实（精度有代价） | 个人日常、更怕漏召回不怕噪声 | 本仓库 [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/)，安装见 [INSTALL.md](INSTALL.md) |
+
+**主推上游纯净版 / 纯净增强版。** 它们守住上游精度门（噪声、混淆不增），是适合大多数人的默认。纯净增强版目前**正在投稿上游**，补丁、探针记录和门禁输出都在仓库里、可复算；是否合并由上游维护者决定，沉默不算同意。
+
+**日常版是我自己的取舍，不是给所有人的推荐。** 它把召回拉满，代价是语义通道带回非目标事实（见下方「精度」一节的收回声明）。想直接用我日常这套，从 [INSTALL.md](INSTALL.md) 开始；更怕噪声，就用上游纯净版，或等纯净增强版进上游。
+
+## 完整安装（日常版，自选）
+
+这是召回优先的个人日常版（取舍见上表）。想直接装上和我日常一致的版本，从 **[INSTALL.md](INSTALL.md)** 开始。它给出固定基线、补丁应用顺序、Desktop 构建、插件安装、模型部署、验证和回滚步骤。
 
 | 组件 | 固定版本 | 本仓库位置 |
 |---|---|---|
 | Hermes Agent | `40d1e95f` → `eccd37ae`（`v0.23.2+canary` + 6 commits） | [`patches/`](patches/README.md) |
 | Holographic | 0.30.0（`ed73195f` → `4cbd5b7`） | [`patches/`](patches/README.md) |
-| `holographic-semantic` | 0.6.0（16 个源文件，含依赖锁和模型清单） | [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/) |
+| `holographic-semantic` | 0.6.1（16 个源文件，含依赖锁和模型清单） | [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/) |
 
 **模型权重不随仓库分发**：bge-m3 约 2.14 GiB，BGE-small-zh 约 92 MiB，MiniLM 约 463 MiB，由安装程序按固定
 提交下载并逐文件校验 SHA-256。详见 [INSTALL.md §6](INSTALL.md#6-本地向量模型权重不在仓库里)。
@@ -70,7 +84,7 @@
 | [`docs/release-manifest.md`](docs/release-manifest.md) | 本次发布的文件清单、排除项与提交前扫描结果 |
 | [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（受管侧车 / 手工侧车 + wrapper + 评测） |
 | [`memory/sidecar/`](memory/sidecar/README.md) | 手工 bge-m3 HTTP 服务（GPU fp16、离线、缓存、fail-safe） |
-| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` 0.6.0：云端/本地向量、连接向导、目录、阈值初始化、索引任务 |
+| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` 0.6.1 支持云端和本地向量、连接向导、事实目录、按模型推荐本地阈值和索引任务 |
 | [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现（`results.json` 为实测输出） |
 | [`memory/threshold-calib/`](memory/threshold-calib/README.md) | 准入阈值校准工具 + 干跑证据（不透明行，可复算） |
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |

@@ -19,7 +19,7 @@ from plugins.memory.config_schema import (
 _ZH = {
     "semantic_tau": {
         "label": "相似度阈值",
-        "description": "本地向量生效：事实需要达到的余弦相似度，范围为 0 到 1。更换本地模型后请重新初始化。",
+        "description": "本地向量召回的余弦相似度下限，范围为 0 到 1。部署新模型时自动采用该模型的推荐值。",
     },
     "embedding_min_score": {
         "label": "云端最低相似度",
@@ -62,8 +62,8 @@ CONFIG_SCHEMA = ProviderConfigSchema(
     fields=(
         ProviderField(
             "semantic_tau", "Similarity threshold", KIND_NUMBER, default="0.55", inline=True,
-            description="Local embeddings: cosine similarity (0-1) a fact needs to be added by meaning. Initialize "
-                        "it again after changing the local model."),
+            description="Minimum cosine similarity (0-1) for local semantic recall. Deploying a different model "
+                        "applies its recommended threshold."),
         ProviderField(
             "embedding_min_score", "Cloud minimum similarity", KIND_NUMBER, inline=True,
             description="Cloud embeddings: optional cosine floor (-1 to 1) for a fact recalled on meaning alone; "

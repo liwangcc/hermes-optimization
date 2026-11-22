@@ -1,0 +1,480 @@
+diff --git a/README.md b/README.md
+index 3a44dbf..6d31047 100644
+--- a/README.md
++++ b/README.md
+@@ -1174,7 +1174,12 @@ guards — no target lost, noise not higher, confusion not higher, pooled exact
+ needs rows of a **single mode**: the probe writes three by default (`off,reorder_only,gate_only`) and the
+ gate refuses mixed runs, so pass `--modes off`. One `endpoint`, one `git_sha`, one `scale` and one `emb`
+ per comparison, and inside a pair only the margin may differ — a pair whose query, kind, split or targets
+-disagree is refused instead of reported.
++disagree is refused instead of reported. `--recall-check-margin <v>` gives a run a checked margin
++(`embeddings.RECALL_CHECK_MARGIN`, unset by default): a fact that stands out at `<v>` but not at the recall margin
++is offered only when the cross-encoder at `--endpoint` scores it above the middle of `--rerank-scale` (0 for
++`logit`, 0.5 for `unit`), with rerank itself off. The rows carry `<v>` as `margin` and the recall margin as
++`margin_check`, the file `_c<v>`, and the gate names the check beside the margin; the other run of the pair is a
++plain one on the same `--endpoint`.
+ 
+ Original plugin by dusterbloom (hermes-agent PR #2351); its history is in hermes-agent
+ (`git log -- plugins/memory/holographic`). MIT licence. The bundled language data live in `dictionaries/` (the list
+diff --git a/__init__.py b/__init__.py
+index d6d4949..c76e939 100644
+--- a/__init__.py
++++ b/__init__.py
+@@ -802,6 +802,7 @@ class HolographicMemoryProvider(MemoryProvider):
+         # the blend. Shared by every store; one synchronous call at recall time, backoff on failure (rerank.py).
+         self._rerank = rerank.settings_from(self._config)
+         self._rescorer = (rerank.Rescorer(self._rerank, secret_check=_secret_in) if self._rerank else None)
++        self._recall_check = None  # embeddings.RECALL_CHECK_MARGIN's cross-encoder with rerank off, made on first use
+         if self._rescorer and self._rescorer.unavailable():
+             logger.warning("holographic: rerank is on but cannot run (%s); the current order is kept",
+                            self._rescorer.unavailable())
+@@ -1401,12 +1402,31 @@ class HolographicMemoryProvider(MemoryProvider):
+         # embedding alone (standout margin, names_fit), at most embedding_prefetch_facts of them, marked
+         # so the model knows the match is looser.
+         if meaning is not None and self._embedding is not None and self._embedding.recall_facts:
++            # embeddings.RECALL_CHECK_MARGIN (a measurement, None by default): a fact that stands out at that margin
++            # but not at RECALL_MARGIN is offered only when the cross-encoder says it answers the message. With no
++            # endpoint to ask, the margin stays RECALL_MARGIN; a call that fails is a no for that fact.
++            margin, checker = embeddings.RECALL_MARGIN, None
++            if embeddings.RECALL_CHECK_MARGIN is not None and embeddings.RECALL_CHECK_MARGIN < margin:
++                checker = self._recall_checker()
++                if checker is not None:
++                    margin = embeddings.RECALL_CHECK_MARGIN
++            asked: list[int] = []  # one question a turn: the closest fact that needs the check, inside the time budget
++
++            def confirmed(fact: dict) -> bool:
++                if checker is None or meaning.standout(fact["fact_id"], embeddings.RECALL_MARGIN,
++                                                       self._embedding.min_score):
++                    return True
++                if asked:
++                    return False
++                asked.append(fact["fact_id"])
++                return self._answers(checker, query, fact)
++
+             for fact in self._retriever.by_meaning(meaning, exclude=have, min_trust=self._min_trust,
+                                                    limit=self._embedding.recall_facts + 3,
+-                                                   margin=embeddings.RECALL_MARGIN,
++                                                   margin=margin,
+                                                    min_score=self._embedding.min_score):
+                 if len(by_meaning) < self._embedding.recall_facts and self._not_recent(key, fact, turn) \
+-                        and self._recallable(fact) and self._retriever.names_fit(query, fact):
++                        and self._recallable(fact) and self._retriever.names_fit(query, fact) and confirmed(fact):
+                     meaning_facts.append(fact)
+                     have.add(fact["fact_id"])
+                     by_meaning.add(fact["fact_id"])
+@@ -1425,6 +1445,23 @@ class HolographicMemoryProvider(MemoryProvider):
+                     have.add(fact["fact_id"])
+         return meaning_facts, entity_facts, by_meaning
+ 
++    def _recall_checker(self):
++        """The cross-encoder asked about a fact offered below RECALL_MARGIN (embeddings.RECALL_CHECK_MARGIN): the
++        reranker when rerank is on, else a client of its own on the same rerank_* keys. None without rerank_url: the
++        default address is not assumed for a call nobody configured."""
++        if self._rescorer is not None:
++            return self._rescorer
++        if self._recall_check is None and str(self._config.get("rerank_url") or "").strip():
++            self._recall_check = rerank.Rescorer(rerank.Settings(self._config), secret_check=_secret_in)
++        return self._recall_check
++
++    @staticmethod
++    def _answers(checker, query: str, fact: dict) -> bool:
++        """The cross-encoder's verdict on one fact, read as recall would show it: a score above the middle of the
++        endpoint's scale (0 for logit, 0.5 for unit). A call that was not made, or failed, is a no."""
++        ranked = checker.scores(query, [_one_line(fact.get("content", ""))], single=True)
++        return bool(ranked) and ranked[0][1] > (0.5 if checker.settings.scale == "unit" else 0.0)
++
+     def _unified_stream(self, query: str, meaning, candidates: list[dict], key: str,
+                         turn: int) -> tuple[list[dict], set[int]]:
+         """Block 3: one rerank over the union sample of the three streams → top-5 strictly by rank (the modes
+diff --git a/embeddings.py b/embeddings.py
+index fe53f57..800ce9d 100644
+--- a/embeddings.py
++++ b/embeddings.py
+@@ -97,6 +97,11 @@ MIN_VECTORS_FOR_Z = 20
+ # arm of a measurement and puts it back. Not to be switched on before that measurement passes its gate.
+ EMBED_TEXTS = ("content", "content+keywords")
+ EMBED_TEXT = "content"
++# A measurement, like EMBED_TEXT (None, the default, changes nothing): before a turn, a fact that stands out at this
++# lower margin but not at RECALL_MARGIN is offered on meaning only when the cross-encoder at rerank_url says the fact
++# answers the message (its score above the middle of rerank_scale). No endpoint, or a call that fails: RECALL_MARGIN
++# alone, as before. tools/provenance_probe.py sets it for one run (--recall-check-margin) and puts it back.
++RECALL_CHECK_MARGIN: float | None = None
+ 
+ 
+ def vector_text(content: str, tags: str | None) -> str:
+diff --git a/rerank.py b/rerank.py
+index 6bf16b9..09fef26 100644
+--- a/rerank.py
++++ b/rerank.py
+@@ -243,10 +243,12 @@ class Rescorer:
+         self.last_status = f"failed: {why}"
+         self._failed(why)
+ 
+-    def scores(self, query: str, documents: list[str]) -> list[tuple[int, float]] | None:
++    def scores(self, query: str, documents: list[str], single: bool = False) -> list[tuple[int, float]] | None:
+         """``(index, relevance_score)`` pairs of *documents* in descending relevance, top_k at most; None when the
+         call must not be made (a secret in *query*), or failed (logged; paused). The caller keeps the current order
+-        on None; the score is the cross-encoder's own logit (not in [0, 1]) — order-only unless the caller blends."""
++        on None; the score is the cross-encoder's own logit (not in [0, 1]) — order-only unless the caller blends.
++        *single*: one document is sent all the same — the caller reads its score, not an order (the provider's check
++        of a fact offered below RECALL_MARGIN, embeddings.RECALL_CHECK_MARGIN)."""
+         if not documents:
+             self.last_status = "not_called"
+             return None
+@@ -268,7 +270,7 @@ class Rescorer:
+             # a failure for the run's zero-failed-calls budget, not a neutral skip.
+             self.last_status = f"failed: {self.status()}"
+             return None
+-        if len(documents) == 1:
++        if len(documents) == 1 and not single:
+             # One sendable document: nothing to reorder, the window cannot drop the only candidate
+             # (a cut judged from the top always keeps the top) and the blend of a single score is
+             # the same either way — so no call is made and the trivial rank comes back (PR #10, point 9).
+diff --git a/tests/test_holographic_recall_check_margin.py b/tests/test_holographic_recall_check_margin.py
+new file mode 100644
+index 0000000..47b2585
+--- /dev/null
++++ b/tests/test_holographic_recall_check_margin.py
+@@ -0,0 +1,246 @@
++"""embeddings.RECALL_CHECK_MARGIN: a lower margin whose facts a cross-encoder has to confirm (a measurement).
++
++A lower RECALL_MARGIN before every turn lets in facts that turn silence into noise (#17). With this value set, a fact
++that stands out at the lower margin but not at RECALL_MARGIN is offered on meaning only when the cross-encoder at
++rerank_url says the fact answers the message; a fact that stands out at RECALL_MARGIN is offered as before, unasked.
++None, the default, changes nothing. No endpoint, a failed call or a no: the fact stays out. The meaning is given (no
++request), as in test_holographic_names_fit_cases; the facts are made up, the cross-encoder is a stand-in.
++"""
++from __future__ import annotations
++
++import json
++import sys
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++np = pytest.importorskip("numpy")
++pytest.importorskip("snowballstemmer")
++
++from hermes_plugin_holographic import HolographicMemoryProvider, embeddings, rerank  # noqa: E402
++
++_REPO = Path(__file__).resolve().parent.parent
++if str(_REPO / "tools") not in sys.path:
++    sys.path.insert(0, str(_REPO / "tools"))
++
++import mcnemar_gate as mcnemar  # noqa: E402
++import provenance_probe as pp  # noqa: E402
++
++ON = {"embeddings": "on", "embedding_url": "https://embeddings.example.net/v1", "embedding_model": "m",
++      "embedding_key_env": "TEST_EMBEDDINGS_KEY"}
++
++KEY = "The spare key hangs behind the blue flowerpot on the balcony."  # what the meaning stream may add
++FILLERS = [f"Shelf {n} of the archive holds the folders of year {1990 + n}." for n in range(32)]
++ASKS = "Whereabouts of the hidden gadget?"  # no word of a fact, no name: the words leave the turn silent
++
++
++class _NoNetwork:
++    def open(self, *a, **k):
++        raise AssertionError("no request in these tests: meaning and the verdict are given")
++
++
++class _Checker:
++    """A cross-encoder that answers one score for every question, and remembers what it was asked."""
++
++    def __init__(self, score, scale="logit"):
++        self.settings, self.score, self.asked = SimpleNamespace(scale=scale), score, []
++
++    def scores(self, query, documents, single=False):
++        self.asked.append((query, list(documents), single))
++        return None if self.score is None else [(0, self.score)]
++
++
++def _provider(tmp_path, monkeypatch, **extra):
++    monkeypatch.setattr(embeddings, "_OPENER", _NoNetwork())
++    monkeypatch.setattr(rerank, "_OPENER", _NoNetwork())
++    monkeypatch.setenv("TEST_EMBEDDINGS_KEY", "sk-test-not-a-real-key")
++    p = HolographicMemoryProvider(config={"db_path": str(tmp_path / "memory_store.db"), "hrr_dim": 64, **ON, **extra})
++    p.initialize(session_id="s1")
++    return p
++
++
++@pytest.fixture
++def provider(tmp_path, monkeypatch):
++    p = _provider(tmp_path, monkeypatch)
++    yield p
++    p.shutdown()
++
++
++def _store(provider, monkeypatch, key_similarity=0.30):
++    """KEY among the fillers; at 0.30 it stands out more than 0.5 over the chance maximum and less than
++    RECALL_MARGIN, at 0.60 it stands out at RECALL_MARGIN too."""
++    ids = {}
++    for text in (KEY, *FILLERS):
++        result = json.loads(provider.handle_tool_call("fact_store", {"action": "add", "content": text}))
++        assert "fact_id" in result, result
++        ids[text] = result["fact_id"]
++    order = list(ids)
++    sims = [key_similarity if t == KEY else 0.10 + 0.01 * (i % 12) for i, t in enumerate(order)]
++    meaning = embeddings.Meaning([ids[t] for t in order], np.array(sims), 0.3,
++                                 [embeddings.text_hash(t) for t in order])
++    assert meaning.standout(ids[KEY], 0.5, None)
++    assert meaning.standout(ids[KEY], embeddings.RECALL_MARGIN, None) == (key_similarity > 0.5)
++    monkeypatch.setattr(provider, "_meaning_of", lambda q, before_turn: meaning)
++    return ids[KEY]
++
++
++def _asked_with(provider, monkeypatch, score, scale="logit"):
++    checker = _Checker(score, scale)
++    monkeypatch.setattr(provider, "_recall_checker", lambda: checker)
++    return checker
++
++
++def _by_meaning(block: str, fact_id: int) -> bool:
++    return any(f"#{fact_id} " in line and line.endswith("(by meaning)") for line in block.splitlines())
++
++
++def test_nothing_is_asked_and_nothing_added_by_default(provider, monkeypatch):
++    _store(provider, monkeypatch)
++    checker = _asked_with(provider, monkeypatch, 5.0)
++    assert embeddings.RECALL_CHECK_MARGIN is None
++    assert provider.prefetch(ASKS) == "" and checker.asked == []
++
++
++def test_a_fact_between_the_margins_enters_when_the_cross_encoder_says_it_answers(provider, monkeypatch):
++    key = _store(provider, monkeypatch)
++    checker = _asked_with(provider, monkeypatch, 2.0)
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert _by_meaning(provider.prefetch(ASKS), key)
++    assert checker.asked == [(ASKS, [KEY], True)]  # one fact, as recall shows it, scored though it is alone
++
++
++@pytest.mark.parametrize("score", [-1.0, 0.0, None])  # a no, the middle of the scale itself, a failed call
++def test_a_no_or_a_failed_call_keeps_the_fact_out(provider, monkeypatch, score):
++    _store(provider, monkeypatch)
++    checker = _asked_with(provider, monkeypatch, score)
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert provider.prefetch(ASKS) == "" and len(checker.asked) == 1
++
++
++def test_one_question_a_turn_about_the_closest_fact(provider, monkeypatch):
++    """A second fact between the margins is not asked about after a no: a turn has one call's worth of time."""
++    second = "The spare bulb lies behind the green bucket in the cellar."
++    ids = {}
++    for text in (KEY, second, *FILLERS):
++        ids[text] = json.loads(provider.handle_tool_call("fact_store", {"action": "add", "content": text}))["fact_id"]
++    order = list(ids)
++    sims = [{KEY: 0.40, second: 0.39}.get(t, 0.10 + 0.01 * (i % 12)) for i, t in enumerate(order)]
++    meaning = embeddings.Meaning([ids[t] for t in order], np.array(sims), 0.3,
++                                 [embeddings.text_hash(t) for t in order])
++    for fact in (KEY, second):  # two facts this close widen the scale: both between the margins at this height
++        assert meaning.standout(ids[fact], 0.5, None) and not meaning.standout(ids[fact], embeddings.RECALL_MARGIN, None)
++    monkeypatch.setattr(provider, "_meaning_of", lambda q, before_turn: meaning)
++    checker = _asked_with(provider, monkeypatch, -1.0)
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert provider.prefetch(ASKS) == "" and checker.asked == [(ASKS, [KEY], True)]
++
++
++@pytest.mark.parametrize("score,enters", [(0.6, True), (0.4, False)])
++def test_on_the_unit_scale_the_middle_is_one_half(provider, monkeypatch, score, enters):
++    key = _store(provider, monkeypatch)
++    _asked_with(provider, monkeypatch, score, scale="unit")
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert _by_meaning(provider.prefetch(ASKS), key) is enters
++
++
++def test_a_fact_that_stands_out_at_the_recall_margin_is_not_asked_about(provider, monkeypatch):
++    key = _store(provider, monkeypatch, key_similarity=0.60)
++    checker = _asked_with(provider, monkeypatch, -5.0)
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert _by_meaning(provider.prefetch(ASKS), key) and checker.asked == []
++
++
++def test_without_an_endpoint_the_margin_stays_the_recall_margin(provider, monkeypatch):
++    _store(provider, monkeypatch)
++    monkeypatch.setattr(embeddings, "RECALL_CHECK_MARGIN", 0.5)
++    assert provider._recall_checker() is None  # no rerank_url in this config: no call to an assumed address
++    assert provider.prefetch(ASKS) == ""
++
++
++def test_the_check_uses_the_rerank_keys_with_rerank_off(tmp_path, monkeypatch):
++    p = _provider(tmp_path, monkeypatch, rerank_url="http://127.0.0.1:9/v1/rerank", rerank_scale="unit")
++    try:
++        checker = p._recall_checker()
++        assert p._rescorer is None and checker is p._recall_checker()  # rerank stays off; one client
++        assert (checker.settings.url, checker.settings.scale) == ("http://127.0.0.1:9/v1/rerank", "unit")
++    finally:
++        p.shutdown()
++
++
++def test_one_document_is_scored_only_when_asked_for(monkeypatch):
++    client = rerank.Rescorer(rerank.Settings({"rerank_url": "http://127.0.0.1:9/v1/rerank"}))
++    sent = []
++    monkeypatch.setattr(client, "_request", lambda body: sent.append(body) or [(0, 1.5)])
++    assert client.scores("question", ["document"]) == [(0, 1.0)] and client.last_status == "skipped_single"
++    assert sent == []  # the reranker's own path: one document is not sent
++    assert client.scores("question", ["document"], single=True) == [(0, 1.5)] and client.last_status == "answered"
++    assert [body["documents"] for body in sent] == [["document"]]
++
++
++# ---------------------------------------------------------------- the probe and the gate
++
++def _stub_run(langs, modes, emb, endpoint):
++    return [{"set": "multi", "lang": "en", "qid": "0", "split": "all", "kind": "real", "q": "query",
++             "keys": ["f1"], "targets": ["t"], "hit": True, "hit5": True, "wrong": [], "wrong5": [],
++             "sources": {"f1": ["words"]}, "miss_cls": "-", "mode": modes[0], "emb": emb, "out_n": 1}]
++
++
++def _rows_in(path):
++    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
++
++
++def test_the_probe_stamps_the_checked_margin_and_puts_it_back(monkeypatch, tmp_path):
++    monkeypatch.setattr(pp, "run_multilingual", _stub_run)
++    monkeypatch.setattr(pp, "ENDPOINT", pp.ENDPOINT)
++    monkeypatch.setattr(pp._holographic_embeddings, "RECALL_MARGIN", 1.0)
++    common = ["--set", "multi", "--modes", "off", "--out", str(tmp_path), "--endpoint", "http://a/v1/rerank"]
++
++    rows = pp.main([*common, "--recall-check-margin", "0.5"])
++    assert (rows[0]["margin"], rows[0]["margin_check"]) == (0.5, 1.0)  # admitted at 0.5, checked below 1.0
++    assert pp._holographic_embeddings.RECALL_CHECK_MARGIN is None  # gone by the time main() returned
++    assert _rows_in(tmp_path / "provenance_multi_c0.5_off.jsonl")[0]["margin_check"] == 1.0
++
++    again = pp.main(common)  # the baseline run, same process: its own file, no check
++    assert (again[0]["margin"], again[0]["margin_check"]) == (1.0, None)
++    assert _rows_in(tmp_path / "provenance_multi_off.jsonl")[0]["margin_check"] is None
++
++
++def _mrow(margin, qid, keys, hit5, **over):
++    row = {"set": "multi", "lang": "en", "qid": qid, "margin": margin, "kind": "real", "q": "query",
++           "split": "all", "mode": "off", "emb": "on", "scale": "logit", "git_sha": "958de48",
++           "endpoint": "http://127.0.0.1:1237/v1/rerank", "targets": ["t"], "keys": list(keys),
++           "hit5": hit5, "wrong": [], "wrong5": [], "out_n": len(keys)}
++    row.update(over)
++    return row
++
++
++def _pair(hi, lo, tmp_path):
++    default, proposal = tmp_path / "m1_on.jsonl", tmp_path / "c0.5_on.jsonl"
++    default.write_text("\n".join(json.dumps(r) for r in hi), encoding="utf-8")
++    proposal.write_text("\n".join(json.dumps(r) for r in lo), encoding="utf-8")
++    return [str(default), str(proposal)]
++
++
++def _six_rescued(**stamp):
++    hi = [_mrow(1.0, f"r{i}", ["f1", "f2"], False) for i in range(6)]
++    lo = [_mrow(0.5, f"r{i}", ["f1", "f2", "t"], True, **stamp) for i in range(6)]
++    return hi, lo
++
++
++def test_the_gate_names_the_check_beside_the_margin(tmp_path, capsys):
++    mcnemar.report_margins(_pair(*_six_rescued(margin_check=1.0), tmp_path))
++    out = capsys.readouterr().out
++    assert "vs 0.5, checked by the cross-encoder below 1.0 (proposal)" in out and "=> gate PASSES" in out
++
++
++def test_a_bare_margin_reads_as_before(tmp_path, capsys):
++    mcnemar.report_margins(_pair(*_six_rescued(), tmp_path))  # rows written before the stamp existed
++    assert "vs 0.5 (proposal)" in capsys.readouterr().out
++
++
++def test_checked_and_bare_rows_under_one_margin_are_refused(tmp_path):
++    hi, lo = _six_rescued(margin_check=1.0)
++    lo[0]["margin_check"] = None
++    with pytest.raises(SystemExit, match="margin_check"):
++        mcnemar.report_margins(_pair(hi, lo, tmp_path))
+diff --git a/tools/mcnemar_gate.py b/tools/mcnemar_gate.py
+index 422675b..ea61999 100644
+--- a/tools/mcnemar_gate.py
++++ b/tools/mcnemar_gate.py
+@@ -250,6 +250,14 @@ def report_margins(paths: list[str]) -> None:
+     rescue passing p < 0.05 pooled (2026-10-24)."""
+     rows, margins, by, real_keys = _paired(paths, "margin", _HEAD, value=float)
+     lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0)
++    # provenance_probe --recall-check-margin: a side whose rows carry `margin_check` is that margin WITH the
++    # cross-encoder's check below the stamped one, another proposal than the bare margin. One stamp per side.
++    checked = {m: {r.get("margin_check") for r in by[m].values()} for m in margins}
++    for m in margins:
++        if len(checked[m]) > 1:
++            raise SystemExit(f"mixed runs — margin {m} with margin_check={sorted(checked[m], key=str)}: one per side")
++    check = next(iter(checked[lo]))
++    proposal = f"{lo}" if check is None else f"{lo}, checked by the cross-encoder below {check}"
+ 
+     hit = {m: {k: bool(by[m][k].get("hit5")) for k in real_keys} for m in margins}
+     # b/c of McNemar: b = rescued BY the proposal (miss at the default, hit at the proposal), c = lost
+@@ -272,7 +280,8 @@ def report_margins(paths: list[str]) -> None:
+     conf = {m: sum(1 for k in real_keys if _confused(by[m][k])) for m in margins}
+     hits = {m: sum(hit[m].values()) for m in margins}
+ 
+-    print(f"\n== margins {hi} (default) vs {lo} (proposal) | rows {n} real | git_sha {rows[0].get('git_sha')}")
++    print(f"\n== margins {hi} (default) vs {proposal} (proposal) | rows {n} real | "
++          f"git_sha {rows[0].get('git_sha')}")
+     print(f"{'margin':>8} {'hit5':>9} {'noise':>6} {'confused':>9}")
+     for m in (lo, hi):
+         print(f"{m:>8} {hits[m]:4d}/{n} {noise[m]:6d} {conf[m]:9d}")
+diff --git a/tools/provenance_probe.py b/tools/provenance_probe.py
+index e5c1d0c..e9b8ff8 100644
+--- a/tools/provenance_probe.py
++++ b/tools/provenance_probe.py
+@@ -168,6 +168,8 @@ def make_provider(db: Path, mode: str, emb, extra: dict | None = None) -> Hologr
+                        "rerank_scale": SCALE, "rerank_url": ENDPOINT, "rerank_model": "probe-reranker"})
+     if emb == "on":
+         config.update({"embeddings": "on", "embedding_url": EMB_URL, "embedding_model": EMB_MODEL})
++    if not spec and _holographic_embeddings.RECALL_CHECK_MARGIN is not None:  # the check's endpoint, rerank off
++        config.update({"rerank_scale": SCALE, "rerank_url": ENDPOINT, "rerank_model": "probe-reranker"})
+     if extra:
+         config.update(extra)
+     p = HolographicMemoryProvider(config=config)
+@@ -933,6 +935,7 @@ def main(argv):
+     # run's margin, endpoint or scale under the plain file name and overwrite a baseline (review of PR #31:
+     # item 3 for RECALL_MARGIN; ENDPOINT is also --endpoint's default below, so it leaked the same way).
+     saved_endpoint, saved_scale = ENDPOINT, SCALE
++    saved_check_margin = _holographic_embeddings.RECALL_CHECK_MARGIN
+     saved_margin = _holographic_embeddings.RECALL_MARGIN
+     saved_embed_text, saved_keywords, saved_db_dir = _holographic_embeddings.EMBED_TEXT, KEYWORDS, DB_DIR
+     ap = argparse.ArgumentParser(description="Provenance probe: the sources of facts in prefetch")
+@@ -969,10 +972,18 @@ def main(argv):
+     ap.add_argument("--kw-coverage", default="all", choices=["all", "half"],
+                     help="with --keywords: every fact, or half of each language's chosen by --kw-seed")
+     ap.add_argument("--kw-seed", type=int, default=95, help="with --kw-coverage half: the seed (default 95)")
++    ap.add_argument("--recall-check-margin", default=None, type=float,
++                    help="set embeddings.RECALL_CHECK_MARGIN for this run: a fact that stands out at this margin but "
++                         "not at RECALL_MARGIN is offered when the cross-encoder at --endpoint says it answers the "
++                         "message. Rows carry it as `margin`, RECALL_MARGIN as `margin_check`; the file gets _c<v>")
+     args = ap.parse_args(argv)
+     try:
+         if args.recall_margin is not None:
+             _holographic_embeddings.RECALL_MARGIN = args.recall_margin
++        if args.recall_check_margin is not None:
++            if not args.endpoint:
++                raise SystemExit("--recall-check-margin: --endpoint names the cross-encoder that checks the fact")
++            _holographic_embeddings.RECALL_CHECK_MARGIN = args.recall_check_margin
+         if args.embed_text is not None:
+             _holographic_embeddings.EMBED_TEXT = args.embed_text
+         kw_file, kw_coverage = None, "none"
+@@ -1032,6 +1043,8 @@ def main(argv):
+             label = f"_{args.label}" if args.label else ""
+             # --recall-margin: two margins must not overwrite each other (PR #17 recipe, 2026-10-24)
+             margin_sfx = "" if args.recall_margin is None else f"_m{args.recall_margin!r}"
++            if args.recall_check_margin is not None:  # the checked margin of the same run: _c0.5
++                margin_sfx += f"_c{args.recall_check_margin!r}"
+             # --keywords / --embed-text: the two arms of issue #95 and each coverage get files of their own
+             kw_sfx = "" if not args.keywords else (
+                 "_kwall" if args.kw_coverage == "all" else f"_kwhalf{args.kw_seed}")
+@@ -1043,6 +1056,9 @@ def main(argv):
+                 r["endpoint"] = args.endpoint or "mock"
+                 r["scale"] = SCALE  # which scale was set for the run
+                 r["margin"] = _holographic_embeddings.RECALL_MARGIN  # which RECALL_MARGIN the run used
++                r["margin_check"] = None  # the margin above which no check was asked; None: no check in this run
++                if _holographic_embeddings.RECALL_CHECK_MARGIN is not None:  # the margin facts were admitted at
++                    r["margin"], r["margin_check"] = _holographic_embeddings.RECALL_CHECK_MARGIN, r["margin"]
+                 r["embed_text"] = _holographic_embeddings.EMBED_TEXT  # what the fact vectors were made from
+                 r["kw_file"], r["kw_coverage"] = kw_file, kw_coverage
+                 r.setdefault("emb_model", None)  # the store's own stamp when embeddings were on (catch_up_vectors)
+@@ -1060,6 +1076,7 @@ def main(argv):
+     finally:
+         ENDPOINT, SCALE = saved_endpoint, saved_scale
+         _holographic_embeddings.RECALL_MARGIN = saved_margin
++        _holographic_embeddings.RECALL_CHECK_MARGIN = saved_check_margin
+         _holographic_embeddings.EMBED_TEXT = saved_embed_text
+         if DB_DIR is not None and DB_DIR != saved_db_dir:  # this run's stores, closed by now: nothing left in Temp
+             shutil.rmtree(DB_DIR, ignore_errors=True)

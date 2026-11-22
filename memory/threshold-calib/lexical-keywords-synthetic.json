@@ -1,0 +1,298 @@
+{
+ "1": [
+  "backend",
+  "web framework",
+  "asynchronous processing",
+  "async IO",
+  "服务端",
+  "非阻塞",
+  "Python",
+  "ASGI"
+ ],
+ "2": [
+  "database",
+  "relational database",
+  "RDBMS",
+  "object-relational mapping",
+  "关系型数据库",
+  "对象关系映射",
+  "持久层",
+  "数据访问层"
+ ],
+ "3": [
+  "frontend",
+  "SPA",
+  "single-page application",
+  "build tool",
+  "bundler",
+  "Vue.js",
+  "打包工具",
+  "网页客户端"
+ ],
+ "4": [
+  "deployment",
+  "reverse proxy",
+  "WSGI server",
+  "web server",
+  "application server",
+  "应用服务器",
+  "生产环境",
+  "请求转发"
+ ],
+ "5": [
+  "cache",
+  "caching",
+  "session store",
+  "in-memory database",
+  "key-value store",
+  "内存数据库",
+  "键值存储",
+  "登录态"
+ ],
+ "6": [
+  "task queue",
+  "message broker",
+  "message queue",
+  "background jobs",
+  "AMQP",
+  "异步任务",
+  "消息中间件",
+  "消息队列"
+ ],
+ "7": [
+  "logging",
+  "structured logging",
+  "log format",
+  "log collection",
+  "log aggregation",
+  "结构化日志",
+  "日志收集",
+  "机器可读"
+ ],
+ "8": [
+  "unit testing",
+  "test coverage",
+  "coverage threshold",
+  "test framework",
+  "80%",
+  "测试框架",
+  "代码覆盖度",
+  "百分之八十"
+ ],
+ "9": [
+  "continuous integration",
+  "CI pipeline",
+  "workflow",
+  "main branch",
+  "持续集成",
+  "主分支",
+  "流水线",
+  "自动化测试"
+ ],
+ "10": [
+  "configuration",
+  "environment variables",
+  "env vars",
+  "secrets",
+  "repository",
+  "凭据",
+  "机密信息",
+  "代码库"
+ ],
+ "11": [
+  "authentication",
+  "authorization",
+  "JSON Web Token",
+  "token expiry",
+  "TTL",
+  "身份认证",
+  "有效期",
+  "60分钟"
+ ],
+ "12": [
+  "file upload",
+  "object storage",
+  "blob storage",
+  "S3 bucket",
+  "temporary copy",
+  "云存储",
+  "附件",
+  "存储桶"
+ ],
+ "13": [
+  "search engine",
+  "full-text search",
+  "inverted index",
+  "text retrieval",
+  "搜索引擎",
+  "检索",
+  "倒排索引",
+  "全文检索"
+ ],
+ "14": [
+  "monitoring",
+  "metrics",
+  "dashboard",
+  "observability",
+  "alerting",
+  "指标采集",
+  "仪表盘",
+  "可观测性"
+ ],
+ "15": [
+  "containerization",
+  "container orchestration",
+  "containers",
+  "k8s",
+  "cluster",
+  "镜像",
+  "容器编排",
+  "集群调度"
+ ],
+ "16": [
+  "database migration",
+  "schema migration",
+  "schema versioning",
+  "DDL",
+  "表结构变更",
+  "数据库升级",
+  "版本控制"
+ ],
+ "17": [
+  "cross-origin resource sharing",
+  "cross-origin requests",
+  "API gateway",
+  "allowed origins",
+  "preflight",
+  "跨源资源共享",
+  "同源策略",
+  "API网关"
+ ],
+ "18": [
+  "rate limiting",
+  "rate limit",
+  "token bucket",
+  "throttling",
+  "requests per second",
+  "100 QPS",
+  "流量控制",
+  "频率限制"
+ ],
+ "19": [
+  "error response",
+  "error format",
+  "error handling",
+  "application/problem+json",
+  "异常返回",
+  "报错信息",
+  "标准化错误",
+  "问题详情"
+ ],
+ "20": [
+  "API documentation",
+  "API docs",
+  "API specification",
+  "docs page",
+  "接口文档",
+  "接口规范",
+  "接口说明"
+ ],
+ "21": [
+  "蓝绿部署",
+  "零停机",
+  "发布策略",
+  "平滑切换",
+  "release strategy",
+  "zero downtime",
+  "rollout",
+  "switchover"
+ ],
+ "22": [
+  "备份",
+  "恢复演练",
+  "每晚",
+  "每月",
+  "灾难恢复",
+  "disaster recovery",
+  "backup schedule",
+  "recovery drill"
+ ],
+ "23": [
+  "encryption",
+  "sensitive data",
+  "PII",
+  "encryption at rest",
+  "field-level encryption",
+  "隐私数据",
+  "个人信息",
+  "密文存储"
+ ],
+ "24": [
+  "canary release",
+  "canary deployment",
+  "gradual rollout",
+  "traffic split",
+  "5%",
+  "金丝雀发布",
+  "渐进式上线",
+  "分流比例"
+ ],
+ "25": [
+  "distributed tracing",
+  "tracing",
+  "trace",
+  "observability",
+  "OTel",
+  "分布式追踪",
+  "调用链",
+  "可观测性"
+ ],
+ "26": [
+  "static assets",
+  "static files",
+  "content delivery network",
+  "edge caching",
+  "内容分发网络",
+  "静态文件",
+  "边缘节点"
+ ],
+ "27": [
+  "password hashing",
+  "password storage",
+  "hash algorithm",
+  "plaintext",
+  "KDF",
+  "口令存储",
+  "散列算法",
+  "摘要算法"
+ ],
+ "28": [
+  "API versioning",
+  "versioning scheme",
+  "path prefix",
+  "URI",
+  "版本号",
+  "路由前缀",
+  "版本管理"
+ ],
+ "29": [
+  "health check",
+  "liveness probe",
+  "readiness probe",
+  "status endpoint",
+  "endpoint",
+  "存活探针",
+  "探活接口",
+  "心跳检测"
+ ],
+ "30": [
+  "batch jobs",
+  "batch processing",
+  "off-peak hours",
+  "scheduled job",
+  "cron",
+  "定时作业",
+  "夜间",
+  "离线计算"
+ ]
+}

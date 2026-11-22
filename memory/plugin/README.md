@@ -1,6 +1,6 @@
 # holographic-semantic plugin
 
-`holographic-semantic` 0.6.0 是 Holographic 的 memory provider 包装层。加载时继承
+`holographic-semantic` 0.6.1 是 Holographic 的 memory provider 包装层。加载时继承
 上游 provider，在它之上加：
 
 - 本地或云端的向量召回通道（侧车失败/超时自动退回词法召回，永不阻塞对话）；
@@ -11,7 +11,7 @@
 
 ## 前置
 
-这套 0.6.0 与下面两个固定版本配套，安装顺序见仓库根目录的 [`INSTALL.md`](../../INSTALL.md)：
+这套 0.6.1 与下面两个固定版本配套，安装顺序见仓库根目录的 [`INSTALL.md`](../../INSTALL.md)：
 
 - Hermes Agent `40d1e95f` + [`patches/hermes-agent-40d1e95f-eccd37ae.patch`](../../patches/README.md)
   （Desktop 设置面板、provider jobs、记忆复查、本地化）；
@@ -45,11 +45,11 @@
 
 本地可选模型（权重不在仓库里）：
 
-| 模型 | 语言 | 维度 | 权重 | 固定提交 |
-|---|---|---|---|---|
-| `bge-m3`（默认） | 多语言 | 1024 | 约 2.14 GiB | `BAAI/bge-m3@5617a9f61b02` |
-| `bge-small-zh` | 中文 | 512 | 约 92 MiB | `BAAI/bge-small-zh-v1.5@7999e1d33597` |
-| `multilingual-minilm` | 多语言，前 128 token | 384 | 约 463 MiB | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@e8f8c211226b` |
+| 模型 | 语言 | 维度 | 权重 | 固定提交 | 推荐阈值 |
+|---|---|---|---|---|---:|
+| `bge-m3`（默认） | 多语言 | 1024 | 约 2.14 GiB | `BAAI/bge-m3@5617a9f61b02` | 0.55 |
+| `bge-small-zh` | 中文 | 512 | 约 92 MiB | `BAAI/bge-small-zh-v1.5@7999e1d33597` | 0.64 |
+| `multilingual-minilm` | 多语言，前 128 token | 384 | 约 463 MiB | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@e8f8c211226b` | 0.58 |
 
 ## Config
 
@@ -59,7 +59,7 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 |---|---|---|
 | `semantic_enabled` | `false` | 本地语义召回总开关 |
 | `semantic_url` | `http://127.0.0.1:8791` | 侧车地址（受管部署会自动填写） |
-| `semantic_tau` | `0.55` | 本地余弦准入阈值（可用「初始化阈值」校准） |
+| `semantic_tau` | `0.55` | 本地余弦准入阈值。首次部署和切换模型时使用表中的推荐值 |
 | `semantic_total_cap` | `7` | maximum total after appending a semantic fact |
 | `semantic_timeout_ms` | `400` | sidecar HTTP budget; exceed → lexical only |
 | `embeddings` | `false` | 云端向量通道（Holographic 自带），与本地二选一 |
@@ -244,21 +244,26 @@ context each session, and the write routing already keeps fact ids out of MEMORY
 - **Local deployment job.** `maintenance_actions` offers "部署本地向量模型" (`managed_local.py`): checks disk, creates
   the pinned Python runtime from `local-runtime.txt`, downloads the pinned weights from `local_models.py`, verifies
   every file's size and SHA-256, starts the loopback service, and tests the connection with one fixed sentence.
-  A running manual BGE-M3 sidecar is reused instead of starting a second service.
+  Setup can reuse a running manual BGE-M3 sidecar and record its model. A first deployment or model change applies
+  the recommended `semantic_tau`. Redeploying the recorded model preserves the user's value.
 - **Index job.** "为已有事实建立语义索引" (`sidecar_index.py`) asks the sidecar's `/sync` for 64 facts at a time until
   none is left. Its status comes from `/health`: facts indexed of facts stored, the model and the device. It is
   unavailable when the sidecar does not answer, has not loaded a model, or reports a fact count that disagrees with
   the profile's. Matching counts do not prove store identity: set the sidecar's `SEMANTIC_DB` to this profile's DB.
-- **Threshold job.** "初始化阈值" (`threshold_job.py` + `threshold_calib.py`) draws two batches of probes from this
-  profile's facts. Local calibration checks the first candidate against `semantic_tau`. Cloud calibration uses
-  `Meaning.standout` and `embedding_min_score`. Confirm the suggestion to write it to the configuration.
-  Fewer than 20 facts, or a model that cannot separate related from unrelated, proposes nothing and says why.
+- **Threshold job.** "初始化阈值" (`threshold_job.py`) shows the recorded local model's recommendation and its
+  natural-question evidence. The job offers a suggestion when it differs from `semantic_tau`. It explains when
+  the model of a manually configured sidecar cannot be identified. Cloud calibration draws two batches of fact
+  fragments and uses `Meaning.standout` and `embedding_min_score`. Confirm a suggestion to apply it.
 - **CLI equivalents**: `hermes memory action` lists the jobs; `hermes memory action semantic-setup-local`,
   `semantic-index`, `semantic-threshold` run one to the end.
 - The model, the index and the vectors stay local: nothing leaves the machine in local mode.
 
 Self-checked against a fake sidecar on 127.0.0.1: `python memory/plugin/test_catalog.py`; the sidecar's own sync:
 `python memory/sidecar/test_sync.py`.
+
+## 未验证
+
+云端「一键初始化阈值」的片段探针流程目前只用接口替身验证过，实际云端接口的校准效果待验证。
 
 ## Rollback
 

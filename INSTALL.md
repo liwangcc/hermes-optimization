@@ -1,6 +1,6 @@
 # 完整安装说明（日常版 2026-11）
 
-这套东西把 **Hermes Agent 日常版补丁 + Holographic 0.30.0 设置补丁 + `holographic-semantic` 0.6.0**
+这套东西把 **Hermes Agent 日常版补丁 + Holographic 0.30.0 设置补丁 + `holographic-semantic` 0.6.1**
 装到一台机器上。目标是可复现：固定基线、固定补丁、固定验证命令；升级或回滚都不靠记忆。
 
 **不包含**：模型权重、事实库、个人 `config.yaml`、凭据、日志、缓存、Python/Node 运行环境。
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | Hermes Agent | https://github.com/NousResearch/hermes-agent | `40d1e95f37e409f9f618f32c170661c66b86a4f4` | `v0.23.2+canary.20261117T064624Z` |
 | Holographic | https://github.com/itpartypattaya/hermes-plugin-holographic | `ed73195df846913d34f4aea54335718e56d841fb` | `0.30.0` |
-| `holographic-semantic` | 本仓库 `memory/plugin/holographic-semantic/` | 随本仓库发布 | `0.6.0` |
+| `holographic-semantic` | 本仓库 `memory/plugin/holographic-semantic/` | 随本仓库发布 | `0.6.1` |
 
 补丁、校验和与应用顺序见 [`patches/README.md`](patches/README.md)。本次发布带了什么、排除了什么，
 见 [`docs/release-manifest.md`](docs/release-manifest.md)。
@@ -134,11 +134,13 @@ hermes config set plugins.hermes-memory-store.catalog_enabled true   # 可选：
 3. 安装程序按 `local_models.py` 固定的提交下载文件，逐个校验大小和 SHA-256，然后启动
    `127.0.0.1` 上的本机服务。
 
-| 模型 | 语言 | 维度 | 权重 |
-|---|---|---|---|
-| BGE-M3（默认） | 多语言 | 1024 | 约 2.14 GiB |
-| BGE-small-zh v1.5 | 中文 | 512 | 约 92 MiB |
-| Multilingual MiniLM-L12 v2 | 多语言，每条事实前 128 token | 384 | 约 463 MiB |
+| 模型 | 语言 | 维度 | 权重 | 推荐阈值 |
+|---|---|---|---|---:|
+| BGE-M3（默认） | 多语言 | 1024 | 约 2.14 GiB | 0.55 |
+| BGE-small-zh v1.5 | 中文 | 512 | 约 92 MiB | 0.64 |
+| Multilingual MiniLM-L12 v2 | 多语言，每条事实前 128 token | 384 | 约 463 MiB | 0.58 |
+
+首次部署或切换本地模型时会自动采用表中的推荐阈值。重新部署已记录的同一模型时保留用户保存的值。
 
 固定提交：
 
@@ -177,9 +179,9 @@ SEMANTIC_DB="$HERMES_HOME/memory_store.db" python server.py
 
 1. **为已有事实建立语义索引**：设置面板里的「为已有事实建立语义索引 → 运行」。
    状态会显示已索引 / 总事实数、模型和设备。
-2. **初始化阈值**：设置面板里的「相似度阈值 → 一键初始化阈值」。本地校准 `semantic_tau`，
-   云端校准 `embedding_min_score`；显示当前值、建议值和依据，点「确认写入」才落盘。
-   事实少于 20 条或模型分不开相关/无关时不建议改值。
+2. 可在设置面板通过 **相似度阈值 → 一键初始化阈值** 查看本地模型的推荐 `semantic_tau`。
+   手工侧车的模型无法识别时会显示原因。云端仍用事实片段校准 `embedding_min_score`。
+   面板上有建议值时，可点「确认写入」应用。
 3. 检查：
 
 ```bash
@@ -208,8 +210,8 @@ hermes plugins list | grep -i holo
 | 旧投稿 testkit 自检 | `cd docs/upstream-memory-review/testkit && python -m unittest -v test_run` | 6 tests OK |
 | Holographic 设置补丁测试 | 见下方命令 | 5 passed |
 
-0.6.0 的 `memory/plugin/test_catalog.py` 在原有 10 项上新增 7 项，覆盖本地语义准入、旧配置加载及本地阈值校准。
-用上表同一条命令运行，17 项全部通过。脚本使用标准库和 Hermes 的 `utils`，侧车使用测试替身。
+0.6.1 的 `memory/plugin/test_catalog.py` 共 21 项通过，覆盖本地语义准入、旧配置加载、模型切换和阈值建议。
+脚本使用标准库和 Hermes 的 `utils`，侧车使用测试替身。
 
 Holographic 的 5 个用例需要把 Hermes 检出和插件测试环境放在一起。Windows + pytest 9 还要避开一个
 测试收集器的坑：仓库根目录本身是包（有 `__init__.py`），直接 `pytest tests/...` 会把根 `__init__.py`

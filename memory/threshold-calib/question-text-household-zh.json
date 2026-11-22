@@ -1,0 +1,599 @@
+{
+ "andrey_bd": [
+  "安德烈的生日是哪天？"
+ ],
+ "lena_bd": [
+  "列娜的生日是哪天？"
+ ],
+ "dima_bd": [
+  "季马的出生日期是哪天？"
+ ],
+ "sonia_bd": [
+  "索妮娅的生日是哪天？"
+ ],
+ "pavel_bd": [
+  "帕维尔爷爷的生日是哪天？"
+ ],
+ "wedding_day": [
+  "安德烈和列娜什么时候结婚？"
+ ],
+ "irina_bd": [
+  "伊琳娜奶奶的生日是哪天？"
+ ],
+ "olya_bd": [
+  "奥莉娅的生日是哪天？"
+ ],
+ "flat_anniv": [
+  "全家什么时候搬进这套房子？"
+ ],
+ "cat_bd": [
+  "巴尔西克什么时候来到家里？"
+ ],
+ "andrey_coffee": [
+  "安德烈喝咖啡加不加糖？"
+ ],
+ "lena_tea": [
+  "列娜晚上喜欢喝什么茶？"
+ ],
+ "dima_hates": [
+  "季马不吃什么？"
+ ],
+ "sonia_sweets": [
+  "索妮娅什么时候可以吃甜食？"
+ ],
+ "andrey_music": [
+  "安德烈做饭时听什么音乐？"
+ ],
+ "lena_music": [
+  "列娜受不了哪种音乐？"
+ ],
+ "pavel_fish": [
+  "帕维尔爷爷什么时候去钓鱼？"
+ ],
+ "irina_bread": [
+  "伊琳娜奶奶星期几烤面包？"
+ ],
+ "lena_bread": [
+  "列娜星期几烤面包？"
+ ],
+ "sonia_draw": [
+  "索妮娅画画用什么笔？"
+ ],
+ "dima_games": [
+  "季马在什么设备上玩策略游戏？"
+ ],
+ "andrey_film": [
+  "安德烈把最爱的电影看了几遍？"
+ ],
+ "lena_reads": [
+  "列娜睡前读哪类书？"
+ ],
+ "pavel_radio": [
+  "帕维尔爷爷整个上午开着什么？"
+ ],
+ "irina_serials": [
+  "伊琳娜奶奶追的是什么节目？"
+ ],
+ "dima_pets": [
+  "安德烈同意季马养狗吗？"
+ ],
+ "sonia_dress": [
+  "索妮娅最喜欢什么颜色？"
+ ],
+ "dima_cap": [
+  "季马冬天戴不戴鸭舌帽？"
+ ],
+ "lena_sport": [
+  "列娜春天开始还去健身房吗？"
+ ],
+ "andrey_run": [
+  "安德烈每周在河堤跑步几次？"
+ ],
+ "olya_coffee": [
+  "奥莉娅只喝哪种咖啡？"
+ ],
+ "sonia_music": [
+  "索妮娅喜欢什么歌？"
+ ],
+ "dima_sport_fav": [
+  "季马最喜欢的球队穿什么颜色球衣？"
+ ],
+ "irina_tea": [
+  "伊琳娜奶奶喝红茶加几勺糖？"
+ ],
+ "pavel_tv": [
+  "帕维尔爷爷几点看新闻？"
+ ],
+ "lena_cook": [
+  "列娜只在星期几做罗宋汤？"
+ ],
+ "andrey_no_sweet": [
+  "六点以后安德烈能喝甜饮料吗？"
+ ],
+ "sonia_cat": [
+  "索妮娅每天早上做什么？"
+ ],
+ "dima_bike": [
+  "天气干燥时季马骑什么上学？"
+ ],
+ "irina_walk": [
+  "伊琳娜奶奶午饭后去哪里散步？"
+ ],
+ "pavel_cards": [
+  "帕维尔爷爷星期六和谁打牌？"
+ ],
+ "dima_football": [
+  "季马周二和周四有什么训练？"
+ ],
+ "sonia_swim": [
+  "索妮娅周一和周五做什么？"
+ ],
+ "andrey_workdays": [
+  "安德烈周几上班？"
+ ],
+ "lena_workdays": [
+  "工作日列娜有课到几点？"
+ ],
+ "pavel_market": [
+  "帕维尔爷爷星期几去市场？"
+ ],
+ "irina_market": [
+  "伊琳娜奶奶星期几去市场？"
+ ],
+ "olga_pharmacy": [
+  "奥莉娅的药房班几点开始？"
+ ],
+ "andrey_shift": [
+  "安德烈每月上几次夜班？"
+ ],
+ "dima_club": [
+  "季马的机器人俱乐部在星期几？"
+ ],
+ "sonia_art": [
+  "索妮娅的美术课什么时候上？"
+ ],
+ "lena_meet": [
+  "列娜的家长会在哪天？"
+ ],
+ "grocery_day": [
+  "每周大采购在什么时候？"
+ ],
+ "cleaning_day": [
+  "打扫房间在什么时候？"
+ ],
+ "trash_days": [
+  "周几晚上把垃圾桶拿出去？"
+ ],
+ "pavel_doctor": [
+  "帕维尔爷爷每月几号看医生？"
+ ],
+ "sonia_homework": [
+  "索妮娅放学后什么时候做作业？"
+ ],
+ "dima_hw_time": [
+  "季马什么时候开始做作业？"
+ ],
+ "andrey_gym": [
+  "安德烈健身是什么时候？"
+ ],
+ "olga_weekend": [
+  "奥莉娅周几休息？"
+ ],
+ "movie_night": [
+  "周五电影之夜几点开始？"
+ ],
+ "dima_dinner": [
+  "季马几点吃晚饭？"
+ ],
+ "sonia_bed": [
+  "上学日索妮娅几点睡觉？"
+ ],
+ "dima_bed": [
+  "季马几点熄灯？"
+ ],
+ "lena_shop": [
+  "列娜什么时候交账单？"
+ ],
+ "sergey_calls": [
+  "帕维尔爷爷什么时候给弟弟打电话？"
+ ],
+ "pizza_friday": [
+  "每月什么时候订披萨？"
+ ],
+ "park_sunday": [
+  "天气好时周日去哪个公园？"
+ ],
+ "irina_calls": [
+  "伊琳娜奶奶每周四晚上给谁打电话？"
+ ],
+ "andrey_lunch": [
+  "安德烈在哪里吃午饭？"
+ ],
+ "lena_lunch": [
+  "列娜中午和谁一起吃午饭？"
+ ],
+ "walk_dog_neighbour": [
+  "邻居玛丽娜几点遛狗？"
+ ],
+ "garage_saturday": [
+  "安德烈隔周六在哪里？"
+ ],
+ "olga_delivery": [
+  "谁在二十号送药来？"
+ ],
+ "andrey_job": [
+  "安德烈的职业是什么？"
+ ],
+ "lena_job": [
+  "列娜在哪里教数学？"
+ ],
+ "olga_job": [
+  "奥莉娅的职业是什么？"
+ ],
+ "andrey_project": [
+  "安德烈的变电站项目什么时候结束？"
+ ],
+ "andrey_deadline": [
+  "布线报告什么时候到期？"
+ ],
+ "sergey_colleague": [
+  "谢尔盖·彼得罗维奇在单位坐在谁旁边？"
+ ],
+ "boss_name": [
+  "部门主管是谁？"
+ ],
+ "lena_exam": [
+  "列娜的班五月考哪门课？"
+ ],
+ "andrey_course": [
+  "安德烈去年四月参加了什么课程？"
+ ],
+ "olga_transfer": [
+  "奥莉娅二月调到了哪里？"
+ ],
+ "andrey_salary_day": [
+  "安德烈几号发工资？"
+ ],
+ "lena_salary_day": [
+  "列娜几号发工资？"
+ ],
+ "pavel_pension": [
+  "帕维尔爷爷的养老金几号到账？"
+ ],
+ "andrey_trip": [
+  "安德烈每月因工作去彼尔姆几次？"
+ ],
+ "lena_olympiad": [
+  "列娜辅导孩子们参加什么竞赛？"
+ ],
+ "olga_night": [
+  "奥莉娅有时值哪个班？"
+ ],
+ "andrey_boss": [
+  "安德烈的新主管什么时候上任？"
+ ],
+ "sergey_g_brother": [
+  "谢尔盖·伊万诺维奇是谁的弟弟？"
+ ],
+ "sergey_g_retired": [
+  "谢尔盖·伊万诺维奇哪一年退休？"
+ ],
+ "dima_school": [
+  "季马读几年级？"
+ ],
+ "sonia_school": [
+  "索妮娅读几年级？"
+ ],
+ "andrey_weekend_work": [
+  "安德烈十月的一个周六被叫去做什么？"
+ ],
+ "lena_committee": [
+  "列娜九月加入了什么？"
+ ],
+ "olga_diploma": [
+  "奥莉娅哪年从药学院毕业？"
+ ],
+ "andrey_patent": [
+  "安德烈的专利是什么设计？"
+ ],
+ "plant_address": [
+  "工厂地址在哪里？"
+ ],
+ "school_address": [
+  "第十四中学位于哪里？"
+ ],
+ "andrey_remote": [
+  "安德烈哪天在家办公？"
+ ],
+ "fridge_bought": [
+  "冰箱是什么时候买的？"
+ ],
+ "washer_bought": [
+  "洗衣机是什么时候买的？"
+ ],
+ "tv_bought": [
+  "新电视什么时候搬进家？"
+ ],
+ "dima_phone": [
+  "季马什么时候有了第一部手机？"
+ ],
+ "sonia_tablet": [
+  "索妮娅哪年生日收到了平板？"
+ ],
+ "car_sold": [
+  "旧车什么时候卖掉的？"
+ ],
+ "loan_closed": [
+  "车贷什么时候还清？"
+ ],
+ "moved_flat": [
+  "2015年从哪里搬走？"
+ ],
+ "sonia_school_year": [
+  "索妮娅哪年上小学？"
+ ],
+ "dima_school_year": [
+  "季马哪年上小学？"
+ ],
+ "cat_adoption": [
+  "什么时候决定留下巴尔西克？"
+ ],
+ "ac_bought": [
+  "空调什么时候装好的？"
+ ],
+ "bike_bought": [
+  "季马的自行车是什么时候买的？"
+ ],
+ "bank_switch": [
+  "什么时候换了银行？"
+ ],
+ "insurance_renew": [
+  "房屋保险什么时候续的？"
+ ],
+ "piano_decision": [
+  "钢琴什么时候送人了？"
+ ],
+ "dima_console": [
+  "游戏机是哪一年的新年礼物？"
+ ],
+ "roof_repair": [
+  "屋顶什么时候修过？"
+ ],
+ "wallpaper_flat": [
+  "走廊什么时候重新刷了漆？"
+ ],
+ "internet_switch": [
+  "什么时候换了网络服务商？"
+ ],
+ "security_door": [
+  "防盗门是什么时候装的？"
+ ],
+ "sonia_glasses": [
+  "索妮娅哪年开始戴眼镜？"
+ ],
+ "andrey_license": [
+  "安德烈哪年拿到驾照？"
+ ],
+ "lena_license": [
+  "列娜什么时候拿到驾照？"
+ ],
+ "terrace_decision": [
+  "2021年选择了露台还是阳台？"
+ ],
+ "dog_refusal": [
+  "约定季马多少岁之前不养狗？"
+ ],
+ "summer_camp": [
+  "索妮娅哪年夏天去了夏令营？"
+ ],
+ "dima_camp": [
+  "季马哪年去了夏令营？"
+ ],
+ "passport_renew": [
+  "列娜什么时候换了新护照？"
+ ],
+ "photo_wall": [
+  "照片墙什么时候挂上？"
+ ],
+ "wifi_name": [
+  "家里的网络名叫什么？"
+ ],
+ "wifi_password_note": [
+  "上网密码写在哪里？"
+ ],
+ "router_reboot": [
+  "重启路由器要按住按钮多久？"
+ ],
+ "tv_remote": [
+  "电视遥控器放在哪里？"
+ ],
+ "printer_toner": [
+  "打印机需要换什么？"
+ ],
+ "old_laptop": [
+  "旧笔记本现在归谁用？"
+ ],
+ "backup_day": [
+  "备份每周哪天晚上运行？"
+ ],
+ "sonia_acct": [
+  "索妮娅的平板是什么账户？"
+ ],
+ "dima_acct": [
+  "季马的电脑账户名是什么？"
+ ],
+ "phone_charger": [
+  "共用的手机充电线放在哪里？"
+ ],
+ "camera_door": [
+  "门口摄像头的提醒发到谁的手机？"
+ ],
+ "heating_app": [
+  "供暖用谁手机上的应用控制？"
+ ],
+ "vacuum_schedule": [
+  "扫地机器人周几工作？"
+ ],
+ "microwave_bug": [
+  "微波炉的钟每周慢几分钟？"
+ ],
+ "old_phones": [
+  "厨房抽屉里放着几部旧手机？"
+ ],
+ "anton_ytube": [
+  "季马的视频在哪个频道？"
+ ],
+ "garage_code": [
+  "车库密码是什么？"
+ ],
+ "tv_subscription": [
+  "影视订阅每月几号续费？"
+ ],
+ "nfc_card": [
+  "交通卡用谁的银行应用充值？"
+ ],
+ "email_family": [
+  "家庭邮箱的名字是什么？"
+ ],
+ "photos_cloud": [
+  "家庭照片周日拷到哪里？"
+ ],
+ "speaker_kitchen": [
+  "厨房音箱只听懂哪种语言？"
+ ],
+ "gps_lost": [
+  "安德烈的追踪器在哪里弄丢了？"
+ ],
+ "pharmacy_addr": [
+  "最近的药房在哪里？"
+ ],
+ "clinic_addr": [
+  "诊所位于哪里？"
+ ],
+ "school_gate": [
+  "学校大门开在哪一侧？"
+ ],
+ "park_name": [
+  "大公园叫什么名字？"
+ ],
+ "metro_side": [
+  "地铁入口在广场哪边？"
+ ],
+ "bakery": [
+  "基洛夫街的面包店几点开门？"
+ ],
+ "vet_clinic": [
+  "宠物医院在哪附近？"
+ ],
+ "marina_flat": [
+  "玛丽娜住在几号？"
+ ],
+ "marina_pool": [
+  "教练玛丽娜在哪里工作？"
+ ],
+ "granny_house": [
+  "奶奶家在哪里？"
+ ],
+ "dacha": [
+  "别墅离火车站多远？"
+ ],
+ "garage_row": [
+  "他们的车库在第几排？"
+ ],
+ "corner_shop": [
+  "街角商店开到几点？"
+ ],
+ "bus_home": [
+  "9路公交车在哪里停靠？"
+ ],
+ "car_park": [
+  "车通常停在哪里？"
+ ],
+ "gym_addr": [
+  "健身房在购物中心哪层？"
+ ],
+ "swim_pool": [
+  "体育街的泳池开到几点？"
+ ],
+ "market_day": [
+  "市场什么时候最热闹？"
+ ],
+ "library": [
+  "儿童图书馆在哪里？"
+ ],
+ "dentist": [
+  "牙科诊所在几楼？"
+ ],
+ "cinema": [
+  "电影院在哪里？"
+ ],
+ "dog_park": [
+  "哪里可以放开狗跑？"
+ ],
+ "shoes_rule": [
+  "家里进门的规矩是什么？"
+ ],
+ "quiet_hours": [
+  "楼里晚上几点起是安静时间？"
+ ],
+ "cat_vet": [
+  "巴尔西克每年几月打疫苗？"
+ ],
+ "cat_food": [
+  "巴尔西克每天吃几次干粮？"
+ ],
+ "cat_bowl": [
+  "猫碗放在哪里？"
+ ],
+ "dima_chore": [
+  "夏天谁倒垃圾？"
+ ],
+ "sonia_chore": [
+  "索妮娅给阳台的什么浇水？"
+ ],
+ "andrey_chore": [
+  "谁自己换灯泡？"
+ ],
+ "lena_ledger": [
+  "家庭预算本放在哪里？"
+ ],
+ "keys_hook": [
+  "备用钥匙挂在哪里？"
+ ],
+ "hall_lamp": [
+  "走廊灯不要开到第几档？"
+ ],
+ "no_screens_table": [
+  "吃饭时能看手机吗？"
+ ],
+ "sunday_dinner": [
+  "周日午饭一定要全家一起吃吗？"
+ ],
+ "birthday_budget": [
+  "生日礼物提前多久买？"
+ ],
+ "guest_sleep": [
+  "客人睡哪个房间？"
+ ],
+ "laundry_day": [
+  "周三晚上分拣什么？"
+ ],
+ "iron_rule": [
+  "电熨斗用完拔插头是谁的规矩？"
+ ],
+ "window_summer": [
+  "每天开窗通风几次？"
+ ],
+ "boiler_check": [
+  "锅炉什么时候检查？"
+ ],
+ "balcony_glazed": [
+  "阳台有没有做保温？"
+ ],
+ "sled_winter": [
+  "雪橇放在哪里？"
+ ],
+ "picnic_july": [
+  "大型野餐在什么时候？"
+ ]
+}

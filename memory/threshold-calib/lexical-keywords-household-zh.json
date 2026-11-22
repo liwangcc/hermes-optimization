@@ -1,0 +1,1980 @@
+{
+ "andrey_bd": [
+  "Andrey",
+  "birthday",
+  "date of birth",
+  "May 9",
+  "出生日期",
+  "诞辰",
+  "五月九日"
+ ],
+ "lena_bd": [
+  "Lena",
+  "birthday",
+  "date of birth",
+  "November 2",
+  "出生日期",
+  "诞辰",
+  "十一月二日"
+ ],
+ "dima_bd": [
+  "Dima",
+  "birthday",
+  "date of birth",
+  "birth year",
+  "January 27",
+  "生日",
+  "出生日期",
+  "年龄"
+ ],
+ "sonia_bd": [
+  "Sonia",
+  "Sonya",
+  "birthday",
+  "date of birth",
+  "August 16",
+  "出生日期",
+  "诞辰",
+  "八月十六日"
+ ],
+ "pavel_bd": [
+  "Pavel",
+  "grandpa",
+  "grandfather",
+  "birthday",
+  "February 21",
+  "祖父",
+  "出生日期",
+  "二月二十一日"
+ ],
+ "wedding_day": [
+  "Andrey",
+  "Lena",
+  "wedding",
+  "wedding anniversary",
+  "marriage",
+  "结婚纪念日",
+  "婚礼",
+  "六月十八日"
+ ],
+ "irina_bd": [
+  "Irina",
+  "grandma",
+  "grandmother",
+  "birthday",
+  "March 30",
+  "祖母",
+  "出生日期",
+  "三月三十日"
+ ],
+ "olya_bd": [
+  "Olya",
+  "Olga",
+  "birthday",
+  "date of birth",
+  "September 12",
+  "出生日期",
+  "诞辰",
+  "九月十二日"
+ ],
+ "flat_anniv": [
+  "move-in date",
+  "relocation",
+  "apartment",
+  "flat",
+  "October 4",
+  "入住日期",
+  "乔迁",
+  "搬家"
+ ],
+ "cat_bd": [
+  "Barsik",
+  "cat",
+  "pet",
+  "arrival date",
+  "adoption",
+  "宠物",
+  "猫咪",
+  "收养"
+ ],
+ "andrey_coffee": [
+  "Andrey",
+  "coffee",
+  "no sugar",
+  "unsweetened coffee",
+  "black coffee",
+  "无糖",
+  "黑咖啡",
+  "饮品口味"
+ ],
+ "lena_tea": [
+  "Lena",
+  "green tea",
+  "lemon",
+  "evening",
+  "beverage",
+  "柠檬茶",
+  "夜间饮品",
+  "茶饮偏好"
+ ],
+ "dima_hates": [
+  "Dima",
+  "boiled carrots",
+  "food dislike",
+  "vegetable",
+  "picky eater",
+  "挑食",
+  "忌口",
+  "蔬菜"
+ ],
+ "sonia_sweets": [
+  "Sonia",
+  "sweets",
+  "candy",
+  "dessert",
+  "weekend",
+  "糖果",
+  "甜点",
+  "零食规定"
+ ],
+ "andrey_music": [
+  "Andrey",
+  "rock music",
+  "rock and roll",
+  "cooking",
+  "music taste",
+  "下厨",
+  "烹饪",
+  "音乐喜好"
+ ],
+ "lena_music": [
+  "Lena",
+  "rock music",
+  "music dislike",
+  "music taste",
+  "aversion",
+  "反感",
+  "音乐偏好",
+  "厌恶"
+ ],
+ "pavel_fish": [
+  "Pavel",
+  "grandpa",
+  "grandfather",
+  "fishing",
+  "summer",
+  "祖父",
+  "垂钓",
+  "夏季"
+ ],
+ "irina_bread": [
+  "Irina",
+  "grandma",
+  "grandmother",
+  "bread baking",
+  "Sunday",
+  "祖母",
+  "周日",
+  "烘焙"
+ ],
+ "lena_bread": [
+  "Lena",
+  "bread baking",
+  "Sunday",
+  "baking habit",
+  "周日",
+  "烘焙",
+  "礼拜天",
+  "新习惯"
+ ],
+ "sonia_draw": [
+  "Sonia",
+  "drawing",
+  "markers",
+  "felt-tip pens",
+  "pencil",
+  "绘画",
+  "记号笔",
+  "画具"
+ ],
+ "dima_games": [
+  "Dima",
+  "strategy games",
+  "old laptop",
+  "video games",
+  "gaming",
+  "电子游戏",
+  "电脑游戏",
+  "手提电脑"
+ ],
+ "andrey_film": [
+  "Andrey",
+  "favorite movie",
+  "film",
+  "rewatch count",
+  "nine times",
+  "影片",
+  "重看次数",
+  "9遍"
+ ],
+ "lena_reads": [
+  "Lena",
+  "detective novels",
+  "bedtime reading",
+  "mystery fiction",
+  "crime novels",
+  "推理小说",
+  "阅读习惯",
+  "悬疑"
+ ],
+ "pavel_radio": [
+  "Pavel",
+  "grandpa",
+  "grandfather",
+  "radio",
+  "morning",
+  "祖父",
+  "广播",
+  "早晨"
+ ],
+ "irina_serials": [
+  "Irina",
+  "grandma",
+  "grandmother",
+  "TV series",
+  "soap opera",
+  "evening",
+  "祖母",
+  "电视剧"
+ ],
+ "dima_pets": [
+  "Dima",
+  "Andrey",
+  "dog",
+  "pet wish",
+  "refusal",
+  "宠物狗",
+  "反对",
+  "愿望"
+ ],
+ "sonia_dress": [
+  "Sonia",
+  "favorite color",
+  "favourite colour",
+  "purple",
+  "violet",
+  "色彩偏好",
+  "紫罗兰色",
+  "最爱"
+ ],
+ "dima_cap": [
+  "Dima",
+  "cap",
+  "baseball cap",
+  "headwear",
+  "winter",
+  "冬季",
+  "帽子",
+  "棒球帽"
+ ],
+ "lena_sport": [
+  "Lena",
+  "gym",
+  "fitness",
+  "workout",
+  "spring",
+  "春季",
+  "锻炼",
+  "运动习惯"
+ ],
+ "andrey_run": [
+  "Andrey",
+  "running",
+  "jogging",
+  "embankment",
+  "riverside",
+  "慢跑",
+  "河边",
+  "运动频率"
+ ],
+ "olya_coffee": [
+  "Olya",
+  "Olga",
+  "instant coffee",
+  "coffee",
+  "beverage",
+  "即溶咖啡",
+  "冲泡",
+  "饮品偏好"
+ ],
+ "sonia_music": [
+  "Sonia",
+  "cartoon songs",
+  "music taste",
+  "animation",
+  "soundtrack",
+  "卡通",
+  "歌曲",
+  "音乐喜好"
+ ],
+ "dima_sport_fav": [
+  "Dima",
+  "favorite team",
+  "red jersey",
+  "sports team",
+  "uniform",
+  "队服",
+  "支持的队伍",
+  "颜色"
+ ],
+ "irina_tea": [
+  "Irina",
+  "grandma",
+  "grandmother",
+  "black tea",
+  "sugar",
+  "祖母",
+  "茶饮习惯",
+  "2勺"
+ ],
+ "pavel_tv": [
+  "Pavel",
+  "grandpa",
+  "grandfather",
+  "news",
+  "television",
+  "祖父",
+  "电视节目",
+  "9点"
+ ],
+ "lena_cook": [
+  "Lena",
+  "borscht",
+  "Friday",
+  "cooking",
+  "soup",
+  "周五",
+  "红菜汤",
+  "烹饪"
+ ],
+ "andrey_no_sweet": [
+  "Andrey",
+  "sweet drinks",
+  "sugary drinks",
+  "soft drinks",
+  "evening",
+  "含糖饮品",
+  "晚间",
+  "6点"
+ ],
+ "sonia_cat": [
+  "Sonia",
+  "cat feeding",
+  "morning",
+  "pet care",
+  "daily chore",
+  "清晨",
+  "宠物",
+  "喂食"
+ ],
+ "dima_bike": [
+  "Dima",
+  "bicycle",
+  "bike",
+  "school commute",
+  "dry weather",
+  "单车",
+  "晴天",
+  "交通方式"
+ ],
+ "irina_walk": [
+  "Irina",
+  "grandma",
+  "walk",
+  "stroll",
+  "park",
+  "lunch",
+  "祖母",
+  "午后"
+ ],
+ "pavel_cards": [
+  "Pavel",
+  "grandpa",
+  "card game",
+  "playing cards",
+  "brother",
+  "Saturday",
+  "周六",
+  "纸牌"
+ ],
+ "dima_football": [
+  "Dima",
+  "football practice",
+  "soccer",
+  "training",
+  "Tuesday",
+  "Thursday",
+  "星期二",
+  "星期四"
+ ],
+ "sonia_swim": [
+  "Sonia",
+  "swimming",
+  "pool",
+  "Monday",
+  "Friday",
+  "星期一",
+  "星期五",
+  "游泳课"
+ ],
+ "andrey_workdays": [
+  "Andrey",
+  "workdays",
+  "work schedule",
+  "Monday to Friday",
+  "weekdays",
+  "工作日",
+  "星期一至星期五",
+  "出勤"
+ ],
+ "lena_workdays": [
+  "Lena",
+  "classes",
+  "weekdays",
+  "teaching schedule",
+  "3 pm",
+  "授课",
+  "下课时间",
+  "15点"
+ ],
+ "pavel_market": [
+  "Pavel",
+  "grandpa",
+  "grandfather",
+  "market",
+  "Wednesday",
+  "周三",
+  "集市",
+  "菜市场"
+ ],
+ "irina_market": [
+  "Irina",
+  "grandma",
+  "same market",
+  "Wednesday",
+  "祖母",
+  "周三",
+  "集市",
+  "菜市场"
+ ],
+ "olga_pharmacy": [
+  "Olya",
+  "Olga",
+  "pharmacy shift",
+  "start time",
+  "drugstore",
+  "药店",
+  "上班时间",
+  "8点"
+ ],
+ "andrey_shift": [
+  "Andrey",
+  "night shift",
+  "monthly shift",
+  "overnight work",
+  "shift schedule",
+  "晚班",
+  "排班",
+  "通宵值班"
+ ],
+ "dima_club": [
+  "Dima",
+  "robotics club",
+  "robots",
+  "Wednesday",
+  "周三",
+  "社团",
+  "兴趣小组",
+  "5点"
+ ],
+ "sonia_art": [
+  "Sonia",
+  "art class",
+  "drawing lesson",
+  "Saturday",
+  "eleven",
+  "周六",
+  "绘画班",
+  "11点"
+ ],
+ "lena_meet": [
+  "Lena",
+  "parent-teacher meeting",
+  "parents meeting",
+  "monthly meeting",
+  "first Tuesday",
+  "周二",
+  "家校会议",
+  "学校会议"
+ ],
+ "grocery_day": [
+  "grocery shopping",
+  "groceries",
+  "weekly shopping",
+  "Saturday morning",
+  "supermarket",
+  "星期六",
+  "购物日",
+  "超市"
+ ],
+ "cleaning_day": [
+  "house cleaning",
+  "housework",
+  "tidying",
+  "Sunday afternoon",
+  "chores",
+  "星期日",
+  "大扫除",
+  "家务"
+ ],
+ "trash_days": [
+  "trash bins",
+  "garbage",
+  "waste collection",
+  "Tuesday",
+  "Friday",
+  "星期二",
+  "星期五",
+  "倒垃圾"
+ ],
+ "pavel_doctor": [
+  "Pavel",
+  "grandpa",
+  "doctor visit",
+  "medical appointment",
+  "physician",
+  "就诊",
+  "门诊",
+  "10号"
+ ],
+ "sonia_homework": [
+  "Sonia",
+  "homework",
+  "schoolwork",
+  "study routine",
+  "after-school routine",
+  "功课",
+  "课后",
+  "家庭作业"
+ ],
+ "dima_hw_time": [
+  "Dima",
+  "homework",
+  "schoolwork",
+  "dinner",
+  "evening",
+  "功课",
+  "晚餐",
+  "家庭作业"
+ ],
+ "andrey_gym": [
+  "Andrey",
+  "gym",
+  "workout",
+  "Wednesday evening",
+  "7 pm",
+  "星期三",
+  "锻炼",
+  "19点"
+ ],
+ "olga_weekend": [
+  "Olya",
+  "Olga",
+  "days off",
+  "Sunday",
+  "Monday",
+  "星期日",
+  "星期一",
+  "休假"
+ ],
+ "movie_night": [
+  "movie night",
+  "film night",
+  "family movie",
+  "Friday",
+  "8 pm",
+  "星期五",
+  "观影",
+  "20点"
+ ],
+ "dima_dinner": [
+  "Dima",
+  "dinner time",
+  "supper",
+  "evening meal",
+  "7:30",
+  "晚餐",
+  "用餐时间",
+  "19:30"
+ ],
+ "sonia_bed": [
+  "Sonia",
+  "bedtime",
+  "school nights",
+  "sleep schedule",
+  "9 pm",
+  "就寝时间",
+  "作息",
+  "21点"
+ ],
+ "dima_bed": [
+  "Dima",
+  "bedtime",
+  "lights out",
+  "sleep schedule",
+  "10 pm",
+  "就寝时间",
+  "睡觉",
+  "22点"
+ ],
+ "lena_shop": [
+  "Lena",
+  "bill payment",
+  "bills",
+  "payment day",
+  "first Monday",
+  "周一",
+  "缴费",
+  "付款"
+ ],
+ "sergey_calls": [
+  "Pavel",
+  "grandpa",
+  "phone call",
+  "brother",
+  "first Sunday",
+  "周日",
+  "通话",
+  "兄弟"
+ ],
+ "pizza_friday": [
+  "pizza",
+  "pizza order",
+  "takeout",
+  "food delivery",
+  "last Friday",
+  "周五",
+  "外卖",
+  "比萨"
+ ],
+ "park_sunday": [
+  "park outing",
+  "big park",
+  "Sunday",
+  "good weather",
+  "weekend trip",
+  "星期日",
+  "晴天",
+  "出游"
+ ],
+ "irina_calls": [
+  "Irina",
+  "grandma",
+  "Olya",
+  "Olga",
+  "phone call",
+  "Thursday evening",
+  "星期四",
+  "通话"
+ ],
+ "andrey_lunch": [
+  "Andrey",
+  "lunch",
+  "factory canteen",
+  "cafeteria",
+  "workplace meal",
+  "午餐",
+  "职工食堂",
+  "中午用餐"
+ ],
+ "lena_lunch": [
+  "Lena",
+  "lunch",
+  "teachers",
+  "colleagues",
+  "midday meal",
+  "午餐",
+  "同事",
+  "教师"
+ ],
+ "walk_dog_neighbour": [
+  "Marina",
+  "neighbor",
+  "neighbour",
+  "dog walking",
+  "seven",
+  "邻里",
+  "宠物狗",
+  "7点"
+ ],
+ "garage_saturday": [
+  "Andrey",
+  "garage",
+  "every other Saturday",
+  "alternate Saturdays",
+  "fortnight",
+  "星期六",
+  "每两周",
+  "双周"
+ ],
+ "olga_delivery": [
+  "Olya",
+  "Olga",
+  "medicine delivery",
+  "medication",
+  "20th",
+  "药品",
+  "配送",
+  "20号"
+ ],
+ "andrey_job": [
+  "Andrey",
+  "engineer",
+  "occupation",
+  "profession",
+  "power grid office",
+  "职业",
+  "电力",
+  "工作单位"
+ ],
+ "lena_job": [
+  "Lena",
+  "math teacher",
+  "mathematics",
+  "School No. 14",
+  "occupation",
+  "数学老师",
+  "职业",
+  "第14中学"
+ ],
+ "olga_job": [
+  "Olya",
+  "Olga",
+  "pharmacist",
+  "Gagarin Street",
+  "occupation",
+  "职业",
+  "药店",
+  "药师"
+ ],
+ "andrey_project": [
+  "Andrey",
+  "substation project",
+  "December",
+  "project end",
+  "completion date",
+  "12月",
+  "完工",
+  "工程期限"
+ ],
+ "andrey_deadline": [
+  "wiring report",
+  "cabling",
+  "deadline",
+  "due date",
+  "15th",
+  "截止日期",
+  "15号",
+  "交付期限"
+ ],
+ "sergey_colleague": [
+  "Sergey Petrovich",
+  "Andrey",
+  "colleague",
+  "coworker",
+  "desk neighbor",
+  "同事",
+  "邻座",
+  "职场"
+ ],
+ "boss_name": [
+  "Viktor Nikolaevich",
+  "department head",
+  "boss",
+  "manager",
+  "supervisor",
+  "上司",
+  "领导",
+  "经理"
+ ],
+ "lena_exam": [
+  "Lena",
+  "geometry exam",
+  "class test",
+  "May",
+  "mathematics",
+  "考试",
+  "5月",
+  "数学测验"
+ ],
+ "andrey_course": [
+  "Andrey",
+  "safety course",
+  "safety training",
+  "last April",
+  "workplace safety",
+  "培训",
+  "4月",
+  "进修"
+ ],
+ "olga_transfer": [
+  "Olya",
+  "Olga",
+  "job transfer",
+  "new pharmacy",
+  "February",
+  "调动",
+  "2月",
+  "药店"
+ ],
+ "andrey_salary_day": [
+  "Andrey",
+  "payday",
+  "salary",
+  "wages",
+  "25th",
+  "薪水",
+  "发薪日",
+  "25号"
+ ],
+ "lena_salary_day": [
+  "Lena",
+  "payday",
+  "salary",
+  "wages",
+  "1st",
+  "薪水",
+  "发薪日",
+  "1号"
+ ],
+ "pavel_pension": [
+  "Pavel",
+  "grandpa",
+  "pension",
+  "pension payment",
+  "3rd",
+  "退休金",
+  "入账",
+  "3号"
+ ],
+ "andrey_trip": [
+  "Andrey",
+  "business trip",
+  "Perm",
+  "work travel",
+  "twice a month",
+  "出差",
+  "差旅",
+  "每月2次"
+ ],
+ "lena_olympiad": [
+  "Lena",
+  "math olympiad",
+  "math competition",
+  "coaching",
+  "tutoring",
+  "奥数",
+  "竞赛",
+  "学生"
+ ],
+ "olga_night": [
+  "Olya",
+  "Olga",
+  "night shift",
+  "night counter",
+  "overnight duty",
+  "晚班",
+  "夜间窗口",
+  "值班"
+ ],
+ "andrey_boss": [
+  "Andrey",
+  "new boss",
+  "manager",
+  "supervisor",
+  "March",
+  "上司",
+  "领导",
+  "3月"
+ ],
+ "sergey_g_brother": [
+  "Sergey Ivanovich",
+  "Pavel",
+  "grandpa",
+  "younger brother",
+  "great-uncle",
+  "兄弟",
+  "亲属关系",
+  "叔公"
+ ],
+ "sergey_g_retired": [
+  "Sergey Ivanovich",
+  "retirement",
+  "retirement year",
+  "depot",
+  "rail depot",
+  "退休年份",
+  "离岗",
+  "铁路"
+ ],
+ "dima_school": [
+  "Dima",
+  "ninth grade",
+  "grade 9",
+  "school grade",
+  "就读年级",
+  "初三",
+  "9年级"
+ ],
+ "sonia_school": [
+  "Sonia",
+  "fourth grade",
+  "grade 4",
+  "school grade",
+  "就读年级",
+  "小学",
+  "4年级"
+ ],
+ "andrey_weekend_work": [
+  "Andrey",
+  "overtime",
+  "Saturday work",
+  "weekend work",
+  "October",
+  "10月",
+  "星期六",
+  "超时工作"
+ ],
+ "lena_committee": [
+  "Lena",
+  "school committee",
+  "school board",
+  "council",
+  "September",
+  "9月",
+  "校委会",
+  "成员"
+ ],
+ "olga_diploma": [
+  "Olya",
+  "Olga",
+  "graduation",
+  "pharmacy school",
+  "diploma",
+  "学历",
+  "文凭",
+  "毕业年份"
+ ],
+ "andrey_patent": [
+  "Andrey",
+  "patent",
+  "junction box",
+  "invention",
+  "design",
+  "发明",
+  "知识产权",
+  "分线盒"
+ ],
+ "plant_address": [
+  "factory address",
+  "plant",
+  "Zavodskaya Street",
+  "location",
+  "street number",
+  "厂址",
+  "位置",
+  "门牌号"
+ ],
+ "school_address": [
+  "School No. 14",
+  "school address",
+  "Lenin Street",
+  "location",
+  "学校地址",
+  "门牌号",
+  "第14中学",
+  "校址"
+ ],
+ "andrey_remote": [
+  "Andrey",
+  "remote work",
+  "home office",
+  "telecommuting",
+  "first Friday",
+  "远程办公",
+  "居家工作",
+  "周五"
+ ],
+ "fridge_bought": [
+  "refrigerator",
+  "fridge",
+  "purchase date",
+  "appliance",
+  "April 2021",
+  "电冰箱",
+  "购买时间",
+  "家电"
+ ],
+ "washer_bought": [
+  "washing machine",
+  "washer",
+  "purchase date",
+  "appliance",
+  "March 2023",
+  "购买时间",
+  "家电",
+  "洗衣设备"
+ ],
+ "tv_bought": [
+  "television",
+  "TV",
+  "new TV",
+  "purchase date",
+  "November 2022",
+  "电视机",
+  "家电",
+  "购置时间"
+ ],
+ "dima_phone": [
+  "Dima",
+  "first phone",
+  "smartphone",
+  "mobile phone",
+  "cellphone",
+  "移动电话",
+  "智能手机",
+  "首部"
+ ],
+ "sonia_tablet": [
+  "Sonia",
+  "tablet",
+  "birthday gift",
+  "present",
+  "device",
+  "生日礼物",
+  "平板电脑",
+  "礼品"
+ ],
+ "car_sold": [
+  "old car",
+  "car sale",
+  "vehicle",
+  "July",
+  "汽车",
+  "出售",
+  "卖车",
+  "转让"
+ ],
+ "loan_closed": [
+  "car loan",
+  "auto loan",
+  "loan payoff",
+  "debt",
+  "January 2025",
+  "汽车贷款",
+  "结清",
+  "还款"
+ ],
+ "moved_flat": [
+  "moving out",
+  "relocation",
+  "old building",
+  "old apartment",
+  "搬家",
+  "迁出",
+  "老房子"
+ ],
+ "sonia_school_year": [
+  "Sonia",
+  "school start",
+  "primary school",
+  "elementary school",
+  "first grade",
+  "enrollment",
+  "入学年份",
+  "一年级"
+ ],
+ "dima_school_year": [
+  "Dima",
+  "school start",
+  "primary school",
+  "elementary school",
+  "first grade",
+  "enrollment",
+  "入学年份",
+  "一年级"
+ ],
+ "cat_adoption": [
+  "Barsik",
+  "adoption",
+  "decision",
+  "keeping",
+  "June",
+  "收养",
+  "六月",
+  "去留"
+ ],
+ "ac_bought": [
+  "air conditioner",
+  "AC",
+  "installation",
+  "appliance",
+  "May 2024",
+  "冷气机",
+  "安装时间",
+  "家电"
+ ],
+ "bike_bought": [
+  "Dima",
+  "bicycle",
+  "bike",
+  "purchase",
+  "last spring",
+  "单车",
+  "春季",
+  "购买时间"
+ ],
+ "bank_switch": [
+  "bank switch",
+  "new bank",
+  "bank account",
+  "August",
+  "更换银行",
+  "开户行",
+  "金融机构"
+ ],
+ "insurance_renew": [
+  "home insurance",
+  "house insurance",
+  "insurance renewal",
+  "policy",
+  "September 2025",
+  "续保",
+  "保单",
+  "住宅险"
+ ],
+ "piano_decision": [
+  "piano",
+  "giveaway",
+  "donation",
+  "musical instrument",
+  "乐器",
+  "赠送",
+  "转赠"
+ ],
+ "dima_console": [
+  "game console",
+  "gaming console",
+  "New Year gift",
+  "present",
+  "video games",
+  "游戏主机",
+  "礼品",
+  "元旦"
+ ],
+ "roof_repair": [
+  "roof repair",
+  "roof",
+  "renovation",
+  "maintenance",
+  "summer 2023",
+  "房顶",
+  "维修",
+  "修缮"
+ ],
+ "wallpaper_flat": [
+  "hallway",
+  "corridor",
+  "repainting",
+  "paint job",
+  "renovation",
+  "过道",
+  "粉刷",
+  "油漆"
+ ],
+ "internet_switch": [
+  "internet provider",
+  "ISP",
+  "broadband",
+  "provider switch",
+  "new provider",
+  "宽带",
+  "运营商",
+  "互联网"
+ ],
+ "security_door": [
+  "security door",
+  "front door",
+  "door installation",
+  "burglar-proof door",
+  "October 2022",
+  "安全门",
+  "入户门",
+  "安装时间"
+ ],
+ "sonia_glasses": [
+  "Sonia",
+  "glasses",
+  "eyeglasses",
+  "spectacles",
+  "eyesight",
+  "视力",
+  "配镜",
+  "镜片"
+ ],
+ "andrey_license": [
+  "Andrey",
+  "driver license",
+  "driving licence",
+  "driving permit",
+  "驾驶证",
+  "驾驶执照",
+  "开车资格"
+ ],
+ "lena_license": [
+  "Lena",
+  "driver license",
+  "driving licence",
+  "two years",
+  "驾驶证",
+  "驾驶执照",
+  "开车资格",
+  "2年后"
+ ],
+ "terrace_decision": [
+  "terrace",
+  "balcony",
+  "patio",
+  "choice",
+  "decision",
+  "取舍",
+  "决定",
+  "户外平台"
+ ],
+ "dog_refusal": [
+  "Dima",
+  "dog",
+  "pet agreement",
+  "age fifteen",
+  "condition",
+  "协议",
+  "宠物狗",
+  "15岁"
+ ],
+ "summer_camp": [
+  "Sonia",
+  "summer camp",
+  "camp",
+  "vacation",
+  "summer 2024",
+  "暑期营",
+  "暑假",
+  "营地"
+ ],
+ "dima_camp": [
+  "Dima",
+  "summer camp",
+  "camp",
+  "vacation",
+  "暑期营",
+  "暑假",
+  "营地"
+ ],
+ "passport_renew": [
+  "Lena",
+  "passport",
+  "passport renewal",
+  "new passport",
+  "last June",
+  "证件",
+  "换发",
+  "6月"
+ ],
+ "photo_wall": [
+  "photo wall",
+  "picture wall",
+  "gallery wall",
+  "photos",
+  "December 2021",
+  "相片",
+  "相框",
+  "装饰"
+ ],
+ "wifi_name": [
+  "Wi-Fi name",
+  "WiFi",
+  "SSID",
+  "network name",
+  "wireless network",
+  "无线网",
+  "热点名称"
+ ],
+ "wifi_password_note": [
+  "Wi-Fi password",
+  "WiFi",
+  "internet password",
+  "sticky note",
+  "fridge",
+  "refrigerator",
+  "无线网",
+  "便签"
+ ],
+ "router_reboot": [
+  "router reboot",
+  "router restart",
+  "reset button",
+  "ten seconds",
+  "troubleshooting",
+  "重置",
+  "10秒",
+  "网络故障"
+ ],
+ "tv_remote": [
+  "TV remote",
+  "remote control",
+  "blue basket",
+  "television",
+  "location",
+  "存放位置",
+  "收纳筐",
+  "电视机"
+ ],
+ "printer_toner": [
+  "printer",
+  "toner",
+  "toner cartridge",
+  "cartridge replacement",
+  "ink",
+  "墨盒",
+  "碳粉",
+  "耗材"
+ ],
+ "old_laptop": [
+  "Dima",
+  "old laptop",
+  "notebook computer",
+  "hand-me-down",
+  "owner",
+  "手提电脑",
+  "笔记本电脑",
+  "使用者"
+ ],
+ "backup_day": [
+  "backup",
+  "automatic backup",
+  "backup schedule",
+  "weekly backup",
+  "Monday night",
+  "星期一",
+  "数据保存",
+  "定时任务"
+ ],
+ "sonia_acct": [
+  "Sonia",
+  "tablet",
+  "child account",
+  "kids account",
+  "parental controls",
+  "家长控制",
+  "平板电脑",
+  "少儿账号"
+ ],
+ "dima_acct": [
+  "computer",
+  "PC",
+  "separate account",
+  "user account",
+  "username",
+  "login",
+  "用户名",
+  "登录名"
+ ],
+ "phone_charger": [
+  "phone charger",
+  "charging cable",
+  "shared charger",
+  "sofa",
+  "couch",
+  "充电器",
+  "数据线",
+  "存放位置"
+ ],
+ "camera_door": [
+  "Andrey",
+  "door camera",
+  "doorbell camera",
+  "security camera",
+  "notifications",
+  "alerts",
+  "监控",
+  "通知推送"
+ ],
+ "heating_app": [
+  "Lena",
+  "heating",
+  "heating app",
+  "thermostat",
+  "smart home",
+  "暖气",
+  "温控",
+  "手机软件"
+ ],
+ "vacuum_schedule": [
+  "robot vacuum",
+  "vacuum cleaner",
+  "cleaning schedule",
+  "Tuesday",
+  "Saturday",
+  "星期二",
+  "星期六",
+  "吸尘器"
+ ],
+ "microwave_bug": [
+  "microwave",
+  "microwave clock",
+  "clock drift",
+  "slow clock",
+  "one minute",
+  "时钟",
+  "时间误差",
+  "计时偏差"
+ ],
+ "old_phones": [
+  "old phones",
+  "kitchen drawer",
+  "spare phones",
+  "mobile phones",
+  "storage",
+  "闲置",
+  "备用机",
+  "2部"
+ ],
+ "anton_ytube": [
+  "video channel",
+  "channel name",
+  "videos",
+  "uploads",
+  "handle",
+  "视频平台",
+  "频道名称",
+  "账号"
+ ],
+ "garage_code": [
+  "garage code",
+  "PIN",
+  "passcode",
+  "year built",
+  "construction year",
+  "门禁码",
+  "口令",
+  "建造年份"
+ ],
+ "tv_subscription": [
+  "streaming subscription",
+  "TV subscription",
+  "renewal date",
+  "billing date",
+  "monthly fee",
+  "流媒体",
+  "会员扣费",
+  "12号"
+ ],
+ "nfc_card": [
+  "Andrey",
+  "transit card",
+  "transport card",
+  "top-up",
+  "banking app",
+  "公交卡",
+  "手机银行",
+  "储值"
+ ],
+ "email_family": [
+  "family email",
+  "email address",
+  "shared mailbox",
+  "e-mail",
+  "account",
+  "电子邮件",
+  "电邮地址",
+  "共用账号"
+ ],
+ "photos_cloud": [
+  "family photos",
+  "photo backup",
+  "external drive",
+  "portable hard drive",
+  "Sunday",
+  "备份",
+  "星期日",
+  "相片"
+ ],
+ "speaker_kitchen": [
+  "kitchen speaker",
+  "smart speaker",
+  "voice assistant",
+  "Russian",
+  "language",
+  "语音助手",
+  "智能音响",
+  "俄文"
+ ],
+ "gps_lost": [
+  "Andrey",
+  "tracker",
+  "GPS tracker",
+  "lost item",
+  "stadium",
+  "定位器",
+  "遗失",
+  "5月"
+ ],
+ "pharmacy_addr": [
+  "nearest pharmacy",
+  "drugstore",
+  "chemist",
+  "Gagarin Street",
+  "location",
+  "药店",
+  "地址",
+  "位置"
+ ],
+ "clinic_addr": [
+  "clinic",
+  "clinic address",
+  "medical clinic",
+  "Pobeda Street",
+  "location",
+  "门诊部",
+  "地址",
+  "医疗机构"
+ ],
+ "school_gate": [
+  "school gate",
+  "school entrance",
+  "entrance",
+  "courtyard",
+  "yard side",
+  "校门",
+  "入口",
+  "庭院"
+ ],
+ "park_name": [
+  "Victory Park",
+  "big park",
+  "large park",
+  "park name",
+  "名称",
+  "公园名字",
+  "绿地"
+ ],
+ "metro_side": [
+  "metro entrance",
+  "subway entrance",
+  "underground station",
+  "square",
+  "left side",
+  "地铁站",
+  "左侧",
+  "进站口"
+ ],
+ "bakery": [
+  "bakery",
+  "Kirov Street",
+  "opening time",
+  "opening hours",
+  "seven",
+  "营业时间",
+  "烘焙店",
+  "7点"
+ ],
+ "vet_clinic": [
+  "vet clinic",
+  "veterinarian",
+  "animal hospital",
+  "stadium",
+  "location",
+  "兽医",
+  "动物诊所",
+  "位置"
+ ],
+ "marina_flat": [
+  "Marina",
+  "number 32",
+  "address",
+  "residence",
+  "home",
+  "住址",
+  "门牌",
+  "住所"
+ ],
+ "marina_pool": [
+  "Marina",
+  "coach",
+  "swimming instructor",
+  "pool",
+  "Sports Street",
+  "Sportivnaya Street",
+  "游泳池",
+  "工作地点"
+ ],
+ "granny_house": [
+  "grandma",
+  "grandmother",
+  "house",
+  "location",
+  "town",
+  "祖母",
+  "住处",
+  "所在城市"
+ ],
+ "dacha": [
+  "dacha",
+  "country house",
+  "cottage",
+  "train station",
+  "one-hour drive",
+  "乡间小屋",
+  "距离",
+  "度假屋"
+ ],
+ "garage_row": [
+  "garage",
+  "row six",
+  "sixth row",
+  "garage location",
+  "row number",
+  "第6排",
+  "位置",
+  "车房"
+ ],
+ "corner_shop": [
+  "corner shop",
+  "convenience store",
+  "closing time",
+  "opening hours",
+  "ten",
+  "便利店",
+  "营业时间",
+  "10点"
+ ],
+ "bus_home": [
+  "bus",
+  "bus route",
+  "bus stop",
+  "public transport",
+  "line nine",
+  "巴士",
+  "公交站",
+  "公共交通"
+ ],
+ "car_park": [
+  "car",
+  "parking spot",
+  "parking",
+  "dumpster",
+  "trash bins",
+  "汽车",
+  "停车位",
+  "垃圾桶"
+ ],
+ "gym_addr": [
+  "gym",
+  "fitness center",
+  "shopping mall",
+  "second floor",
+  "location",
+  "商场",
+  "2楼",
+  "健身中心"
+ ],
+ "swim_pool": [
+  "swimming pool",
+  "pool hours",
+  "closing time",
+  "Sports Street",
+  "10 pm",
+  "游泳池",
+  "营业时间",
+  "22点"
+ ],
+ "market_day": [
+  "market",
+  "market day",
+  "busiest time",
+  "Wednesday morning",
+  "crowd",
+  "星期三",
+  "集市",
+  "人流高峰"
+ ],
+ "library": [
+  "children's library",
+  "kids library",
+  "library",
+  "clinic",
+  "location",
+  "少儿图书室",
+  "位置",
+  "门诊"
+ ],
+ "dentist": [
+  "dentist",
+  "dental clinic",
+  "dental office",
+  "third floor",
+  "location",
+  "牙医",
+  "口腔门诊",
+  "3楼"
+ ],
+ "cinema": [
+  "cinema",
+  "movie theater",
+  "Sovetskaya Street",
+  "Soviet Street",
+  "city center",
+  "downtown",
+  "影城",
+  "位置"
+ ],
+ "dog_park": [
+  "dog park",
+  "off-leash area",
+  "pond",
+  "dog walking",
+  "leash",
+  "遛狗",
+  "牵引绳",
+  "宠物活动区"
+ ],
+ "shoes_rule": [
+  "house rule",
+  "household rules",
+  "shoe removal",
+  "footwear",
+  "entryway",
+  "鞋子",
+  "规矩",
+  "换鞋"
+ ],
+ "quiet_hours": [
+  "quiet hours",
+  "noise curfew",
+  "building rules",
+  "noise",
+  "10 pm",
+  "静音时段",
+  "噪音",
+  "22点"
+ ],
+ "cat_vet": [
+  "Barsik",
+  "vaccination",
+  "vaccine",
+  "annual shot",
+  "February",
+  "接种",
+  "免疫",
+  "2月"
+ ],
+ "cat_food": [
+  "Barsik",
+  "dry food",
+  "kibble",
+  "feeding schedule",
+  "twice a day",
+  "喂食",
+  "饲料",
+  "每日2次"
+ ],
+ "cat_bowl": [
+  "cat bowl",
+  "food bowl",
+  "pet dish",
+  "radiator",
+  "heater",
+  "食盆",
+  "散热器",
+  "摆放位置"
+ ],
+ "dima_chore": [
+  "Dima",
+  "trash",
+  "garbage duty",
+  "chore",
+  "summer",
+  "家务",
+  "夏季",
+  "垃圾清理"
+ ],
+ "sonia_chore": [
+  "Sonia",
+  "flower watering",
+  "plants",
+  "balcony",
+  "chore",
+  "植物",
+  "家务",
+  "浇花"
+ ],
+ "andrey_chore": [
+  "Andrey",
+  "light bulbs",
+  "bulb replacement",
+  "lighting",
+  "chore",
+  "电灯",
+  "更换",
+  "家务"
+ ],
+ "lena_ledger": [
+  "budget book",
+  "family budget",
+  "ledger",
+  "drawer",
+  "household finances",
+  "账本",
+  "记账",
+  "开支记录"
+ ],
+ "keys_hook": [
+  "spare keys",
+  "backup key",
+  "extra key",
+  "black hook",
+  "key location",
+  "钥匙位置",
+  "存放处"
+ ],
+ "hall_lamp": [
+  "hallway lamp",
+  "corridor light",
+  "flickering",
+  "second setting",
+  "brightness level",
+  "过道",
+  "闪烁",
+  "灯具故障"
+ ],
+ "no_screens_table": [
+  "phone ban",
+  "screen ban",
+  "screen-free meals",
+  "mealtime rule",
+  "dinner table",
+  "餐桌规矩",
+  "用餐",
+  "电子屏幕"
+ ],
+ "sunday_dinner": [
+  "Sunday lunch",
+  "family meal",
+  "family lunch",
+  "family gathering",
+  "tradition",
+  "星期日",
+  "午餐",
+  "家庭聚餐"
+ ],
+ "birthday_budget": [
+  "birthday gifts",
+  "presents",
+  "gift shopping",
+  "advance purchase",
+  "one-month lead time",
+  "礼品",
+  "预先购买",
+  "30天"
+ ],
+ "guest_sleep": [
+  "Sonia",
+  "guests",
+  "guest room",
+  "visitors",
+  "sleeping arrangement",
+  "访客",
+  "留宿",
+  "卧室"
+ ],
+ "laundry_day": [
+  "laundry",
+  "laundry sorting",
+  "clothes sorting",
+  "washing",
+  "Wednesday evening",
+  "星期三",
+  "洗衣",
+  "衣服分类"
+ ],
+ "iron_rule": [
+  "Lena",
+  "iron",
+  "clothes iron",
+  "unplugging",
+  "safety rule",
+  "断电",
+  "熨衣",
+  "用电安全"
+ ],
+ "window_summer": [
+  "ventilation",
+  "airing",
+  "open windows",
+  "fresh air",
+  "twice a day",
+  "winter",
+  "换气",
+  "冬季"
+ ],
+ "boiler_check": [
+  "boiler",
+  "boiler inspection",
+  "maintenance",
+  "heating system",
+  "September",
+  "检修",
+  "9月",
+  "保养"
+ ],
+ "balcony_glazed": [
+  "balcony",
+  "glazing",
+  "glazed balcony",
+  "enclosed balcony",
+  "insulation",
+  "封阳台",
+  "隔热",
+  "保暖"
+ ],
+ "sled_winter": [
+  "sled",
+  "sledge",
+  "sleigh",
+  "storage",
+  "staircase",
+  "stairs",
+  "楼梯间",
+  "收纳位置"
+ ],
+ "picnic_july": [
+  "picnic",
+  "big picnic",
+  "early July",
+  "outing",
+  "summer",
+  "7月",
+  "郊游",
+  "户外聚餐"
+ ]
+}

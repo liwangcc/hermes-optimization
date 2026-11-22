@@ -1,0 +1,249 @@
+--- a/memory/plugin/holographic-semantic/__init__.py
++++ b/memory/plugin/holographic-semantic/__init__.py
+@@ -6,6 +6,8 @@
+ - prefetch adds at most the closest fact above the trust floor from a local embedding sidecar.
+   The fact must reach tau, be absent from the base recall, and pass the base's repeat, recallability,
+   and name checks. Greetings and short messages skip the sidecar. Sidecar failures fall back to base recall.
++  With the same query vector, a base fact far below the base's best (or below a floor) is not shown, and on a
++  silent base the closest fact must stand out of the store (a clear winner from a lower cosine is taken too).
+ - Embedding setup (Desktop): cloud is the base's own embeddings (embedding_url, embedding_model, embedding_key_env),
+   saved only after a test call; local deploys one of the pinned models (local_models.py) with an index of its own.
+   Switching local models applies the new model's recommended semantic_tau. The threshold job offers that preset
+@@ -44,8 +46,10 @@
+ import importlib
+ import json
+ import logging
++import math
+ import re
+ import sqlite3
++import threading
+ import time
+ import urllib.request
+ from pathlib import Path
+@@ -67,6 +71,12 @@
+                  "the message are recalled before your turn. When the task needs a listed fact that was not recalled, "
+                  "read it in one call: fact_store get {fact_ids: [...]}.")
+ _GET_MAX = 20
++# Semantic step, chosen on dev fixtures and checked once on held-out ones (memory/threshold-calib): a shown base fact
++# more than _GAP below the base's best cosine (the lexical first is exempt) or below _FLOOR is dropped; on a silent
++# base the closest fact needs z - sqrt(2 ln N) >= _Z_SILENT, and from _RESCUE_TAU it is taken with z >= _Z_RESCUE
++# and a _LEAD over the runner-up.
++_GAP, _FLOOR = 0.20, 0.35
++_Z_SILENT, _RESCUE_TAU, _Z_RESCUE, _LEAD = -0.5, 0.45, 1.0, 0.02
+ _NEEDS_KEYWORDS = ("Nothing was stored: the catalog lists a fact this long by its keywords. Send it again with "
+                    "keywords: 3-8 words or short phrases someone might use to ask for it.")
+ _CATALOG_SQL = "SELECT fact_id, content, tags FROM facts WHERE trust_score >= ? ORDER BY trust_score DESC, fact_id DESC"
+@@ -128,6 +138,7 @@
+         self._sem_timeout = float(c.get("semantic_timeout_ms", 400)) / 1000.0
+         self._sem_min_trust = float(c.get("min_trust_threshold", 0.3))
+         self._sem_warned = False
++        self._sem_local = threading.local()  # this turn's sidecar answer, shared by the veto and the append
+         self._cat_enabled = _orig.is_truthy_value(c.get("catalog_enabled", False))
+         self._cat_max = int(c.get("catalog_max_tokens", 3000))
+         self._cat_label = int(c.get("catalog_label_tokens", 30))
+@@ -448,45 +459,112 @@
+             managed_local.wake(home, self._review_path(home), self._sem_url)
+ 
+     def prefetch(self, query: str, *, session_id: str = "") -> str:
+-        base = super().prefetch(query, session_id=session_id)
+-        if not self._sem_enabled or not query or not self._retriever:
+-            return base
++        # One sidecar answer per turn: asked inside the base's layout (for the veto), then reused by the append.
++        self._sem_local.turn = {} if self._sem_enabled and query else None
++        self._sem_local.extra = set()
+         try:
+-            with self._op_lock:
+-                return self._add_semantic(query, base, session_id)
++            base = super().prefetch(query, session_id=session_id)
++            if not self._sem_enabled or not query or not self._retriever:
++                return base
++            # the base's own words (quotes, notices and author off, cut): both steps judge what the base searched
++            words = _orig._own_words(query, self._author.get("name", ""))[:_orig._PREFETCH_QUERY_CHARS]
++            try:
++                with self._op_lock:
++                    return self._add_semantic(words, base, session_id)
++            except Exception as e:
++                self._sidecar_failed(e)
++                return base
++        finally:
++            self._sem_local.turn = None
++
++    def _sidecar_failed(self, e: Exception) -> None:
++        if not self._sem_warned:
++            logger.warning("holographic-semantic: sidecar unavailable, lexical-only recall (%s)", e)
++            self._sem_warned = True
++
++    @staticmethod
++    def _askable(query: str) -> bool:
++        return not _orig_text.is_greeting(query) and _orig.embeddings.worth_asking(query, before_turn=True)
++
++    def _stream_extras(self, *args, **kwargs):
++        out = super()._stream_extras(*args, **kwargs)
++        with contextlib.suppress(Exception):  # facts not found by words: the veto's lexical first is none of them
++            self._sem_local.extra = {f["fact_id"] for f in out[0] + out[1]}
++        return out
++
++    def _off_layout(self, *args, **kwargs):
++        """The base's facts before it remembers them, less those far from the message by the sidecar's cosines."""
++        out = super()._off_layout(*args, **kwargs)
++        state = getattr(self._sem_local, "turn", None)
++        # rerank on: its fallback also lands here; the veto was measured for the off layout only
++        if state is None or self._rescorer is not None:
++            return out
++        try:  # neither the sidecar nor its answer may fail the base's recall
++            (facts, by_meaning), words = out, (args[0] if args else kwargs["query"])
++            if not facts or not self._askable(words):
++                return out
++            state["base"] = [f["fact_id"] for f in facts]
++            state["view"] = None  # asked once per turn, also when the call fails
++            state["view"] = self._sidecar_candidates(words, state["base"])
++            scores = state["view"].get("scores")
++            if not isinstance(scores, dict):  # an older sidecar, another model, or a store it does not serve
++                return out
++            cos = {f: c if isinstance(c := scores.get(str(f)), (int, float)) and math.isfinite(c) else None
++                   for f in state["base"]}
++            best = max((c for c in cos.values() if c is not None), default=0.0)
++            first = next((f for f in state["base"] if f not in self._sem_local.extra), None)
++            keep = [f for f in facts if (c := cos[f["fact_id"]]) is None  # not indexed yet: shown as before
++                    or (c >= _FLOOR and (best - c <= _GAP or f["fact_id"] == first))]
++            state["vetoed"] = set(state["base"]) - {f["fact_id"] for f in keep}
++            return keep, by_meaning
+         except Exception as e:
+-            if not self._sem_warned:
+-                logger.warning("holographic-semantic: sidecar unavailable, lexical-only recall (%s)", e)
+-                self._sem_warned = True
+-            return base
++            self._sidecar_failed(e)
++            return out
+ 
+-    def _sidecar_candidates(self, query: str) -> list:
++    def _sidecar_candidates(self, query: str, ids=()) -> dict:
+         if self._managed_store and not managed_local.responds_for_store(self._sem_url, self._managed_store):
+-            return []
++            return {}
+         req = urllib.request.Request(
+             self._sem_url + "/candidates",
+-            data=json.dumps({"query": query, "tau": self._sem_tau,
+-                             "limit": 1, "min_trust": self._sem_min_trust}).encode("utf-8"),
++            data=json.dumps({"query": query, "tau": self._sem_tau, "limit": 1, "min_trust": self._sem_min_trust,
++                             "ids": list(ids)}).encode("utf-8"),
+             headers={"Content-Type": "application/json"})
+         # localhost must never go through a system/env proxy
+         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+         with opener.open(req, timeout=self._sem_timeout) as r:
+-            return json.loads(r.read()).get("candidates", [])
++            out = json.loads(r.read())
++        return out if isinstance(out, dict) else {}
++
++    def _closest(self, view: dict, silent: bool) -> tuple:
++        """(the closest fact, whether to add it). An older sidecar reports only candidates above tau."""
++        top = view.get("top")
++        if not top:
++            cands = view.get("candidates") or []
++            # The sidecar tests the full cosine against tau, then rounds the returned score to four decimals.
++            return (cands[0]["fact_id"], cands[0]["cos"] >= round(self._sem_tau, 4)) if cands else (None, False)
++        (fact_id, cos), runner = top[0], (top[1][1] if len(top) > 1 else 0.0)
++        ok = cos >= self._sem_tau
++        s = view.get("stats") or {}
++        if silent and s.get("n", 0) >= 2 and s.get("std", 0) > 0:
++            # nothing lexical: chit-chat sits near many facts, a real question's answer stands out of the store
++            z = (cos - s["mean"]) / s["std"] - math.sqrt(2 * math.log(s["n"]))
++            ok = z >= _Z_SILENT and (ok or (cos >= _RESCUE_TAU and z >= _Z_RESCUE and cos - runner >= _LEAD))
++        return fact_id, ok
+ 
+     def _add_semantic(self, query: str, base: str, session_id: str) -> str:
+-        if _orig_text.is_greeting(query) or not _orig.embeddings.worth_asking(query, before_turn=True):
++        if not self._askable(query):
+             return base
+-        candidates = self._sidecar_candidates(query)
+-        if not candidates:
++        state = getattr(self._sem_local, "turn", None) or {}
++        view = state["view"] if "view" in state else self._sidecar_candidates(query)
++        if not view:
+             return base
+         self._sem_warned = False
+-        have = {int(m) for m in _ID_RE.findall(base)}
+-        if len(have) >= self._sem_total_cap:
++        # the block as emitted plus what the veto took out: the shipped rule's view (a budget cut is not in it)
++        shown = {int(m) for m in _ID_RE.findall(base)} | state.get("vetoed", set())
++        if len(shown) >= self._sem_total_cap:
+             return base
+-        top = candidates[0]
+-        fact_id = top["fact_id"]
+-        # The sidecar tests the full cosine against tau, then rounds the returned score to four decimals.
+-        if fact_id in have or not top["cos"] >= round(self._sem_tau, 4):
++        fact_id, ok = self._closest(view, silent=not (state.get("base") or shown))
++        if fact_id is None or fact_id in shown or not ok:
+             return base
+         rows = self._store.read("SELECT fact_id, content, tags, trust_score FROM facts "
+                                 "WHERE fact_id = ? AND trust_score >= ?", (fact_id, self._sem_min_trust))
+--- a/memory/plugin/holographic-semantic/managed_server.py
++++ b/memory/plugin/holographic-semantic/managed_server.py
+@@ -18,11 +18,14 @@
+ Endpoints:
+     GET  /health                 readiness, device, indexed fact count, the store's fact count
+     POST /sync                   {limit} -> index new/changed facts now (at most limit), drop deleted ones
+-    POST /candidates             {query, tau, limit, min_trust} -> ranked cosine candidates
++    POST /candidates             {query, tau, limit, min_trust[, ids]} -> ranked cosine candidates; with ids
++                                 also scores {id: cos}, top [[id, cos]] x2 and stats {n, mean, std}
+     POST /embed                  {texts: [...]} -> normalized vectors
+ """
+ import hashlib
++import heapq
+ import json
++import math
+ import os
+ import sqlite3
+ import threading
+@@ -139,22 +142,33 @@
+         return facts, len(batch), len(stale) - len(batch)
+ 
+ 
+-def sync_and_candidates(query, tau, limit, min_trust):
++def sync_and_candidates(query, tau, limit, min_trust, ids=None):
+     import numpy as np
+     with LOCK:
+         facts, embedded, _ = sync()
+         m = STATE["model"]
+         qv = np.asarray(m.encode([query], normalize_embeddings=True, show_progress_bar=False)[0], dtype=np.float32)
+-        out = []
++        out, scores = [], {}
+         for f in facts:
+             fid = f["fact_id"]
+             if f["trust_score"] < min_trust or fid not in STATE["vecs"]:
+                 continue
+             cos = float(STATE["vecs"][fid] @ qv)
++            if not math.isfinite(cos):  # a broken vector ranks nothing
++                continue
++            scores[fid] = cos
+             if cos >= tau:
+                 out.append({"fact_id": fid, "cos": round(cos, 4)})
+         out.sort(key=lambda x: -x["cos"])
+-        return out[:limit], embedded, len(facts)
++        if ids is None or MODEL_ID != "bge-m3":  # the wrapper's veto constants were measured on bge-m3 only
++            return out[:limit], embedded, len(facts), {}
++        # For the wrapper's veto and silent-block check: the same query vector, full precision.
++        values = np.array(list(scores.values()), dtype=np.float32)
++        extra = {"scores": {str(i): scores[i] for i in ids if i in scores},
++                 "top": [[i, c] for i, c in heapq.nlargest(2, scores.items(), key=lambda kv: kv[1])],
++                 "stats": {"n": len(values), "mean": float(values.mean()) if len(values) else 0.0,
++                           "std": float(values.std()) if len(values) else 0.0}}
++        return out[:limit], embedded, len(facts), extra
+ 
+ class Handler(BaseHTTPRequestHandler):
+     def _send(self, code, obj):
+@@ -190,10 +204,11 @@
+         try:
+             if self.path == "/candidates":
+                 t0 = time.time()
+-                cands, embedded, total = sync_and_candidates(
++                ids = [int(i) for i in req["ids"]] if isinstance(req.get("ids"), list) else None
++                cands, embedded, total, extra = sync_and_candidates(
+                     str(req.get("query", "")), float(req.get("tau", 0.55)),
+-                    int(req.get("limit", 8)), float(req.get("min_trust", 0.3)))
+-                self._send(200, {"candidates": cands, "embedded": embedded, "facts": total,
++                    int(req.get("limit", 8)), float(req.get("min_trust", 0.3)), ids)
++                self._send(200, {"candidates": cands, "embedded": embedded, "facts": total, **extra,
+                                  "ms": round((time.time() - t0) * 1000, 1)})
+             elif self.path == "/sync":
+                 t0 = time.time()

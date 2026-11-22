@@ -1,42 +1,46 @@
 """CPU-only paired recall experiment. See CONSENSUS-RESULTS.md for commands and data."""
+
 from __future__ import annotations
 
 import argparse
-from collections import Counter, defaultdict
-from contextlib import contextmanager
 import json
 import logging
 import os
-from pathlib import Path
 import re
 import runpy
 import tempfile
 import time
+from collections import Counter, defaultdict
+from contextlib import contextmanager
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
-
 from calib_answerability import load_plugin, open_fixture
 from calib_consensus_rule import KeywordIndex, background_floors
-from calib_margin_verify import public_facts, documents_for
+from calib_margin_verify import documents_for, public_facts
 from calib_probes import labelled_probes
 from calib_squad_fixture import squad_fixture
 
-
 REPO = Path(__file__).resolve().parents[2]
-ARMS = ("agreement", "both", "shown", "silent")
+ARMS = ("novel_terms", "silent_agreement", "agreement", "both", "shown", "silent")
 ID = re.compile(r"^- #(\d+) ", re.MULTILINE)
 
 
-def public_data(root, suite, lang, squad):
+def public_data(root, suite, lang, squad, article_offset=0, support_keywords=False):
     if suite == "squad":
-        return squad_fixture(squad)
-    keywords = json.loads((root / "tools" / "issue95_keywords" / f"{suite}.json").read_text(encoding="utf-8"))[lang]
+        return squad_fixture(squad, article_offset=article_offset, support_keywords=support_keywords)
+    keywords = json.loads(
+        (root / "tools" / "issue95_keywords" / f"{suite}.json").read_text(encoding="utf-8")
+    )[lang]
     if suite == "household":
         data = runpy.run_path(str(root / "tools" / "household.py"))
         documents = {k: v[lang] for k, v in data["FACTS"].items()}
-        questions = [{"q": q[lang], "qid": i, "targets": q.get("targets", []), "split": q["split"]}
-                     for group in ("QUERIES", "CHITCHAT") for i, q in data[group].items()]
+        questions = [
+            {"q": q[lang], "qid": i, "targets": q.get("targets", []), "split": q["split"]}
+            for group in ("QUERIES", "CHITCHAT")
+            for i, q in data[group].items()
+        ]
     else:
         documents = documents_for(public_facts(root, suite), suite, lang)
         rows = (root / "results" / f"provenance_{suite}_m1_on.jsonl").read_text(encoding="utf-8").splitlines()
@@ -53,17 +57,29 @@ def build_fixture(pkg, args, tmp):
     provider = open_fixture(pkg, cfg, tmp)
     try:
         if args.suite in ("synthetic", "real"):
-            paths = [synthetic/"queries.json", synthetic/"queries_ext.json"] if cfg.facts else args.queries
+            paths = (
+                [synthetic / "queries.json", synthetic / "queries_ext.json"] if cfg.facts else args.queries
+            )
             ids = {i for (i,) in provider._store.read("SELECT fact_id FROM facts")}
             questions = [{**q, "split": "all"} for path in paths for q in labelled_probes(path, ids)]
         else:
-            docs, keywords, questions = public_data(args.plugin_src, args.suite, args.lang, args.squad)
+            docs, keywords, questions = public_data(
+                args.plugin_src,
+                args.suite,
+                args.lang,
+                args.squad,
+                getattr(args, "article_offset", 0),
+                getattr(args, "support_keywords", False),
+            )
             stored = {}
             for name, (content, entities) in docs.items():
-                call = dict(action="add", content=content, entities=entities, keywords=keywords[name])
+                call = {"action": "add", "content": content, "entities": entities, "keywords": keywords[name]}
                 result = json.loads(provider.handle_tool_call("fact_store", call))
-                if (result.get("status") != "added" or result.get("keywords", []) != keywords[name]
-                        or not pkg._sendable(content)):
+                if (
+                    result.get("status") != "added"
+                    or result.get("keywords", []) != keywords[name]
+                    or not pkg._sendable(content)
+                ):
                     raise ValueError("a public fixture fact or its keywords did not pass indexing")
                 stored[name] = result["fact_id"]
             questions = [{**q, "targets": [stored[k] for k in q["targets"]]} for q in questions]
@@ -94,29 +110,50 @@ def record(q, base, point):
     gold, before, after = set(q["targets"]), set(base[:5]), set(point[:5])
     had, has = bool(before & gold), bool(after & gold)
     added = set(point) - set(base)
-    return Counter(rows=1, labelled=bool(gold), negatives=not gold, base_hit=had, hit=has, rescued=has and not had,
-                   lost_targets=len((before & gold) - after), base_noise=not gold and bool(base),
-                   noise=not gold and bool(point), new_noise=not gold and not base and bool(point),
-                   base_confusion=bool(gold and before-gold), confusion=bool(gold and after-gold),
-                   new_confusion=bool(gold and after-gold and not (before-gold)),
-                   added_right=len(added & gold), added_wrong=len(added-gold))
+    return Counter(
+        rows=1,
+        labelled=bool(gold),
+        negatives=not gold,
+        base_hit=had,
+        hit=has,
+        rescued=has and not had,
+        lost_targets=len((before & gold) - after),
+        base_noise=not gold and bool(base),
+        noise=not gold and bool(point),
+        new_noise=not gold and not base and bool(point),
+        base_confusion=bool(gold and before - gold),
+        confusion=bool(gold and after - gold),
+        new_confusion=bool(gold and after - gold and not (before - gold)),
+        added_right=len(added & gold),
+        added_wrong=len(added - gold),
+    )
 
 
 def timing(values):
-    return {k: round(float(np.percentile(values, p)), 2)
-            for k, p in (("p50_ms", 50), ("p95_ms", 95), ("p99_ms", 99), ("max_ms", 100))} if values else {}
+    return (
+        {
+            k: round(float(np.percentile(values, p)), 2)
+            for k, p in (("p50_ms", 50), ("p95_ms", 95), ("p99_ms", 99), ("max_ms", 100))
+        }
+        if values
+        else {}
+    )
 
 
 class CpuEncoder:
     def __init__(self, model_path, threads):
         import torch
         from sentence_transformers import SentenceTransformer
+
         torch.set_num_threads(threads)
-        self.model = SentenceTransformer(str(model_path.resolve(strict=True)), device="cpu", local_files_only=True)
+        self.model = SentenceTransformer(
+            str(model_path.resolve(strict=True)), device="cpu", local_files_only=True
+        )
 
     def encode(self, texts):
-        return self.model.encode([t[:2000] for t in texts], normalize_embeddings=True, batch_size=12,
-                                 show_progress_bar=False)
+        return self.model.encode(
+            [t[:2000] for t in texts], normalize_embeddings=True, batch_size=12, show_progress_bar=False
+        )
 
 
 def benchmark_without_vectors(provider, queries):
@@ -132,8 +169,13 @@ def benchmark_without_vectors(provider, queries):
             metrics.update(record(q, got, got))
     finally:
         provider._meaning_of = original
-    return {"calls": len(times), "hit": metrics["hit"], "labelled": metrics["labelled"],
-            "over_3000_ms": sum(ms > 3000 for ms in times), **timing(times)}
+    return {
+        "calls": len(times),
+        "hit": metrics["hit"],
+        "labelled": metrics["labelled"],
+        "over_3000_ms": sum(ms > 3000 for ms in times),
+        **timing(times),
+    }
 
 
 def encode_store(encoder, columns):
@@ -165,7 +207,11 @@ def retrieval(pkg, provider, index, matrices, floors, lookup, arm):
             return facts, semantic
         qv = latest[1]
         shown = [f["fact_id"] for f in facts]
-        key_scores = keywords @ qv if shown or arm == "agreement" else None
+        if (shown and arm in ("silent", "silent_agreement")) or (not shown and arm == "shown"):
+            return facts, semantic
+        key_scores = (
+            keywords @ qv if shown or arm in ("novel_terms", "agreement", "silent_agreement") else None
+        )
         winner = index.choose(text, joined @ qv, key_scores, shown, floors, arm=arm)
         if winner is None:
             return facts, semantic
@@ -173,8 +219,11 @@ def retrieval(pkg, provider, index, matrices, floors, lookup, arm):
         if not rows:
             return facts, semantic
         fact = rows[0]
-        if not (provider._recallable(fact) and provider._not_recent(key, fact, turn)
-                and provider._retriever.names_fit(text, fact)):
+        if not (
+            provider._recallable(fact)
+            and provider._not_recent(key, fact, turn)
+            and provider._retriever.names_fit(text, fact)
+        ):
             return facts, semantic
         return [*facts, fact], semantic | {winner}
 
@@ -205,7 +254,7 @@ def masked_targets(pkg, fixture, questions, facts, matrices, vectors):
             try:
                 for target in targets:
                     provider.handle_tool_call("fact_store", {"action": "forget", "fact_id": target})
-                remaining = {i for i, in provider._store.read("SELECT fact_id FROM facts")}
+                remaining = {i for (i,) in provider._store.read("SELECT fact_id FROM facts")}
                 if remaining.intersection(targets):
                     raise ValueError("a masked target is still present")
                 kept = [i for i, (fid, _, _) in enumerate(facts) if fid in remaining]
@@ -241,13 +290,17 @@ def run(args):
             matrices = encode_store(encoder, [raw, joined, keys])
             floors = background_floors(*matrices[:2])
             build = time.perf_counter() - start
+
             def live(text):
                 return encoder.encode([text])[0]
+
             # Ask the same cleaned text that prefetch passes to _meaning_of, even for quoted messages.
             own_words = getattr(pkg, "_own_words", None)
             texts = [own_words(q["q"], "") if own_words else q["q"] for q in queries]
-            texts = list(dict.fromkeys(t[:pkg._PREFETCH_QUERY_CHARS] for t in texts))
-            approved = [t for t in texts if not pkg._secret_in(t) and pkg.embeddings.worth_asking(t,before_turn=True)]
+            texts = list(dict.fromkeys(t[: pkg._PREFETCH_QUERY_CHARS] for t in texts))
+            approved = [
+                t for t in texts if not pkg._secret_in(t) and pkg.embeddings.worth_asking(t, before_turn=True)
+            ]
             vecs = dict(zip(approved, encoder.encode(approved), strict=True)) if approved else {}
             baseline = []
             with retrieval(pkg, provider, index, matrices, floors, vecs.__getitem__, "baseline"):
@@ -267,60 +320,101 @@ def run(args):
             speed = {}
             if args.benchmark:
                 speed["without_vectors"] = benchmark_without_vectors(provider, queries)
-                for arm in ("baseline", "agreement", "both", "shown"):
+                for arm in ("baseline", "novel_terms", "agreement"):
                     times, agreements = [], 0
                     with retrieval(pkg, provider, index, matrices, floors, live, arm):
                         for i, q in enumerate(queries):
                             start = time.perf_counter()
                             got = prefetch(provider, q["q"], f"timed-{arm}-{i}")
-                            times.append((time.perf_counter()-start)*1000)
+                            times.append((time.perf_counter() - start) * 1000)
                             agreements += got == outputs[arm][i]
-                    speed[arm] = {"calls":len(times), "serial_matches_batched":agreements,
-                                  "over_3000_ms":sum(ms>3000 for ms in times), **timing(times)}
-            masked = (masked_targets(pkg, Path(td) / "fixture.db", queries, facts, matrices, vecs)
-                      if args.mask_targets else {})
-            return {"suite":args.suite,"lang":args.lang,"facts":len(facts),"questions":len(queries),
-                    "plugin":args.plugin_src.name,"threads":args.threads,"device":"cpu",
-                    "model_load_s":round(boot,2),"fact_index_s":round(build,2),
-                    "arms":totals,"latency":speed,"masked":masked}
+                    speed[arm] = {
+                        "calls": len(times),
+                        "serial_matches_batched": agreements,
+                        "over_3000_ms": sum(ms > 3000 for ms in times),
+                        **timing(times),
+                    }
+            masked = (
+                masked_targets(pkg, Path(td) / "fixture.db", queries, facts, matrices, vecs)
+                if args.mask_targets
+                else {}
+            )
+            return {
+                "suite": args.suite,
+                "lang": args.lang,
+                "facts": len(facts),
+                "questions": len(queries),
+                "article_offset": getattr(args, "article_offset", 0),
+                "support_keywords": getattr(args, "support_keywords", False),
+                "plugin": args.plugin_src.name,
+                "threads": args.threads,
+                "device": "cpu",
+                "model_load_s": round(boot, 2),
+                "fact_index_s": round(build, 2),
+                "arms": totals,
+                "latency": speed,
+                "masked": masked,
+            }
         finally:
             provider.shutdown()
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--suite", required=True, choices=["real","synthetic","household","squad","multi",
-                                                       "contrast_en","contrast_ru","contrast_zh"])
+    ap.add_argument(
+        "--suite",
+        required=True,
+        choices=[
+            "real",
+            "synthetic",
+            "household",
+            "squad",
+            "multi",
+            "contrast_en",
+            "contrast_ru",
+            "contrast_zh",
+        ],
+    )
     ap.add_argument("--model", type=Path, required=True)
     ap.add_argument("--plugin-src", type=Path, required=True)
     ap.add_argument("--core-src", type=Path, required=True)
     ap.add_argument("--lang")
-    ap.add_argument("--squad",type=Path)
+    ap.add_argument("--squad", type=Path)
+    ap.add_argument("--article-offset", type=int, default=0)
+    ap.add_argument(
+        "--support-keywords",
+        action="store_true",
+        help="For SQuAD, derive keywords from a separate, withheld support question per article",
+    )
     ap.add_argument("--store", type=Path, help="Frozen read-only copy for --suite real")
     ap.add_argument("--queries", type=Path, nargs="+")
-    ap.add_argument("--threads",type=int,default=4)
-    ap.add_argument("--benchmark",action="store_true")
-    ap.add_argument("--mask-targets",action="store_true")
-    ap.add_argument("--out",type=Path)
+    ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--benchmark", action="store_true")
+    ap.add_argument("--mask-targets", action="store_true")
+    ap.add_argument("--out", type=Path)
     args = ap.parse_args()
-    if args.suite=="real" and not (args.store and args.queries):
+    if args.suite == "real" and not (args.store and args.queries):
         ap.error("real requires --store and --queries")
-    if args.suite=="squad" and not args.squad:
+    if args.suite == "squad" and not args.squad:
         ap.error("squad requires --squad")
     if args.suite.startswith("contrast_"):
-        args.lang=args.suite
-    if args.suite in ("household","multi") and not args.lang:
+        args.lang = args.suite
+    if args.suite in ("household", "multi") and not args.lang:
         ap.error("this suite requires --lang")
     logging.disable(logging.CRITICAL)
-    os.environ.update(HF_HUB_OFFLINE="1",TRANSFORMERS_OFFLINE="1",HF_HUB_DISABLE_TELEMETRY="1",HF_HUB_DISABLE_PROGRESS_BARS="1")
-    result=run(args)
-    payload=json.dumps(result, ensure_ascii=True, indent=2)
+    os.environ.update(
+        HF_HUB_OFFLINE="1",
+        TRANSFORMERS_OFFLINE="1",
+        HF_HUB_DISABLE_TELEMETRY="1",
+        HF_HUB_DISABLE_PROGRESS_BARS="1",
+    )
+    result = run(args)
+    payload = json.dumps(result, ensure_ascii=True, indent=2)
     if args.out:
-        args.out.write_text(payload+"\n",encoding="utf-8")
+        args.out.write_text(payload + "\n", encoding="utf-8")
     else:
         print(payload)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
-

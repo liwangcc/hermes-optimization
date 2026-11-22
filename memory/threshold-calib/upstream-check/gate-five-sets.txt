@@ -1,0 +1,13 @@
+
+== margins 1.0 (default) vs 0.5, checked by the cross-encoder below 1.0 (proposal) | rows 540 real | git_sha 76689f954f500d49a7ef2eb73d0e868a5b43b53e-dirty
+  margin      hit5  noise  confused
+     0.5  486/540     93        34
+     1.0  480/540     93        34
+paired misses: b=6 (rescued at 0.5), c=0 (lost at 0.5), exact McNemar p=0.0312
+gained targets in the top five (6): multi/nl 18 -> python; contrast_en/contrast_en p3q1 -> denis_car; contrast_en/contrast_en p4q1 -> dina_flat; contrast_en/contrast_en p14q1 -> olga_ielts; contrast_zh/contrast_zh p4q0 -> andrey_vacation; household/en q063 -> andrey_no_sweet
+lost targets in the top five (0): -
+  PASS  no target lost
+  PASS  noise not higher (93 <= 93)
+  PASS  confusion not higher (34 <= 34)
+  PASS  pooled McNemar p < 0.05 (0.031)
+  => gate PASSES on these files

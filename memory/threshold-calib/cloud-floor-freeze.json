@@ -1,0 +1,97 @@
+{
+ "frozen": "2026-11-22, before any run of calib_cloud_floor.py with a real model",
+ "script_sha256": {
+  "calib_cloud_floor.py": "51d90e99fd0aadb4a419bc38a21847dd520ec97ccb5a217af52a5d1b48f174ac",
+  "calib_cloud_floor.py, with choose_m2": "4880ac9c56578089142c8e48e9d2c2c9c4f5e00ef6b85b567f4a6fafa8bdeb0e",
+  "calib_cloud_floor.py, final (floor sweep added after the household runs; events, curve, choose and choose_m2 unchanged)": "ebe2083452f8cebe7dc6268088e60cbe2d8c35fd2b3956a5f85abfdba4c3bb65",
+  "calib_cloud_floor.py, with per-question events in the output (events, curve, choose and choose_m2 unchanged)": "6ff9edc4e12912152acc25f26678a704e2e43c431890fcb99f1d3659661d80a1"
+ },
+ "rule_M": {
+  "probe": "the built-in natural-question bank: issue95-evidence/synthetic, 30 facts with their blind keywords, 48 questions",
+  "candidate": "per question that passes the query gate: the single closest fact by cosine among trusted facts, when it is not already shown by the mode's own output, the block holds fewer than 7 facts and the fact passes the repeat, recallable and name checks",
+  "kinds": "rescue = the candidate is a target and the row had no target in its first five; extra = a target on a row that already had one; wrong = not a target (answerable or not)",
+  "curve": "for tau in 0.05..0.99 step 0.01: R = rescues with cosine >= tau, W = wrong with cosine >= tau",
+  "choice": "tau with the largest R - W; ties: the longest run of grid points, the higher run among equal lengths, its midpoint (the higher of two middle points)",
+  "verdict": "the model adds something only when max(R - W) >= 1 and R >= 2 at the chosen tau; otherwise: this model adds nothing, keep the closest-fact admission off for it",
+  "modes": {
+   "local": "shown = base prefetch with embeddings off; vectors of content + ' ' + tags (the sidecar's text)",
+   "cloud": "shown = base prefetch with embeddings on (its own vector text, z gate at margin 1.0, no floor); the same vectors rank the candidate"
+  }
+ },
+ "check_against_existing_numbers": {
+  "source": "BUILTIN-QUESTIONS-RESULTS.md, synthetic prefetch table: (rescued, added non-answers) per model and threshold",
+  "bge-m3": {
+   "0.52": [
+    5,
+    7
+   ],
+   "0.55": [
+    4,
+    3
+   ],
+   "0.58": [
+    2,
+    1
+   ]
+  },
+  "bge-small-zh": {
+   "0.50": [
+    2,
+    14
+   ],
+   "0.64": [
+    0,
+    2
+   ]
+  },
+  "minilm": {
+   "0.58": [
+    0,
+    0
+   ],
+   "0.52": [
+    0,
+    3
+   ]
+  },
+  "expected_from_those_points": "bge-m3: gain, tau between 0.55 and 0.58 or above; the two small models: no tabulated point with R - W >= 1",
+  "implementation_check": "local mode with bge-m3 must give the three bge-m3 pairs above at 0.52, 0.55 and 0.58"
+ },
+ "confirmation": {
+  "new_data": "household en, ru, zh (199 facts, 115 questions each), not used to pick any threshold",
+  "pass_when_gain": "at the tau chosen on the built-in bank: rescued > 0 and wrong <= rescued on each language (BUILTIN's pass condition; nothing can be lost, the rule only appends)",
+  "pass_when_no_gain": "no household language has its own best R - W >= 1 with R >= 2; otherwise the verdict missed a real gain"
+ },
+ "seen_before_freeze": "choose() and events() were written before the question-text runs. Those runs then showed household zh in local mode at 0.55 only: 7 rescued, 16 non-answers added. Household en and ru, every cloud-mode result and every other threshold were unseen.",
+ "models_on_disk": "bge-m3 only; the two small models are checked against the tabulated points, not re-run",
+ "rule_M_outcome_on_bank": {
+  "bge-m3 local": "curve reproduces the tabulated pairs (0.52: 5/7, 0.55: 4/3, 0.58: 2/1). max(R - W) = 1 on three runs: 0.55, 0.58-0.59, 0.61-0.63. The tie rule takes 0.62 with R = 1, so the verdict is 'adds nothing'. That contradicts the real-store result already on record for bge-m3 (0.55: 6 rescued, 3 non-answers). Rule M fails its first check as frozen.",
+  "bge-m3 cloud": "max(R - W) = 0: adds nothing"
+ },
+ "rule_M2": {
+  "written": "2026-11-22, after the bank result above and before any household run of calib_cloud_floor.py",
+  "why": "R - W is flat at +1 on a bank with 7 word-missed questions, and the longest-run tie rule then picks the strictest run. M2 states the accepted trade directly, as BUILTIN's pass condition does.",
+  "choice": "the lowest tau with R >= 2 and W <= R on the built-in bank; none: this model adds nothing",
+  "on_bank": {
+   "bge-m3 local": "0.55 (4 rescued, 3 wrong)",
+   "bge-m3 cloud": "none: adds nothing",
+   "bge-small-zh, tabulated points only": "none",
+   "minilm, tabulated points only": "none"
+  },
+  "confirmation": "unchanged: on each household language, at the bank's tau, rescued > 0 and wrong <= rescued; for a 'nothing' verdict, no language with its own lowest feasible tau",
+  "seen_when_written": "the bank curves of both modes; BUILTIN's real-store rows; household zh local mode at 0.55 (7 rescued, 16 non-answers added), which already fails the confirmation condition for M2's bge-m3 value. Household en and ru and every cloud-mode household result were unseen."
+ },
+ "outcome": {
+  "rule_M": "failed its check on the bank (calls bge-m3 'adds nothing')",
+  "rule_M2": "fits the numbers on record; fails confirmation on all three household languages in local mode (at 0.55: zh 7 rescued / 16 wrong, en 8 / 12, ru 5 / 17); its 'nothing' verdict for cloud mode is contradicted on zh (own lowest feasible tau 0.66: 2 rescued / 1 wrong)"
+ },
+ "rule_P10": {
+  "written": "2026-11-22, before any run with bge-small-zh, multilingual-minilm or multilingual-e5-small",
+  "bank": "synthetic + household en, ru, zh pooled: 210 answerable and 183 no-answer questions; local shape (the base's word and entity output first, then the closest fact by cosine of content + ' ' + tags)",
+  "choice": "the lowest tau on the 0.05..0.99 grid at which wrong facts appended to no-answer questions are at most 10% of the 183",
+  "verdict": "the model adds nothing when fewer than 5 of the 210 answerable questions are rescued at that tau",
+  "reported": "per model: tau, rescued / 210, wrong on no-answer / 183, and the same rate on each of the four sets",
+  "seen_when_written": "every bge-m3 curve; for the two small models only BUILTIN's tabulated points; nothing for multilingual-e5-small, which stands in for a model nobody tuned for",
+  "note": "the sidecar adds no query or passage prefix, so e5 is used as a user who just plugs it in would use it"
+ }
+}

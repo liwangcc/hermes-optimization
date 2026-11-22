@@ -1,13 +1,8 @@
-"""The Desktop job "Initialize threshold": calibrate the recall threshold of the embedding mode in use on this
-profile's own facts (threshold_calib.py) and propose a value beside its field.
+"""The Desktop job "Initialize threshold" proposes a value beside the active mode's threshold field.
 
-  local  semantic_tau: vectors from the sidecar's /embed, admission of just the closest fact above the trust floor
-         when cosine >= tau. Uses prefetch's query-length and greeting checks.
-  cloud  embedding_min_score: vectors from the base provider's own client, admission by its own Meaning.standout
-         (the floor on top of its z-score bar), walked as its by_meaning and prefetch walk it.
-
-Nothing is written to the config here: the proposal is kept beside the service receipt, and the Desktop writes it once
-the user confirms. Too few facts, or a model that cannot tell them apart, says why and proposes nothing.
+Local mode offers the recommended semantic_tau for the recorded model. Cloud mode calibrates embedding_min_score
+on fact fragments using the base's embeddings and Meaning.standout. The cloud proposal is kept beside the service
+receipt. The Desktop applies the proposed value when the user confirms it.
 """
 from __future__ import annotations
 
@@ -17,28 +12,18 @@ from array import array
 from pathlib import Path
 from typing import Any, Generator
 
-from . import cloud_setup, managed_local, settings, sidecar_index
+from . import cloud_setup, managed_local, settings
 from . import threshold_calib as calib
 from .setup_common import message, progress, result
 
 JOB_ID = "semantic-threshold"
 _FILE = "threshold.json"
-_LOCAL_BATCH = 16  # the sidecar's own batch size
-_LOCAL_SECONDS = 600.0  # one batch on a CPU
 _CLOUD_SECONDS = 120.0  # per request, as the calibration tool waits
 
 
-def _field(mode: str) -> str:
-    return "embedding_min_score" if mode == "cloud" else "semantic_tau"
-
-
-def _identity(home: str, section: dict, mode: str, base) -> str:
+def _cloud_identity(section: dict, base) -> str:
     """Which model a proposal was made for: with another model or address it is stale."""
-    if mode == "cloud":
-        return "cloud " + base.embeddings.Settings(section).tag
-    url = str(section.get("semantic_url") or settings.DEFAULTS["semantic_url"])
-    model = managed_local.deployed(home, url)
-    return f"local {url} {model.id} {model.rev}" if model else f"local {url}"
+    return "cloud " + base.embeddings.Settings(section).tag
 
 
 def _path(home: str) -> Path:
@@ -60,13 +45,29 @@ def _same(suggested: str, stored: Any) -> bool:
         return False
 
 
+def _local_recommendation(home: str, section: dict) -> tuple[str | None, str, str]:
+    url = str(section.get("semantic_url") or settings.DEFAULTS["semantic_url"])
+    model = managed_local.deployed(home, url)
+    if model is None:
+        return (None, "No recommendation is available because the configured local sidecar's model is unrecognized.",
+                "无法识别当前本地侧车的模型，暂无推荐阈值。")
+    suggested = f"{model.recommended_tau:.2f}"
+    status = (f"The recommended threshold for {model.label} is {suggested}, based on the natural-question "
+              "measurements in BUILTIN-QUESTIONS-RESULTS.md.")
+    zh_status = f"{model.label} 的推荐阈值为 {suggested}，依据为 BUILTIN-QUESTIONS-RESULTS.md 的自然问句实测。"
+    return suggested, status, zh_status
+
+
 def action(home: str, section: dict, facts: int | None, base) -> dict:
-    """The job as the Desktop lists it: bound to the threshold of the mode in use, with the last proposal for the
-    model in use until the stored value is that one."""
+    """List the active mode's threshold job with the recommendation or matching cloud proposal."""
     mode = settings.mode(section)
-    field = _field(mode)
+    field = "embedding_min_score" if mode == "cloud" else "semantic_tau"
     ready, status, zh = True, "", ""
-    if not mode:
+    suggested = None
+    if mode == "local":
+        suggested, status, zh = _local_recommendation(home, section)
+        ready = suggested is not None
+    elif not mode:
         ready, status, zh = False, "Connect a cloud or local embedding model first.", "请先连接云端或本地向量模型。"
     elif facts is None:
         ready, status, zh = False, "Calibration needs a profile-wide fact store.", "校准需要配置级事实库。"
@@ -74,53 +75,22 @@ def action(home: str, section: dict, facts: int | None, base) -> dict:
         ready = False
         status = f"Too few facts to calibrate: {facts} stored, {calib.MIN_FACTS} needed. The current value stays."
         zh = f"样本不足：事实库只有 {facts} 条事实，至少需要 {calib.MIN_FACTS} 条。保留当前值。"
-    job: dict[str, Any] = {"id": JOB_ID, "label": "Initialize threshold", "field": field, "ready": ready}
     if mode == "cloud":
         description = ("Sends this profile's fact text and questions cut from it to the connected embedding API (what "
                        "it already receives), and proposes a minimum similarity. Nothing is saved until you confirm.")
         zh_description = "向已连接的向量接口发送当前档案的事实文本和从中截取的探针（与日常向量化的内容相同），给出建议的最低相似度。确认前不写入配置。"
+        last = _proposal(home)
+        if ready and last.get("field") == field and last.get("identity") == _cloud_identity(section, base):
+            status, zh = str(last.get("status") or ""), str(last.get("status_zh") or "")
+            suggested = last.get("suggested")
     else:
-        description = ("Embeds this profile's facts and questions cut from them on the local model, and proposes the "
-                       "lowest threshold that keeps unrelated questions out. Nothing leaves this machine; nothing is "
-                       "saved until you confirm.")
-        zh_description = "用本机模型向量化当前档案的事实和从中截取的探针，给出能挡住无关问题的最低阈值。数据留在本机，确认前不写入配置。"
-    last = _proposal(home)
-    if ready and last.get("field") == field and last.get("identity") == _identity(home, section, mode, base):
-        status, zh = str(last.get("status") or ""), str(last.get("status_zh") or "")
-        suggested = last.get("suggested")
-        if isinstance(suggested, str) and suggested and not _same(suggested, section.get(field, settings.DEFAULTS[field])):
-            job["suggestion"] = suggested
+        description = "Shows the recommended threshold for the deployed local model. Confirm the suggestion to apply it."
+        zh_description = "显示已部署本地模型的推荐阈值。点击「确认写入」后应用建议。"
+    job: dict[str, Any] = {"id": JOB_ID, "label": "Initialize threshold", "field": field, "ready": ready}
+    if ready and isinstance(suggested, str) and suggested and not _same(suggested, section.get(field, settings.DEFAULTS[field])):
+        job["suggestion"] = suggested
     return {**job, "description": description, "status": status,
             "translations": {"zh": {"label": "一键初始化阈值", "description": zh_description, "status": zh}}}
-
-
-def _local_rule(section: dict, rows: list[dict], base) -> dict:
-    """Test the closest fact above the trust floor against semantic_tau, using the sidecar's content and tags."""
-    is_greeting = importlib.import_module(f"{base.__name__}.text").is_greeting
-    url = str(section.get("semantic_url") or settings.DEFAULTS["semantic_url"])
-    floor = float(section.get("min_trust_threshold", 0.3))
-    held = [r for r in rows if r["trust_score"] is not None and r["trust_score"] >= floor]
-
-    def embed(batch: list[str]) -> list:
-        try:
-            vectors = sidecar_index._call(url, "/embed", {"texts": batch}, timeout=_LOCAL_SECONDS).get("vectors")
-        except (OSError, ValueError):
-            vectors = None
-        if not isinstance(vectors, list) or len(vectors) != len(batch):
-            raise ValueError(message("The local embedding service did not return vectors.", "本地向量服务未返回向量。"))
-        return vectors
-
-    return {
-        "texts": {r["fact_id"]: (r["content"] or "") + " " + (r["tags"] or "") for r in held},
-        "pool": {r["fact_id"]: r["content"] or "" for r in held},
-        "askable": lambda text: bool(text) and not is_greeting(text) and base.embeddings.worth_asking(
-            text, before_turn=True),
-        "embed": embed, "batch": _LOCAL_BATCH,
-        "scored": calib.ranked,
-        "admit": lambda ranked, tau: [fact_id for fact_id, cosine in ranked[:1] if cosine >= tau],
-        "candidates": calib.GRID,
-        "current": float(section.get("semantic_tau", settings.DEFAULTS["semantic_tau"])),
-    }
 
 
 def _cloud_rule(section: dict, rows: list[dict], base) -> dict:
@@ -230,22 +200,27 @@ def _verdict(found: dict | None, measured, current, loosest, facts: int) -> tupl
 
 
 def run(home: str, section: dict, rows: list[dict], base) -> Generator[dict, None, None]:
-    """*rows*: every fact of the store (fact_id, content, tags, trust_score)."""
-    from utils import atomic_json_write
-
+    """Show the local recommendation or calibrate the cloud threshold from the store's rows."""
     mode = settings.mode(section)
+    if mode == "local":
+        _, en, zh = _local_recommendation(home, section)
+        yield result(en, zh)
+        return
     if not mode:
         raise ValueError(message("Connect a cloud or local embedding model first.", "请先连接云端或本地向量模型。"))
-    identity = _identity(home, section, mode, base)
+
+    from utils import atomic_json_write
+
+    identity = _cloud_identity(section, base)
 
     def finish(suggested: str, en: str, zh: str) -> dict:
         _path(home).parent.mkdir(parents=True, exist_ok=True)
-        atomic_json_write(_path(home), {"identity": identity, "field": _field(mode), "suggested": suggested,
+        atomic_json_write(_path(home), {"identity": identity, "field": "embedding_min_score", "suggested": suggested,
                                         "status": en, "status_zh": zh}, mode=0o600)
         return result(en, zh)
 
     yield progress("Reading the fact store…", "正在读取事实库…")
-    rule = _cloud_rule(section, rows, base) if mode == "cloud" else _local_rule(section, rows, base)
+    rule = _cloud_rule(section, rows, base)
     now, now_zh = _shown(rule["current"])
     sets = calib.probe_sets(rule["pool"], rule["askable"])
     if len(rule["pool"]) < calib.MIN_FACTS or not calib.enough(sets):

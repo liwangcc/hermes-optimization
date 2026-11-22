@@ -1,5 +1,7 @@
 # Hermes 执行手册：holographic 插件库 Issue D 与 HOLO-4
 
+> **2026-11-22 更新：本手册第 2 节（A10）已执行，Issue D 发为 #121。第 3 节起的 HOLO-4（双档余量的 PR）不要再做。** 发出后用官方探针在 bge-m3 上直接跑，双档余量的噪声是 93 → 95，过不了门禁。后续改为在 #121 下发更正评论，并提「余量放宽加小模型复核」的 PR，步骤见 [`memory/threshold-calib/upstream-check/RUNBOOK.md`](../../memory/threshold-calib/upstream-check/RUNBOOK.md)。下面的内容保留作记录。
+
 - **执行者**：Hermes Agent。**编写者**：Claude Code，2026-11-21（代码、补丁、测试、正文）。**对外批准人**：@liwangcc。
 - 规则全部沿用 [`RUNBOOK-HERMES.md`](RUNBOOK-HERMES.md) 第 1 节：哪些动作要批准、永远不做的事、什么情况停下来报告、记录格式。本手册只写这条线自己的步骤。
 - 每个动作照样记进 [`SUBMISSION-LOG.md`](SUBMISSION-LOG.md)，步骤 ID 用本手册的 `A10`、`H4.x`。

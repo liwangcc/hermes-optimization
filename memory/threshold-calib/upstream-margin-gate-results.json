@@ -1,0 +1,894 @@
+{
+ "five_m0.7_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.7_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test"
+  ],
+  "pooled": {
+   "rows": 810,
+   "real": 540,
+   "hit_base": 480,
+   "hit_arm": 487,
+   "b": 7,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 93,
+   "noise_arm": 95,
+   "confused_base": 34,
+   "confused_arm": 34,
+   "p": 0.0156,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": false,
+    "confusion not higher": true,
+    "McNemar p < 0.05 with b > c": true
+   },
+   "passes": false,
+   "gained": [
+    "multi/nl/18",
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "contrast_zh/contrast_zh/p4q0",
+    "household/zh/q065",
+    "household/zh/q068"
+   ],
+   "new_noise_rows": [
+    "contrast_ru/contrast_ru/c17",
+    "contrast_ru/contrast_ru/c31"
+   ]
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 360,
+    "b": 1,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 27,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 26,
+    "b": 1,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 48,
+    "b": 2,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   }
+  }
+ },
+ "five_m0.8_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.8_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test"
+  ],
+  "pooled": {
+   "rows": 810,
+   "real": 540,
+   "hit_base": 480,
+   "hit_arm": 485,
+   "b": 5,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 93,
+   "noise_arm": 94,
+   "confused_base": 34,
+   "confused_arm": 34,
+   "p": 0.0625,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": false,
+    "confusion not higher": true,
+    "McNemar p < 0.05 with b > c": false
+   },
+   "passes": false,
+   "gained": [
+    "multi/nl/18",
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068"
+   ],
+   "new_noise_rows": [
+    "contrast_ru/contrast_ru/c31"
+   ]
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 360,
+    "b": 1,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 26,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   }
+  }
+ },
+ "five_m0.9_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.9_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test"
+  ],
+  "pooled": {
+   "rows": 810,
+   "real": 540,
+   "hit_base": 480,
+   "hit_arm": 484,
+   "b": 4,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 93,
+   "noise_arm": 93,
+   "confused_base": 34,
+   "confused_arm": 34,
+   "p": 0.125,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": true,
+    "confusion not higher": true,
+    "McNemar p < 0.05 with b > c": false
+   },
+   "passes": false,
+   "gained": [
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068"
+   ],
+   "new_noise_rows": []
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 359,
+    "b": 0,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   }
+  }
+ },
+ "five_m1.0_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m1.0_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test"
+  ],
+  "pooled": {
+   "rows": 810,
+   "real": 540,
+   "hit_base": 480,
+   "hit_arm": 484,
+   "b": 4,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 93,
+   "noise_arm": 93,
+   "confused_base": 34,
+   "confused_arm": 34,
+   "p": 0.125,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": true,
+    "confusion not higher": true,
+    "McNemar p < 0.05 with b > c": false
+   },
+   "passes": false,
+   "gained": [
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068"
+   ],
+   "new_noise_rows": []
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 359,
+    "b": 0,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   }
+  }
+ },
+ "all_m0.7_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.7_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test",
+   "household_dev",
+   "synthetic_zh"
+  ],
+  "pooled": {
+   "rows": 1068,
+   "real": 696,
+   "hit_base": 565,
+   "hit_arm": 576,
+   "b": 11,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 142,
+   "noise_arm": 145,
+   "confused_base": 46,
+   "confused_arm": 47,
+   "p": 0.001,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": false,
+    "confusion not higher": false,
+    "McNemar p < 0.05 with b > c": true
+   },
+   "passes": false,
+   "gained": [
+    "multi/nl/18",
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "contrast_zh/contrast_zh/p4q0",
+    "household/zh/q065",
+    "household/zh/q068",
+    "household/en/q039",
+    "household/zh/q033",
+    "household/zh/q038",
+    "synthetic_zh/zh/C10"
+   ],
+   "new_noise_rows": [
+    "contrast_ru/contrast_ru/c17",
+    "contrast_ru/contrast_ru/c31",
+    "household/ru/h022"
+   ]
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 360,
+    "b": 1,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 27,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 26,
+    "b": 1,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 48,
+    "b": 2,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   },
+   "household_dev": {
+    "real": 120,
+    "hit_base": 74,
+    "hit_arm": 77,
+    "b": 3,
+    "c": 0,
+    "noise_base": 48,
+    "noise_arm": 49,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "synthetic_zh": {
+    "real": 36,
+    "hit_base": 11,
+    "hit_arm": 12,
+    "b": 1,
+    "c": 0,
+    "noise_base": 1,
+    "noise_arm": 1,
+    "confused_base": 5,
+    "confused_arm": 6
+   }
+  }
+ },
+ "all_m0.8_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.8_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test",
+   "household_dev",
+   "synthetic_zh"
+  ],
+  "pooled": {
+   "rows": 1068,
+   "real": 696,
+   "hit_base": 565,
+   "hit_arm": 573,
+   "b": 8,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 142,
+   "noise_arm": 144,
+   "confused_base": 46,
+   "confused_arm": 47,
+   "p": 0.0078,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": false,
+    "confusion not higher": false,
+    "McNemar p < 0.05 with b > c": true
+   },
+   "passes": false,
+   "gained": [
+    "multi/nl/18",
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068",
+    "household/en/q039",
+    "household/zh/q033",
+    "synthetic_zh/zh/C10"
+   ],
+   "new_noise_rows": [
+    "contrast_ru/contrast_ru/c31",
+    "household/ru/h022"
+   ]
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 360,
+    "b": 1,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 26,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   },
+   "household_dev": {
+    "real": 120,
+    "hit_base": 74,
+    "hit_arm": 76,
+    "b": 2,
+    "c": 0,
+    "noise_base": 48,
+    "noise_arm": 49,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "synthetic_zh": {
+    "real": 36,
+    "hit_base": 11,
+    "hit_arm": 12,
+    "b": 1,
+    "c": 0,
+    "noise_base": 1,
+    "noise_arm": 1,
+    "confused_base": 5,
+    "confused_arm": 6
+   }
+  }
+ },
+ "all_m0.9_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m0.9_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test",
+   "household_dev",
+   "synthetic_zh"
+  ],
+  "pooled": {
+   "rows": 1068,
+   "real": 696,
+   "hit_base": 565,
+   "hit_arm": 570,
+   "b": 5,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 142,
+   "noise_arm": 142,
+   "confused_base": 46,
+   "confused_arm": 47,
+   "p": 0.0625,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": true,
+    "confusion not higher": false,
+    "McNemar p < 0.05 with b > c": false
+   },
+   "passes": false,
+   "gained": [
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068",
+    "synthetic_zh/zh/C10"
+   ],
+   "new_noise_rows": []
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 359,
+    "b": 0,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   },
+   "household_dev": {
+    "real": 120,
+    "hit_base": 74,
+    "hit_arm": 74,
+    "b": 0,
+    "c": 0,
+    "noise_base": 48,
+    "noise_arm": 48,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "synthetic_zh": {
+    "real": 36,
+    "hit_base": 11,
+    "hit_arm": 12,
+    "b": 1,
+    "c": 0,
+    "noise_base": 1,
+    "noise_arm": 1,
+    "confused_base": 5,
+    "confused_arm": 6
+   }
+  }
+ },
+ "all_m1.0_s0.5": {
+  "base": "_m1.0",
+  "arm": "_m1.0_s0.5",
+  "sets": [
+   "multi",
+   "contrast_en",
+   "contrast_ru",
+   "contrast_zh",
+   "household_test",
+   "household_dev",
+   "synthetic_zh"
+  ],
+  "pooled": {
+   "rows": 1068,
+   "real": 696,
+   "hit_base": 565,
+   "hit_arm": 569,
+   "b": 4,
+   "c": 0,
+   "lost_targets": 0,
+   "noise_base": 142,
+   "noise_arm": 142,
+   "confused_base": 46,
+   "confused_arm": 46,
+   "p": 0.125,
+   "guards": {
+    "no target lost": true,
+    "noise not higher": true,
+    "confusion not higher": true,
+    "McNemar p < 0.05 with b > c": false
+   },
+   "passes": false,
+   "gained": [
+    "contrast_en/contrast_en/p3q1",
+    "contrast_en/contrast_en/p4q1",
+    "contrast_en/contrast_en/p14q1",
+    "household/zh/q068"
+   ],
+   "new_noise_rows": []
+  },
+  "per_set": {
+   "multi": {
+    "real": 360,
+    "hit_base": 359,
+    "hit_arm": 359,
+    "b": 0,
+    "c": 0,
+    "noise_base": 0,
+    "noise_arm": 0,
+    "confused_base": 1,
+    "confused_arm": 1
+   },
+   "contrast_en": {
+    "real": 30,
+    "hit_base": 23,
+    "hit_arm": 26,
+    "b": 3,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "contrast_ru": {
+    "real": 30,
+    "hit_base": 27,
+    "hit_arm": 27,
+    "b": 0,
+    "c": 0,
+    "noise_base": 25,
+    "noise_arm": 25,
+    "confused_base": 8,
+    "confused_arm": 8
+   },
+   "contrast_zh": {
+    "real": 30,
+    "hit_base": 25,
+    "hit_arm": 25,
+    "b": 0,
+    "c": 0,
+    "noise_base": 22,
+    "noise_arm": 22,
+    "confused_base": 12,
+    "confused_arm": 12
+   },
+   "household_test": {
+    "real": 90,
+    "hit_base": 46,
+    "hit_arm": 47,
+    "b": 1,
+    "c": 0,
+    "noise_base": 21,
+    "noise_arm": 21,
+    "confused_base": 6,
+    "confused_arm": 6
+   },
+   "household_dev": {
+    "real": 120,
+    "hit_base": 74,
+    "hit_arm": 74,
+    "b": 0,
+    "c": 0,
+    "noise_base": 48,
+    "noise_arm": 48,
+    "confused_base": 7,
+    "confused_arm": 7
+   },
+   "synthetic_zh": {
+    "real": 36,
+    "hit_base": 11,
+    "hit_arm": 11,
+    "b": 0,
+    "c": 0,
+    "noise_base": 1,
+    "noise_arm": 1,
+    "confused_base": 5,
+    "confused_arm": 5
+   }
+  }
+ }
+}

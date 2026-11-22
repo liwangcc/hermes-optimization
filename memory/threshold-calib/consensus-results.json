@@ -1,0 +1,3896 @@
+{
+  "rule": "novel_terms",
+  "date": "2026-11-22",
+  "totals": {
+    "novel_terms": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 776,
+      "rescued": 4,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 566,
+      "new_noise": 0,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 4,
+      "added_wrong": 0
+    },
+    "silent_agreement": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 775,
+      "rescued": 3,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 568,
+      "new_noise": 2,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 3,
+      "added_wrong": 2
+    },
+    "agreement": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 777,
+      "rescued": 5,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 568,
+      "new_noise": 2,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 5,
+      "added_wrong": 3
+    },
+    "both": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 780,
+      "rescued": 8,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 573,
+      "new_noise": 7,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 8,
+      "added_wrong": 8
+    },
+    "shown": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 774,
+      "rescued": 2,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 566,
+      "new_noise": 0,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 2,
+      "added_wrong": 1
+    },
+    "silent": {
+      "rows": 1770,
+      "labelled": 848,
+      "negatives": 922,
+      "base_hit": 772,
+      "hit": 778,
+      "rescued": 6,
+      "lost_targets": 0,
+      "base_noise": 566,
+      "noise": 573,
+      "new_noise": 7,
+      "base_confusion": 321,
+      "confusion": 321,
+      "new_confusion": 0,
+      "added_right": 6,
+      "added_wrong": 7
+    }
+  },
+  "by_suite": {
+    "real": {
+      "novel_terms": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 35,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 35,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 36,
+        "rescued": 2,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 2,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 35,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 35,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 54,
+        "labelled": 44,
+        "negatives": 10,
+        "base_hit": 34,
+        "hit": 34,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 30,
+        "confusion": 30,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      }
+    },
+    "synthetic": {
+      "novel_terms": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 30,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 30,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 30,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 32,
+        "rescued": 3,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 3,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 29,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 48,
+        "labelled": 36,
+        "negatives": 12,
+        "base_hit": 29,
+        "hit": 32,
+        "rescued": 3,
+        "lost_targets": 0,
+        "base_noise": 3,
+        "noise": 3,
+        "new_noise": 0,
+        "base_confusion": 10,
+        "confusion": 10,
+        "new_confusion": 0,
+        "added_right": 3,
+        "added_wrong": 0
+      }
+    },
+    "squad": {
+      "novel_terms": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 335,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 406,
+        "new_noise": 0,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 335,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 408,
+        "new_noise": 2,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 2
+      },
+      "agreement": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 335,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 408,
+        "new_noise": 2,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 3
+      },
+      "both": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 336,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 413,
+        "new_noise": 7,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 8
+      },
+      "shown": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 335,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 406,
+        "new_noise": 0,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 1
+      },
+      "silent": {
+        "rows": 898,
+        "labelled": 344,
+        "negatives": 554,
+        "base_hit": 335,
+        "hit": 336,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 406,
+        "noise": 413,
+        "new_noise": 7,
+        "base_confusion": 33,
+        "confusion": 33,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 7
+      }
+    },
+    "contrast": {
+      "novel_terms": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 225,
+        "labelled": 90,
+        "negatives": 135,
+        "base_hit": 79,
+        "hit": 79,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 81,
+        "noise": 81,
+        "new_noise": 0,
+        "base_confusion": 80,
+        "confusion": 80,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      }
+    },
+    "household": {
+      "novel_terms": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 138,
+        "rescued": 2,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 2,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 137,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 138,
+        "rescued": 2,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 2,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 139,
+        "rescued": 3,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 3,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 137,
+        "rescued": 1,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 1,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 345,
+        "labelled": 174,
+        "negatives": 171,
+        "base_hit": 136,
+        "hit": 138,
+        "rescued": 2,
+        "lost_targets": 0,
+        "base_noise": 71,
+        "noise": 71,
+        "new_noise": 0,
+        "base_confusion": 89,
+        "confusion": 89,
+        "new_confusion": 0,
+        "added_right": 2,
+        "added_wrong": 0
+      }
+    },
+    "multi": {
+      "novel_terms": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 200,
+        "labelled": 160,
+        "negatives": 40,
+        "base_hit": 159,
+        "hit": 159,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 2,
+        "noise": 2,
+        "new_noise": 0,
+        "base_confusion": 79,
+        "confusion": 79,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      }
+    }
+  },
+  "masked_targets": {
+    "real": {
+      "novel_terms": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "shown": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 44,
+        "labelled": 0,
+        "negatives": 44,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 34,
+        "noise": 34,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      }
+    },
+    "synthetic": {
+      "novel_terms": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 13,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent_agreement": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 13,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "agreement": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 13,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "both": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 14,
+        "new_noise": 1,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 1
+      },
+      "shown": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 13,
+        "new_noise": 0,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 0
+      },
+      "silent": {
+        "rows": 36,
+        "labelled": 0,
+        "negatives": 36,
+        "base_hit": 0,
+        "hit": 0,
+        "rescued": 0,
+        "lost_targets": 0,
+        "base_noise": 13,
+        "noise": 14,
+        "new_noise": 1,
+        "base_confusion": 0,
+        "confusion": 0,
+        "new_confusion": 0,
+        "added_right": 0,
+        "added_wrong": 1
+      }
+    }
+  },
+  "cpu": {
+    "processor": "Intel Core i7-12650H",
+    "threads": 4,
+    "device": "cpu",
+    "model_load_s": 10.71,
+    "fact_index_s": 116.43,
+    "plugin": "holographic-0.27.0",
+    "measurements": {
+      "without_vectors": {
+        "calls": 54,
+        "hit": 31,
+        "labelled": 44,
+        "over_3000_ms": 0,
+        "p50_ms": 9.91,
+        "p95_ms": 21.95,
+        "p99_ms": 23.27,
+        "max_ms": 23.94
+      },
+      "baseline": {
+        "calls": 54,
+        "serial_matches_batched": 54,
+        "over_3000_ms": 0,
+        "p50_ms": 108.58,
+        "p95_ms": 137.72,
+        "p99_ms": 146.93,
+        "max_ms": 147.67
+      },
+      "novel_terms": {
+        "calls": 54,
+        "serial_matches_batched": 54,
+        "over_3000_ms": 0,
+        "p50_ms": 127.84,
+        "p95_ms": 159.42,
+        "p99_ms": 197.65,
+        "max_ms": 202.54
+      },
+      "agreement": {
+        "calls": 54,
+        "serial_matches_batched": 54,
+        "over_3000_ms": 0,
+        "p50_ms": 124.23,
+        "p95_ms": 151.57,
+        "p99_ms": 159.39,
+        "max_ms": 163.6
+      }
+    }
+  },
+  "two_topics": {
+    "rows": 650,
+    "lost_targets": 0,
+    "added_wrong": 0,
+    "new_noise": 0,
+    "new_any_confusion": 0,
+    "other_suite_rows": 620,
+    "changed_other_suite_rows": 0,
+    "compound": 16,
+    "complete_before": 12,
+    "complete_after": 15
+  },
+  "runs": {
+    "novel-real": {
+      "suite": "real",
+      "lang": null,
+      "facts": 54,
+      "questions": 54,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 35,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 35,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 36,
+            "rescued": 2,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 2,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 35,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 35,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 54,
+            "labelled": 44,
+            "negatives": 10,
+            "base_hit": 34,
+            "hit": 34,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 30,
+            "confusion": 30,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "article_offset": 0,
+      "support_keywords": false
+    },
+    "novel-synthetic": {
+      "suite": "synthetic",
+      "lang": null,
+      "facts": 30,
+      "questions": 48,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 30,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 30,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 30,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 32,
+            "rescued": 3,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 3,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 29,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 48,
+            "labelled": 36,
+            "negatives": 12,
+            "base_hit": 29,
+            "hit": 32,
+            "rescued": 3,
+            "lost_targets": 0,
+            "base_noise": 3,
+            "noise": 3,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 3,
+            "added_wrong": 0
+          }
+        }
+      },
+      "article_offset": 0,
+      "support_keywords": false
+    },
+    "novel-squad-dev": {
+      "suite": "squad",
+      "lang": "en",
+      "facts": 35,
+      "questions": 173,
+      "arms": {
+        "novel_terms": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 72,
+            "new_noise": 0,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 72,
+            "new_noise": 0,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 72,
+            "new_noise": 0,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 73,
+            "new_noise": 1,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 1
+          }
+        },
+        "shown": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 72,
+            "new_noise": 0,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "transfer": {
+            "rows": 173,
+            "labelled": 68,
+            "negatives": 105,
+            "base_hit": 67,
+            "hit": 67,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 72,
+            "noise": 73,
+            "new_noise": 1,
+            "base_confusion": 6,
+            "confusion": 6,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 1
+          }
+        }
+      },
+      "article_offset": 0,
+      "support_keywords": false
+    },
+    "novel-squad-train": {
+      "suite": "squad",
+      "lang": "en",
+      "facts": 50,
+      "questions": 251,
+      "arms": {
+        "novel_terms": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 110,
+            "new_noise": 0,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 110,
+            "new_noise": 0,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 110,
+            "new_noise": 0,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 1
+          }
+        },
+        "both": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 100,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 111,
+            "new_noise": 1,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 2
+          }
+        },
+        "shown": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 110,
+            "new_noise": 0,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 1
+          }
+        },
+        "silent": {
+          "transfer": {
+            "rows": 251,
+            "labelled": 101,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 100,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 110,
+            "noise": 111,
+            "new_noise": 1,
+            "base_confusion": 8,
+            "confusion": 8,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 1
+          }
+        }
+      },
+      "article_offset": 0,
+      "support_keywords": false
+    },
+    "novel-squad-reserve": {
+      "suite": "squad",
+      "lang": "en",
+      "facts": 50,
+      "questions": 253,
+      "arms": {
+        "novel_terms": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 107,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 109,
+            "new_noise": 2,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 2
+          }
+        },
+        "agreement": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 109,
+            "new_noise": 2,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 2
+          }
+        },
+        "both": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 112,
+            "new_noise": 5,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 5
+          }
+        },
+        "shown": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 107,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "transfer": {
+            "rows": 253,
+            "labelled": 103,
+            "negatives": 150,
+            "base_hit": 99,
+            "hit": 99,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 107,
+            "noise": 112,
+            "new_noise": 5,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 5
+          }
+        }
+      },
+      "article_offset": 50,
+      "support_keywords": false
+    },
+    "novel-independent": {
+      "suite": "squad",
+      "lang": "en",
+      "facts": 50,
+      "questions": 221,
+      "arms": {
+        "novel_terms": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "transfer": {
+            "rows": 221,
+            "labelled": 72,
+            "negatives": 149,
+            "base_hit": 70,
+            "hit": 70,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 117,
+            "noise": 117,
+            "new_noise": 0,
+            "base_confusion": 12,
+            "confusion": 12,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "article_offset": 100,
+      "support_keywords": true
+    },
+    "verified-contrast_en-contrast_en": {
+      "suite": "contrast_en",
+      "lang": "contrast_en",
+      "facts": 64,
+      "questions": 75,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 30,
+            "noise": 30,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-contrast_ru-contrast_ru": {
+      "suite": "contrast_ru",
+      "lang": "contrast_ru",
+      "facts": 64,
+      "questions": 75,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 27,
+            "noise": 27,
+            "new_noise": 0,
+            "base_confusion": 28,
+            "confusion": 28,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-contrast_zh-contrast_zh": {
+      "suite": "contrast_zh",
+      "lang": "contrast_zh",
+      "facts": 69,
+      "questions": 75,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 75,
+            "labelled": 30,
+            "negatives": 45,
+            "base_hit": 26,
+            "hit": 26,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 24,
+            "noise": 24,
+            "new_noise": 0,
+            "base_confusion": 26,
+            "confusion": 26,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-household-en": {
+      "suite": "household",
+      "lang": "en",
+      "facts": 199,
+      "questions": 115,
+      "arms": {
+        "novel_terms": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 25,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 20,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 25,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 25,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 20,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 26,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 20,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 25,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 20,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 25,
+            "hit": 26,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 21,
+            "noise": 21,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 15,
+            "confusion": 15,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [
+          "q064"
+        ],
+        "silent_agreement": [],
+        "agreement": [
+          "q064"
+        ],
+        "both": [
+          "q039",
+          "q064"
+        ],
+        "shown": [
+          "q064"
+        ],
+        "silent": [
+          "q039"
+        ]
+      }
+    },
+    "verified-household-ru": {
+      "suite": "household",
+      "lang": "ru",
+      "facts": 199,
+      "questions": 115,
+      "arms": {
+        "novel_terms": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 30,
+            "hit": 30,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 12,
+            "noise": 12,
+            "new_noise": 0,
+            "base_confusion": 20,
+            "confusion": 20,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 18,
+            "hit": 18,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 6,
+            "noise": 6,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-household-zh": {
+      "suite": "household",
+      "lang": "zh",
+      "facts": 199,
+      "questions": 115,
+      "arms": {
+        "novel_terms": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 28,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 28,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 28,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 28,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 27,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "dev": {
+            "rows": 70,
+            "labelled": 33,
+            "negatives": 37,
+            "base_hit": 27,
+            "hit": 28,
+            "rescued": 1,
+            "lost_targets": 0,
+            "base_noise": 16,
+            "noise": 16,
+            "new_noise": 0,
+            "base_confusion": 17,
+            "confusion": 17,
+            "new_confusion": 0,
+            "added_right": 1,
+            "added_wrong": 0
+          },
+          "test": {
+            "rows": 45,
+            "labelled": 25,
+            "negatives": 20,
+            "base_hit": 17,
+            "hit": 17,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 8,
+            "noise": 8,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [
+          "q033"
+        ],
+        "silent_agreement": [
+          "q033"
+        ],
+        "agreement": [
+          "q033"
+        ],
+        "both": [
+          "q039"
+        ],
+        "shown": [],
+        "silent": [
+          "q039"
+        ]
+      }
+    },
+    "verified-multi-de": {
+      "suite": "multi",
+      "lang": "de",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 7,
+            "confusion": 7,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-en": {
+      "suite": "multi",
+      "lang": "en",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-it": {
+      "suite": "multi",
+      "lang": "it",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-ja": {
+      "suite": "multi",
+      "lang": "ja",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 13,
+            "confusion": 13,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-nl": {
+      "suite": "multi",
+      "lang": "nl",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 19,
+            "hit": 19,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 1,
+            "noise": 1,
+            "new_noise": 0,
+            "base_confusion": 9,
+            "confusion": 9,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-ru": {
+      "suite": "multi",
+      "lang": "ru",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-th": {
+      "suite": "multi",
+      "lang": "th",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 11,
+            "confusion": 11,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    },
+    "verified-multi-zh": {
+      "suite": "multi",
+      "lang": "zh",
+      "facts": 20,
+      "questions": 25,
+      "arms": {
+        "novel_terms": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent_agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "agreement": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "both": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "shown": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        },
+        "silent": {
+          "all": {
+            "rows": 25,
+            "labelled": 20,
+            "negatives": 5,
+            "base_hit": 20,
+            "hit": 20,
+            "rescued": 0,
+            "lost_targets": 0,
+            "base_noise": 0,
+            "noise": 0,
+            "new_noise": 0,
+            "base_confusion": 10,
+            "confusion": 10,
+            "new_confusion": 0,
+            "added_right": 0,
+            "added_wrong": 0
+          }
+        }
+      },
+      "public_rescued_qids": {
+        "novel_terms": [],
+        "silent_agreement": [],
+        "agreement": [],
+        "both": [],
+        "shown": [],
+        "silent": []
+      }
+    }
+  }
+}

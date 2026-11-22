@@ -8,7 +8,8 @@ Design (update-proof):
   and name checks. Greetings and short messages skip the sidecar. Sidecar failures fall back to base recall.
 - Embedding setup (Desktop): cloud is the base's own embeddings (embedding_url, embedding_model, embedding_key_env),
   saved only after a test call; local deploys one of the pinned models (local_models.py) with an index of its own.
-  A job proposes the threshold of the mode in use (semantic_tau or embedding_min_score); the user confirms it.
+  Switching local models applies the new model's recommended semantic_tau. The threshold job offers that preset
+  in local mode and calibrates embedding_min_score in cloud mode. Users confirm the job's suggestions.
 - Fact catalog (opt-in): the system prompt block lists every recallable fact as `#id=label` (a long fact's
   keywords, or its opening words when it has none) within a hard token budget, generated from the store (nothing
   kept by hand, no dangling ids), and fact_store gains `get {fact_ids}` so the agent reads the listed facts it
@@ -31,7 +32,7 @@ Config (plugins.hermes-memory-store, same section as the base provider):
   catalog_label_tokens: 30       # a fact longer than this is listed by its keywords (or opening words)
   semantic_enabled: false        # master switch
   semantic_url: http://127.0.0.1:8791
-  semantic_tau: 0.55             # cosine threshold (eval-tuned; see memory/eval)
+  semantic_tau: 0.55             # cosine threshold, initialized by model during local setup
   semantic_total_cap: 7          # maximum total after appending a semantic fact
   semantic_timeout_ms: 400       # sidecar HTTP budget; exceed -> lexical only
 """
@@ -408,11 +409,11 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
 
     def _threshold(self, home: str):
         section = settings.stored(home, _orig._load_plugin_config)
+        if settings.mode(section) == "local":
+            return threshold_job.run(home, section, [], _orig)
         db = self._review_path(home)
         if db is None or not db.is_file():
             raise ValueError(message("Calibration needs a profile-wide fact store.", "校准需要配置级事实库。"))
-        if settings.mode(section) == "local":
-            self._own_sidecar(home)
         with _read_only(db) as read:
             rows = [dict(r) for r in read("SELECT fact_id, content, tags, trust_score FROM facts ORDER BY fact_id")]
         return threshold_job.run(home, section, rows, _orig)

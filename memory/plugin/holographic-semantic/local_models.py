@@ -19,6 +19,7 @@ class LocalModel:
     files: dict[str, tuple[int, str]]  # name -> (bytes, sha256)
     note: str
     note_zh: str
+    recommended_tau: float
 
     @property
     def base(self) -> str:
@@ -30,6 +31,9 @@ class LocalModel:
 
 
 # No model here needs a query instruction or remote code: the service embeds facts and messages the same way.
+# Thresholds come from the natural-question measurements in BUILTIN-QUESTIONS-RESULTS.md.
+# BGE-M3 at 0.55 matches 0.52 on the real store with less added noise on the synthetic set.
+# For the two smaller models, we chose the lower-contamination option of N and Z after seeing the real-store results.
 MODELS = (
     LocalModel(
         "bge-m3", "BGE-M3", "BAAI/bge-m3", "5617a9f61b028005a4858fdac845db406aefb181", 1024,
@@ -46,7 +50,8 @@ MODELS = (
             "1_Pooling/config.json": (191, "e54c164a07274f2eb45bb724f54a79d1efcc90c41573887cd9a29aeee0597352"),
         },
         "Multilingual; the largest and most capable of the three, and the default.",
-        "多语言，三者中体积最大、能力最强，默认模型。"),
+        "多语言，三者中体积最大、能力最强，默认模型。",
+        recommended_tau=0.55),
     LocalModel(
         "bge-small-zh", "BGE-small-zh v1.5", "BAAI/bge-small-zh-v1.5", "7999e1d3359715c523056ef9478215996d62a620", 512,
         {
@@ -61,8 +66,9 @@ MODELS = (
             "vocab.txt": (109540, "45bbac6b341c319adc98a532532882e91a9cefc0329aa57bac9ae761c27b291c"),
             "1_Pooling/config.json": (190, "aaa8861589f80c961a03cc86c7eeaef7605c1676b9ab55329d33a304738769c6"),
         },
-        "Chinese only; small and fast.",
-        "中文专用，体积小、速度快。"),
+        "Chinese only, small and fast. Semantic recall added few hits on the Chinese software-project material tested.",
+        "中文专用，体积小、速度快。在测过的中文软件项目内容上，语义召回几乎不增加命中。",
+        recommended_tau=0.64),
     LocalModel(
         "multilingual-minilm", "Multilingual MiniLM-L12 v2", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         "e8f8c211226b894fcb81acc59f3b34ba3efd5f42", 384,
@@ -78,8 +84,10 @@ MODELS = (
             "tokenizer.json": (9081518, "2c3387be76557bd40970cec13153b3bbf80407865484b209e655e5e4729076b8"),
             "1_Pooling/config.json": (190, "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"),
         },
-        "Multilingual and light; reads only the first 128 tokens of a fact.",
-        "多语言轻量模型，每条事实只读取前 128 个 token。"),
+        "Multilingual and light, with a 128-token limit per fact. "
+        "Semantic recall added few hits on the Chinese software-project material tested.",
+        "多语言轻量模型，每条事实只读取前 128 个 token。在测过的中文软件项目内容上，语义召回几乎不增加命中。",
+        recommended_tau=0.58),
 )
 
 

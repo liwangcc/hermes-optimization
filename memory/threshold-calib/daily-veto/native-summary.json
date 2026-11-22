@@ -1,0 +1,982 @@
+{
+ "totals": {
+  "shipped 0.6.0 vs replay [cuda]": "848/848",
+  "shipped 0.6.0 vs replay [cpu]": "115/115",
+  "P1 vs frozen rule [cuda]": "848/848",
+  "P2 vs frozen rule [cuda]": "848/848",
+  "P2 vs frozen rule [cpu]": "220/220",
+  "new wrapper + old sidecar vs 0.6.0 [cuda]": "238/238",
+  "sidecar reports another model vs 0.6.0 [cuda]": "190/190"
+ },
+ "runs": [
+  {
+   "run": "daily-contrast_en-contrast_en-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "contrast_en",
+   "lang": "contrast_en",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 37.6,
+    "p95": 54.5,
+    "max": 61.5
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-contrast_ru-contrast_ru-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "contrast_ru",
+   "lang": "contrast_ru",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 42.6,
+    "p95": 103.4,
+    "max": 153.1
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-contrast_zh-contrast_zh-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 42.2,
+    "p95": 59.0,
+    "max": 77.3
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-household-en-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "household",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 42.5,
+    "p95": 64.5,
+    "max": 71.8
+   },
+   "sidecar_gpu_mib": 1265,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-household-ru-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "household",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 35.6,
+    "p95": 56.8,
+    "max": 74.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-household-zh-cpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cpu",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 86.4,
+    "p95": 107.5,
+    "max": 124.9
+   },
+   "sidecar_gpu_mib": -1,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-household-zh-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 32.3,
+    "p95": 46.6,
+    "max": 94.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-de-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "de",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 45.1,
+    "p95": 59.9,
+    "max": 61.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-en-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 39.4,
+    "p95": 59.3,
+    "max": 62.8
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-it-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "it",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 43.5,
+    "p95": 57.0,
+    "max": 65.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-ja-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "ja",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 42.9,
+    "p95": 56.2,
+    "max": 62.2
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-nl-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "nl",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 33.2,
+    "p95": 59.7,
+    "max": 138.5
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-ru-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 39.2,
+    "p95": 61.4,
+    "max": 71.1
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-th-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "th",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 38.6,
+    "p95": 57.5,
+    "max": 60.8
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-multi-zh-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "multi",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 42.8,
+    "p95": 55.7,
+    "max": 56.6
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-synthetic-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "synthetic",
+   "lang": "-",
+   "device": "cuda",
+   "equal": 48,
+   "questions": 48,
+   "prefetch_ms": {
+    "p50": 30.7,
+    "p95": 49.3,
+    "max": 59.7
+   },
+   "sidecar_gpu_mib": null,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "daily-two_topics-ru-gpu",
+   "kind": "shipped 0.6.0 vs replay",
+   "suite": "two_topics",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 30,
+   "questions": 30,
+   "prefetch_ms": {
+    "p50": 39.7,
+    "p95": 57.6,
+    "max": 69.9
+   },
+   "sidecar_gpu_mib": 1267,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-contrast_en-contrast_en",
+   "kind": "P1 vs frozen rule",
+   "suite": "contrast_en",
+   "lang": "contrast_en",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 40.8,
+    "p95": 61.9,
+    "max": 68.5
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-contrast_ru-contrast_ru",
+   "kind": "P1 vs frozen rule",
+   "suite": "contrast_ru",
+   "lang": "contrast_ru",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 37.4,
+    "p95": 59.3,
+    "max": 71.3
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-contrast_zh-contrast_zh",
+   "kind": "P1 vs frozen rule",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 33.2,
+    "p95": 52.3,
+    "max": 58.8
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-household-en",
+   "kind": "P1 vs frozen rule",
+   "suite": "household",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 45.1,
+    "p95": 63.4,
+    "max": 77.1
+   },
+   "sidecar_gpu_mib": 1265,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-household-ru",
+   "kind": "P1 vs frozen rule",
+   "suite": "household",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 45.2,
+    "p95": 61.8,
+    "max": 71.9
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-household-zh",
+   "kind": "P1 vs frozen rule",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 42.8,
+    "p95": 62.2,
+    "max": 67.2
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-de",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "de",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 32.5,
+    "p95": 54.2,
+    "max": 64.3
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-en",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 35.0,
+    "p95": 53.2,
+    "max": 60.0
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-it",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "it",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 29.1,
+    "p95": 51.5,
+    "max": 64.9
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-ja",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "ja",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 38.0,
+    "p95": 61.6,
+    "max": 92.0
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-nl",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "nl",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 37.2,
+    "p95": 76.6,
+    "max": 137.6
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-ru",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 38.4,
+    "p95": 56.9,
+    "max": 59.3
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-th",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "th",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 41.0,
+    "p95": 56.4,
+    "max": 57.0
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-multi-zh",
+   "kind": "P1 vs frozen rule",
+   "suite": "multi",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 31.3,
+    "p95": 51.6,
+    "max": 55.9
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-synthetic--",
+   "kind": "P1 vs frozen rule",
+   "suite": "synthetic",
+   "lang": "-",
+   "device": "cuda",
+   "equal": 48,
+   "questions": 48,
+   "prefetch_ms": {
+    "p50": 31.0,
+    "p95": 56.5,
+    "max": 67.9
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P1-two_topics-ru",
+   "kind": "P1 vs frozen rule",
+   "suite": "two_topics",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 30,
+   "questions": 30,
+   "prefetch_ms": {
+    "p50": 41.4,
+    "p95": 51.1,
+    "max": 75.0
+   },
+   "sidecar_gpu_mib": 1267,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-contrast_en-contrast_en",
+   "kind": "P2 vs frozen rule",
+   "suite": "contrast_en",
+   "lang": "contrast_en",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 41.0,
+    "p95": 61.0,
+    "max": 65.5
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-contrast_ru-contrast_ru",
+   "kind": "P2 vs frozen rule",
+   "suite": "contrast_ru",
+   "lang": "contrast_ru",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 40.9,
+    "p95": 59.7,
+    "max": 63.5
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-contrast_zh-contrast_zh",
+   "kind": "P2 vs frozen rule",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 39.8,
+    "p95": 53.8,
+    "max": 63.5
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-cpu-contrast_zh-contrast_zh",
+   "kind": "P2 vs frozen rule",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cpu",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 82.3,
+    "p95": 103.1,
+    "max": 111.5
+   },
+   "sidecar_gpu_mib": 0,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-cpu-household-zh",
+   "kind": "P2 vs frozen rule",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cpu",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 84.2,
+    "p95": 108.0,
+    "max": 125.4
+   },
+   "sidecar_gpu_mib": 0,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-cpu-two_topics-ru",
+   "kind": "P2 vs frozen rule",
+   "suite": "two_topics",
+   "lang": "ru",
+   "device": "cpu",
+   "equal": 30,
+   "questions": 30,
+   "prefetch_ms": {
+    "p50": 93.8,
+    "p95": 126.4,
+    "max": 134.0
+   },
+   "sidecar_gpu_mib": 0,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-household-en",
+   "kind": "P2 vs frozen rule",
+   "suite": "household",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 39.3,
+    "p95": 60.6,
+    "max": 65.9
+   },
+   "sidecar_gpu_mib": 1265,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-household-ru",
+   "kind": "P2 vs frozen rule",
+   "suite": "household",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 43.0,
+    "p95": 62.3,
+    "max": 77.5
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-household-zh",
+   "kind": "P2 vs frozen rule",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 38.1,
+    "p95": 62.6,
+    "max": 77.5
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-de",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "de",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 32.8,
+    "p95": 47.6,
+    "max": 54.7
+   },
+   "sidecar_gpu_mib": 1255,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-en",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "en",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 40.4,
+    "p95": 58.8,
+    "max": 67.2
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-it",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "it",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 33.9,
+    "p95": 53.5,
+    "max": 60.2
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-ja",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "ja",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 37.4,
+    "p95": 57.4,
+    "max": 58.6
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-nl",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "nl",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 36.0,
+    "p95": 54.6,
+    "max": 155.1
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-ru",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 31.1,
+    "p95": 56.5,
+    "max": 62.9
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-th",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "th",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 32.9,
+    "p95": 51.6,
+    "max": 54.2
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-multi-zh",
+   "kind": "P2 vs frozen rule",
+   "suite": "multi",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 25,
+   "questions": 25,
+   "prefetch_ms": {
+    "p50": 38.2,
+    "p95": 51.7,
+    "max": 52.4
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-synthetic--",
+   "kind": "P2 vs frozen rule",
+   "suite": "synthetic",
+   "lang": "-",
+   "device": "cuda",
+   "equal": 48,
+   "questions": 48,
+   "prefetch_ms": {
+    "p50": 42.2,
+    "p95": 56.4,
+    "max": 61.5
+   },
+   "sidecar_gpu_mib": 1261,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-P2-two_topics-ru",
+   "kind": "P2 vs frozen rule",
+   "suite": "two_topics",
+   "lang": "ru",
+   "device": "cuda",
+   "equal": 30,
+   "questions": 30,
+   "prefetch_ms": {
+    "p50": 40.1,
+    "p95": 57.7,
+    "max": 65.5
+   },
+   "sidecar_gpu_mib": 1267,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-oldsidecar-contrast_zh-contrast_zh",
+   "kind": "new wrapper + old sidecar vs 0.6.0",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 37.0,
+    "p95": 52.7,
+    "max": 59.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-oldsidecar-household-zh",
+   "kind": "new wrapper + old sidecar vs 0.6.0",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 37.6,
+    "p95": 55.2,
+    "max": 70.1
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-oldsidecar-synthetic--",
+   "kind": "new wrapper + old sidecar vs 0.6.0",
+   "suite": "synthetic",
+   "lang": "-",
+   "device": "cuda",
+   "equal": 48,
+   "questions": 48,
+   "prefetch_ms": {
+    "p50": 34.6,
+    "p95": 59.0,
+    "max": 65.0
+   },
+   "sidecar_gpu_mib": 1264,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-othermodel-contrast_zh-contrast_zh",
+   "kind": "sidecar reports another model vs 0.6.0",
+   "suite": "contrast_zh",
+   "lang": "contrast_zh",
+   "device": "cuda",
+   "equal": 75,
+   "questions": 75,
+   "prefetch_ms": {
+    "p50": 38.1,
+    "p95": 56.0,
+    "max": 64.3
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  },
+  {
+   "run": "final-othermodel-household-zh",
+   "kind": "sidecar reports another model vs 0.6.0",
+   "suite": "household",
+   "lang": "zh",
+   "device": "cuda",
+   "equal": 115,
+   "questions": 115,
+   "prefetch_ms": {
+    "p50": 41.0,
+    "p95": 59.4,
+    "max": 67.7
+   },
+   "sidecar_gpu_mib": 1263,
+   "over_3000_ms": 0,
+   "sidecar_over_400_ms": 0
+  }
+ ]
+}

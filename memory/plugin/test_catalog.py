@@ -250,13 +250,20 @@ def _settings_env(section):
     constants = types.ModuleType("hermes_constants")
     constants.set_hermes_home_override = lambda home: homes.append(home) or len(homes)
     constants.reset_hermes_home_override = lambda token: None
+    constants.mkdir_under_hermes_home = lambda path: Path(path).mkdir(parents=True, exist_ok=True)
     config = types.ModuleType("hermes_cli.config")
-    config.load_env = lambda: {}
+    config.load_env = dict
+    config.load_config_readonly = lambda: {"memory": {"provider": "holographic-semantic"}}
     cli = types.ModuleType("hermes_cli")
     cli.config = config
     sys.modules.update({"hermes_constants": constants, "hermes_cli": cli, "hermes_cli.config": config})
     sys.modules["fakeholo"]._load_plugin_config = lambda: dict(section)
-    _Base.save_config = lambda self, values, hermes_home: saved.append((values, hermes_home))
+
+    def save_config(self, values, hermes_home):
+        saved.append((values, hermes_home))
+        section.update(values)
+
+    _Base.save_config = save_config
     return homes, saved
 
 
@@ -418,16 +425,127 @@ def test_legacy_semantic_max_extra_is_ignored():
     assert saved == [({"semantic_enabled": True}, "/homes/work")]
 
 
-def test_local_calibration_uses_top_one_and_skips_short_messages():
-    _provider({}, FACTS)
+def _service_record(home, **fields):
+    path = Path(home) / "services" / "memory-embeddings" / "service.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(fields), encoding="utf-8")
+    return path
+
+
+def _run_local_setup(p, home, option):
+    for _ in range(8):
+        step = p.run_maintenance_step("semantic-setup-local", home, option=option)
+        if step.get("done"):
+            return
+    raise AssertionError("local setup did not finish")
+
+
+def test_switching_the_local_model_sets_tau_and_redeploying_it_preserves_tau():
+    p = _provider({}, FACTS)
+    from holographic_semantic import managed_local
+
+    section = {"semantic_enabled": True, "semantic_tau": 0.71}
+    _, saved = _settings_env(section)
+
+    def prepare_model(profile, root, model):
+        yield {"status": "weights ready"}
+        return managed_local.managed_dir(root, model)
+
+    with tempfile.TemporaryDirectory() as home, patch.multiple(
+        managed_local, _ready=Mock(return_value={}), _check_embedding=Mock(), _stop_replaced=Mock(),
+        _free_port=Mock(side_effect=(8811, 8812)), _launch=Mock(), _stop_started=Mock(),
+        _wait_ready=Mock(return_value={"device": "cpu"}), prepare_model=prepare_model,
+        prepare_runtime=lambda root: root / "runtime-test" / "Scripts" / "python.exe",
+    ):
+        _service_record(home, url="http://127.0.0.1:8791")  # pre-model-choice receipts identify BGE-M3
+        _run_local_setup(p, home, "bge-small-zh")
+        assert saved[-1][0]["semantic_tau"] == section["semantic_tau"] == 0.64
+        assert managed_local.deployed(home, section["semantic_url"]).id == "bge-small-zh"
+
+        p.write_config_fields({"semantic_tau": "0.67"}, home)
+        _run_local_setup(p, home, "bge-small-zh")  # another port, same model
+        assert section["semantic_url"] == "http://127.0.0.1:8812"
+        assert "semantic_tau" not in saved[-1][0] and section["semantic_tau"] == 0.67
+
+
+def test_reusing_a_verified_sidecar_records_the_model_for_the_next_deploy():
+    p = _provider({}, FACTS)
+    from holographic_semantic import managed_local
+
+    section = {"semantic_tau": 0.67}
+    _, saved = _settings_env(section)
+    with tempfile.TemporaryDirectory() as home, patch.multiple(
+        managed_local, _ready=Mock(return_value={"device": "cuda"}), _check_embedding=Mock(), _stop_replaced=Mock(),
+    ):
+        _run_local_setup(p, home, "bge-m3")
+        url = section["semantic_url"]
+        assert saved[-1][0]["semantic_tau"] == section["semantic_tau"] == 0.55
+        assert managed_local.deployed(home, url).id == "bge-m3"
+        assert managed_local.expected_store(home, url) is None  # the verified legacy service has no store ID
+
+        p.write_config_fields({"semantic_tau": "0.60"}, home)
+        _run_local_setup(p, home, "bge-m3")
+        assert "semantic_tau" not in saved[-1][0] and section["semantic_tau"] == 0.60
+
+
+def test_reusing_a_sidecar_restores_the_previous_record_if_saving_fails():
+    p = _provider({}, FACTS)
+    from holographic_semantic import managed_local
+
+    section = {"semantic_url": "http://127.0.0.1:8811", "semantic_tau": 0.64, "semantic_enabled": True}
+    _, saved = _settings_env(section)
+    with tempfile.TemporaryDirectory() as home, patch.multiple(
+        managed_local, _ready=Mock(return_value={"device": "cuda"}), _check_embedding=Mock(), _stop_replaced=Mock(),
+    ), patch.object(p, "_save_connection", side_effect=ValueError("config write failed")):
+        path = _service_record(home, url=section["semantic_url"], model_id="bge-small-zh", store_id="previous")
+        previous = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            _run_local_setup(p, home, "bge-m3")
+            raise AssertionError("the failed config write went unnoticed")
+        except ValueError as exc:
+            assert str(exc) == "config write failed"
+        assert json.loads(path.read_text(encoding="utf-8")) == previous
+        assert not saved and section["semantic_tau"] == 0.64
+        managed_local._stop_replaced.assert_not_called()
+
+
+def _listed_threshold(p, home):
+    from holographic_semantic import sidecar_index
+
+    with patch.object(sidecar_index, "action", return_value={"id": "semantic-index"}):
+        return next(job for job in p.maintenance_actions(home) if job["id"] == "semantic-threshold")
+
+
+def test_the_local_threshold_job_suggests_the_model_value_without_fact_probes():
+    p = _provider({}, FACTS)
     from holographic_semantic import threshold_job
 
-    rule = threshold_job._local_rule({}, [], sys.modules["fakeholo"])
-    assert rule["askable"](_QUERY)
-    assert all(not rule["askable"](q) for q in ("", "short", "Hello"))
-    assert rule["admit"]([(1, 0.55), (2, 0.55)], 0.55) == [1]
-    assert rule["admit"]([(1, 0.54), (2, 0.52)], 0.55) == []
-    assert rule["admit"]([], 0.55) == []
+    section = {"semantic_enabled": True, "semantic_tau": 0.71, "semantic_url": "http://127.0.0.1:8820"}
+    _, saved = _settings_env(section)
+    with tempfile.TemporaryDirectory() as home, patch.object(threshold_job, "_proposal") as old_proposal:
+        _service_record(home, url=section["semantic_url"], model_id="multilingual-minilm")
+        job = _listed_threshold(p, home)
+        assert job["field"] == "semantic_tau" and job["ready"] and job["suggestion"] == "0.58"
+        assert "Multilingual MiniLM-L12 v2" in job["status"] and "BUILTIN-QUESTIONS-RESULTS.md" in job["status"]
+
+        step = p.run_maintenance_step("semantic-threshold", home)  # no fact DB or listening sidecar
+        assert step["done"] and step["result"] == job["status"]
+        old_proposal.assert_not_called()
+        assert not saved and section["semantic_tau"] == 0.71
+
+        p.write_config_fields({"semantic_tau": job["suggestion"]}, home)
+        job = _listed_threshold(p, home)
+        assert job["ready"] and "suggestion" not in job and "0.58" in job["status"]
+
+
+def test_the_local_threshold_job_explains_an_unrecognized_manual_sidecar():
+    p = _provider({}, FACTS)
+    _settings_env({"semantic_enabled": True, "semantic_url": "http://127.0.0.1:8791", "semantic_tau": 0.71})
+    with tempfile.TemporaryDirectory() as home:
+        job = _listed_threshold(p, home)
+        assert not job["ready"] and "suggestion" not in job and "unrecognized" in job["status"]
+        step = p.run_maintenance_step("semantic-threshold", home)
+        assert step["done"] and step["result"] == job["status"]
 
 
 if __name__ == "__main__":

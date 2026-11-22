@@ -1,0 +1,28 @@
+{
+  "rule": "novel_terms",
+  "hash_format": "SHA-256 of UTF-8 file bytes after CRLF to LF",
+  "files": {
+    "calib_consensus_rule.py": "09b09768324af5f7e8e8077f2003fb1e53417558a9d92706e346805d17ae3e0d",
+    "calib_consensus.py": "12b14980505f6bb77895c732c431ae025d7ca419196d4710e8896688c691b629",
+    "calib_squad_fixture.py": "c8c31acf8e477dbdb3e117215265b520d19e30d467554f1d1c7079ad68ef7183",
+    "calib_answerability.py": "2f913df32e21f75772a09ea02bb698683f8ecb48976b7cb18e958ca78c6142df",
+    "CONSENSUS-RESULTS.md": "1335e29b150155e9c90c8d7a4fc7bfa76accfde653ee38da044778c82296af40",
+    "consensus-results.json": "af3d7e299a0c109df8158d26fdccac66beb95739296960718c595cf873ed8178"
+  },
+  "model_weights_sha256": "b5e0ce3470abf5ef3831aa1bd5553b486803e83251590ab7ff35a117cf6aad38",
+  "controls": ["H1", "H3"],
+  "ablations_on_original_pool_only": {
+    "no_second_view": "Keep the joined winner and its z threshold. Remove the keyword vector, its top-one agreement and its z threshold.",
+    "no_novel_terms": "Drop only the intersection with keyword terms absent from the body.",
+    "no_question_cue": "Drop only the silent query's question-cue test.",
+    "no_1_5": "Keep a unique positive lexical winner. Drop its 1.5 multiplier.",
+    "no_plus_1": "Use B instead of B+1 for both shown z scores.",
+    "no_plus_2": "Use B instead of B+2 for the silent keyword z score."
+  },
+  "simplification": "After the six single omissions, jointly omit conditions with zero added wrong facts, as a separately named development arm. If the joint omission adds a wrong fact, retain interacting conditions using the listed order, accepting each cumulative deletion only with zero added wrong and zero lost targets. No further independent-set runs.",
+  "decision": {
+    "adopt": "At least 6 independent rescues, zero lost targets, zero added wrong facts, and fewer added wrong facts or more rescues than H1 on the original pool.",
+    "reject": "At most 1 independent rescue, or equal rescues and equal added wrong facts with H1 on the original pool.",
+    "otherwise": "Adoption criterion unmet."
+  }
+}
