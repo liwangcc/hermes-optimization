@@ -30,7 +30,6 @@ plugins:
     semantic_enabled: true
     semantic_url: http://127.0.0.1:8791   # managed local deploy fills this
     semantic_tau: 0.55
-    semantic_max_extra: 3
     semantic_total_cap: 7
     semantic_timeout_ms: 400
     catalog_enabled: true                  # optional: #id=label catalog + fact_store get

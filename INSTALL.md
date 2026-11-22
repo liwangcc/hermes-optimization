@@ -1,6 +1,6 @@
 # 完整安装说明（日常版 2026-11）
 
-这套东西把 **Hermes Agent 日常版补丁 + Holographic 0.30.0 设置补丁 + `holographic-semantic` 0.5.0**
+这套东西把 **Hermes Agent 日常版补丁 + Holographic 0.30.0 设置补丁 + `holographic-semantic` 0.6.0**
 装到一台机器上。目标是可复现：固定基线、固定补丁、固定验证命令；升级或回滚都不靠记忆。
 
 **不包含**：模型权重、事实库、个人 `config.yaml`、凭据、日志、缓存、Python/Node 运行环境。
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | Hermes Agent | https://github.com/NousResearch/hermes-agent | `40d1e95f37e409f9f618f32c170661c66b86a4f4` | `v0.23.2+canary.20261117T064624Z` |
 | Holographic | https://github.com/itpartypattaya/hermes-plugin-holographic | `ed73195df846913d34f4aea54335718e56d841fb` | `0.30.0` |
-| `holographic-semantic` | 本仓库 `memory/plugin/holographic-semantic/` | 随本仓库发布 | `0.5.0` |
+| `holographic-semantic` | 本仓库 `memory/plugin/holographic-semantic/` | 随本仓库发布 | `0.6.0` |
 
 补丁、校验和与应用顺序见 [`patches/README.md`](patches/README.md)。本次发布带了什么、排除了什么，
 见 [`docs/release-manifest.md`](docs/release-manifest.md)。
@@ -118,8 +118,8 @@ hermes config set plugins.hermes-memory-store.semantic_enabled true
 hermes config set plugins.hermes-memory-store.catalog_enabled true   # 可选：事实目录 + fact_store get
 ```
 
-包装插件不修改 Holographic 本体：加载时继承它的 provider，侧车失败就退回词法召回。
-回滚是改一行 `memory.provider`，不是改代码。
+包装插件继承 Holographic 的 provider。本地向量只检查信任线以上余弦最高的一条事实，问候和短消息跳过侧车。
+侧车失败就退回词法召回。回滚时把 `memory.provider` 设回 `holographic`。
 
 > `semantic_enabled` 只控制本地向量通道。用云端 embedding 时，改设
 > `plugins.hermes-memory-store.embeddings true`（以及 `embedding_url` / `embedding_model`），
@@ -189,7 +189,7 @@ hermes plugins list | grep -i holo
 
 ## 8. 验证（干净克隆实测）
 
-下面是在固定基线的干净 worktree 上实际跑过的结果，不是推断。
+下面是 0.5.0 在固定基线的干净 worktree 上的实测结果。
 
 环境：Windows 11，Python 3.12.13（测试 venv），Node/pnpm 12.15.0，2026-11-20。
 
@@ -208,9 +208,8 @@ hermes plugins list | grep -i holo
 | 旧投稿 testkit 自检 | `cd docs/upstream-memory-review/testkit && python -m unittest -v test_run` | 6 tests OK |
 | Holographic 设置补丁测试 | 见下方命令 | 5 passed |
 
-`test_catalog.py` 这次按插件 0.5.0 的 `usage_report` / `maintenance_actions` 输出更新过断言（新增
-`catalog_max_tokens`、`connection_state`、`semantic-index` job），不是插件行为变化。旧投稿 testkit
-只测投稿编排器，与插件运行时无耦合，保留原样即可。
+0.6.0 的 `memory/plugin/test_catalog.py` 在原有 10 项上新增 7 项，覆盖本地语义准入、旧配置加载及本地阈值校准。
+用上表同一条命令运行，17 项全部通过。脚本使用标准库和 Hermes 的 `utils`，侧车使用测试替身。
 
 Holographic 的 5 个用例需要把 Hermes 检出和插件测试环境放在一起。Windows + pytest 9 还要避开一个
 测试收集器的坑：仓库根目录本身是包（有 `__init__.py`），直接 `pytest tests/...` 会把根 `__init__.py`
@@ -224,10 +223,6 @@ HERMES_AGENT_REPO=/path/to/hermes-agent pytest -q -c pytest.ini test_holographic
 ```
 
 这是测试运行方式的问题，不是补丁或插件行为的问题；Linux CI 上直接 `pytest` 不受影响。
-
-> 说明：`memory/plugin/test_catalog.py` 是旧自检脚本，已按 0.5.0 的 `usage_report` 字段、
-> `maintenance_actions` 三任务返回值和 `settings.read` 的 `connection_state` 更新；它仍然只依赖
-> 标准库和 Hermes 的 `utils`，不需要装模型或 pytest。
 
 ## 9. 回滚
 

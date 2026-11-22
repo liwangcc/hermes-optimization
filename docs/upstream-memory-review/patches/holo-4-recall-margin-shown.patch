@@ -1,0 +1,313 @@
+diff --git a/README.md b/README.md
+index 3a44dbf..0326e8c 100644
+--- a/README.md
++++ b/README.md
+@@ -1174,7 +1174,11 @@ guards — no target lost, noise not higher, confusion not higher, pooled exact
+ needs rows of a **single mode**: the probe writes three by default (`off,reorder_only,gate_only`) and the
+ gate refuses mixed runs, so pass `--modes off`. One `endpoint`, one `git_sha`, one `scale` and one `emb`
+ per comparison, and inside a pair only the margin may differ — a pair whose query, kind, split or targets
+-disagree is refused instead of reported.
++disagree is refused instead of reported. `--recall-margin-shown <v>` gives a run a second margin
++(`embeddings.RECALL_MARGIN_SHOWN`, unset by default) for a turn that already shows a fact — one the words found, or
++one of an entity the message names — while `--recall-margin` stays the margin of a turn that would show nothing: the
++rows carry `margin_shown`, the file `_m<v>_s<v>`, and the gate names it beside the margin. The two runs of a pair
++still have to differ in `--recall-margin`.
+ 
+ Original plugin by dusterbloom (hermes-agent PR #2351); its history is in hermes-agent
+ (`git log -- plugins/memory/holographic`). MIT licence. The bundled language data live in `dictionaries/` (the list
+diff --git a/__init__.py b/__init__.py
+index d6d4949..cea541f 100644
+--- a/__init__.py
++++ b/__init__.py
+@@ -1401,9 +1401,14 @@ class HolographicMemoryProvider(MemoryProvider):
+         # embedding alone (standout margin, names_fit), at most embedding_prefetch_facts of them, marked
+         # so the model knows the match is looser.
+         if meaning is not None and self._embedding is not None and self._embedding.recall_facts:
++            margin = embeddings.RECALL_MARGIN
++            # embeddings.RECALL_MARGIN_SHOWN (a measurement, None by default): a margin of its own for a turn that
++            # shows a fact anyway — the words found one (`have`), or stream 3 below is about to add one.
++            if embeddings.RECALL_MARGIN_SHOWN is not None and (have or self._names_a_fact(query, have, key, turn)):
++                margin = embeddings.RECALL_MARGIN_SHOWN
+             for fact in self._retriever.by_meaning(meaning, exclude=have, min_trust=self._min_trust,
+                                                    limit=self._embedding.recall_facts + 3,
+-                                                   margin=embeddings.RECALL_MARGIN,
++                                                   margin=margin,
+                                                    min_score=self._embedding.min_score):
+                 if len(by_meaning) < self._embedding.recall_facts and self._not_recent(key, fact, turn) \
+                         and self._recallable(fact) and self._retriever.names_fit(query, fact):
+@@ -1425,6 +1430,14 @@ class HolographicMemoryProvider(MemoryProvider):
+                     have.add(fact["fact_id"])
+         return meaning_facts, entity_facts, by_meaning
+ 
++    def _names_a_fact(self, query: str, have: set[int], key: str, turn: int) -> bool:
++        """Would stream 3 show a fact for this message — the test _stream_extras makes for an entity's fact, on the
++        facts it reads? Asked only when embeddings.RECALL_MARGIN_SHOWN is set, before the meaning stream runs."""
++        return any(fact["fact_id"] not in have and self._not_recent(key, fact, turn) and self._recallable(fact)
++                   for entity_id in sorted(self._store.mentioned_entity_ids(query))
++                   for fact in self._retriever.entity_facts(entity_id, min_trust=self._min_trust,
++                                                            limit=_ENTITY_FACTS * 3))
++
+     def _unified_stream(self, query: str, meaning, candidates: list[dict], key: str,
+                         turn: int) -> tuple[list[dict], set[int]]:
+         """Block 3: one rerank over the union sample of the three streams → top-5 strictly by rank (the modes
+diff --git a/embeddings.py b/embeddings.py
+index fe53f57..6edb755 100644
+--- a/embeddings.py
++++ b/embeddings.py
+@@ -80,6 +80,12 @@ _INPUT_REFUSED = (400, 413, 422)
+ _PLAIN = "hello"  # what is sent to tell a refused text from a refusing endpoint
+ REFUSED = object()  # embed_facts (and _request): the endpoint refused these fact texts as input; it works otherwise
+ RECALL_MARGIN = 1.0  # before a turn
++# The margin before a turn that already shows a fact — one the words found, or one of an entity the message names —
++# when set; None (the default): RECALL_MARGIN before every turn, as before. A fact let in by meaning turns silence
++# into noise only in a turn that shows nothing else, so a lower bar may be measured where that cannot happen. A module
++# value, not a setting, like RECALL_MARGIN: tools/provenance_probe.py sets it for one arm of a measurement
++# (--recall-margin-shown) and puts it back. Not to be set before that measurement passes the gate of PR #17.
++RECALL_MARGIN_SHOWN: float | None = None
+ SEARCH_MARGIN = 0.5  # fact_store search: the agent asked, and judges what it gets
+ # fact_store search beyond the words (Retriever.beyond_words): of the SEARCH_TOP_K facts closest in meaning, one is
+ # shown when it is closer than the best the words found by SEARCH_BEAT_WORDS and stands out at least SEARCH_Z_FLOOR.
+diff --git a/tests/test_holographic_provenance_recall_margin.py b/tests/test_holographic_provenance_recall_margin.py
+index d140bef..aaf7fed 100644
+--- a/tests/test_holographic_provenance_recall_margin.py
++++ b/tests/test_holographic_provenance_recall_margin.py
+@@ -78,4 +78,19 @@ def test_two_close_margins_get_two_files(monkeypatch, tmp_path):
+ 
+     # the published grid keeps the name it was committed under
+     _main(monkeypatch, tmp_path, "--recall-margin", "0.6")
+-    assert (tmp_path / "provenance_multi_m0.6_off.jsonl").exists()
+\ No newline at end of file
++    assert (tmp_path / "provenance_multi_m0.6_off.jsonl").exists()
++
++def test_the_margin_of_a_turn_that_shows_a_fact_is_stamped_and_does_not_outlive_its_run(monkeypatch, tmp_path):
++    """--recall-margin-shown sets embeddings.RECALL_MARGIN_SHOWN for one run: stamped beside `margin`, a file of
++    its own, and none again when main() returns, so a later run in the process is the plain one."""
++    monkeypatch.setattr(pp._holographic_embeddings, "RECALL_MARGIN", 1.0)
++    monkeypatch.setattr(pp._holographic_embeddings, "RECALL_MARGIN_SHOWN", None)
++
++    rows = _main(monkeypatch, tmp_path, "--recall-margin", "0.7", "--recall-margin-shown", "0.5")
++    assert (rows[0]["margin"], rows[0]["margin_shown"]) == (0.7, 0.5)
++    assert pp._holographic_embeddings.RECALL_MARGIN_SHOWN is None
++    assert _rows_in(tmp_path / "provenance_multi_m0.7_s0.5_off.jsonl")[0]["margin_shown"] == 0.5
++
++    again = _main(monkeypatch, tmp_path, "--recall-margin", "0.7")  # one margin: not the file of the two
++    assert again[0]["margin_shown"] is None
++    assert _rows_in(tmp_path / "provenance_multi_m0.7_off.jsonl")[0]["margin_shown"] is None
+diff --git a/tests/test_holographic_recall_margin_shown.py b/tests/test_holographic_recall_margin_shown.py
+new file mode 100644
+index 0000000..d18eea8
+--- /dev/null
++++ b/tests/test_holographic_recall_margin_shown.py
+@@ -0,0 +1,91 @@
++"""embeddings.RECALL_MARGIN_SHOWN: a margin of its own before a turn that already shows a fact (a measurement).
++
++A fact let in by meaning turns silence into noise only in a turn that shows nothing else. With the value set, a turn
++in which the words found a fact, or the message names an entity that has one, admits by meaning at that margin; a turn
++that would stay silent keeps RECALL_MARGIN. None, the default, is one margin before every turn. The meaning is given
++(no request), as in test_holographic_names_fit_cases; the facts are made up."""
++from __future__ import annotations
++
++import json
++
++import pytest
++
++np = pytest.importorskip("numpy")
++pytest.importorskip("snowballstemmer")
++
++from hermes_plugin_holographic import HolographicMemoryProvider, embeddings  # noqa: E402
++
++ON = {"embeddings": "on", "embedding_url": "https://embeddings.example.net/v1", "embedding_model": "m",
++      "embedding_key_env": "TEST_EMBEDDINGS_KEY"}
++
++KEY = "The spare key hangs behind the blue flowerpot on the balcony."  # what the meaning stream may add
++COFFEE = "Black coffee without sugar is the morning drink."  # what the words of ASKS_COFFEE find
++FILLERS = [f"Shelf {n} of the archive holds the folders of year {1990 + n}." for n in range(32)]
++ASKS_COFFEE = "Which coffee is the morning drink?"
++ASKS_NOTHING = "Whereabouts of the hidden gadget?"  # no word of a fact, no name: the words leave the turn silent
++
++
++class _NoNetwork:
++    def open(self, *a, **k):
++        raise AssertionError("no request in these tests: meaning is given")
++
++
++@pytest.fixture
++def provider(tmp_path, monkeypatch):
++    monkeypatch.setattr(embeddings, "_OPENER", _NoNetwork())
++    monkeypatch.setenv("TEST_EMBEDDINGS_KEY", "sk-test-not-a-real-key")
++    p = HolographicMemoryProvider(config={"db_path": str(tmp_path / "memory_store.db"), "hrr_dim": 64, **ON})
++    p.initialize(session_id="s1")
++    yield p
++    p.shutdown()
++
++
++def _add(p, text, entities=()) -> int:
++    args = {"action": "add", "content": text, **({"entities": list(entities)} if entities else {})}
++    result = json.loads(p.handle_tool_call("fact_store", args))
++    assert "fact_id" in result, result
++    return result["fact_id"]
++
++
++def _between_the_margins(provider, monkeypatch, texts):
++    """The store with KEY standing out more than 0.5 over the chance maximum and less than RECALL_MARGIN."""
++    ids = {text: _add(provider, text) for text in texts}
++    order = list(ids)
++    sims = [0.30 if t == KEY else 0.10 + 0.01 * (i % 12) for i, t in enumerate(order)]
++    meaning = embeddings.Meaning([ids[t] for t in order], np.array(sims), 0.3,
++                                 [embeddings.text_hash(t) for t in order])
++    assert meaning.standout(ids[KEY], 0.5, None) and not meaning.standout(ids[KEY], embeddings.RECALL_MARGIN, None)
++    monkeypatch.setattr(provider, "_meaning_of", lambda q, before_turn: meaning)
++    return ids
++
++
++def _by_meaning(block: str, fact_id: int) -> bool:
++    return any(f"#{fact_id} " in line and line.endswith("(by meaning)") for line in block.splitlines())
++
++
++def test_one_margin_before_every_turn_by_default(provider, monkeypatch):
++    ids = _between_the_margins(provider, monkeypatch, [KEY, COFFEE, *FILLERS])
++    assert embeddings.RECALL_MARGIN_SHOWN is None
++    block = provider.prefetch(ASKS_COFFEE)
++    assert f"#{ids[COFFEE]} " in block and not _by_meaning(block, ids[KEY])
++
++
++def test_a_turn_the_words_already_answer_admits_at_the_second_margin(provider, monkeypatch):
++    ids = _between_the_margins(provider, monkeypatch, [KEY, COFFEE, *FILLERS])
++    monkeypatch.setattr(embeddings, "RECALL_MARGIN_SHOWN", 0.5)
++    block = provider.prefetch(ASKS_COFFEE)
++    assert f"#{ids[COFFEE]} " in block and _by_meaning(block, ids[KEY])
++
++
++def test_a_turn_that_would_stay_silent_keeps_the_recall_margin(provider, monkeypatch):
++    _between_the_margins(provider, monkeypatch, [KEY, COFFEE, *FILLERS])
++    monkeypatch.setattr(embeddings, "RECALL_MARGIN_SHOWN", 0.5)
++    assert provider.prefetch(ASKS_NOTHING) == ""
++
++
++def test_an_entity_the_message_names_counts_as_a_fact_shown(provider, monkeypatch):
++    """Stream 3 runs after the meaning stream, so whether it will show a fact is asked beforehand."""
++    _between_the_margins(provider, monkeypatch, [KEY, COFFEE, *FILLERS])
++    _add(provider, "Mirabel waters the orchids on Sundays.", ["Mirabel"])
++    assert provider._names_a_fact("Anything about Mirabel?", set(), "s1", 1)
++    assert not provider._names_a_fact(ASKS_NOTHING, set(), "s1", 1)
+diff --git a/tests/test_mcnemar_gate.py b/tests/test_mcnemar_gate.py
+index 9aefe80..f784906 100644
+--- a/tests/test_mcnemar_gate.py
++++ b/tests/test_mcnemar_gate.py
+@@ -313,3 +313,28 @@ def test_other_shapes_fields_do_not_hide_a_contrast_measurement():
+ def test_an_unknown_set_does_not_borrow_a_known_confusion_field():
+     with pytest.raises(SystemExit, match="unknown row shape"):
+         mcnemar._confused({"set": "unrecognized", "wrong": True})
++
++
++# --- a second margin for a turn that already shows a fact (provenance_probe --recall-margin-shown) ---
++
++
++def test_the_report_names_the_second_margin_of_the_proposal(tmp_path, capsys):
++    """The default side carries none (also rows written before the stamp existed), the proposal one."""
++    hi, lo = _rescued()
++    lo[-1]["keys"], lo[-1]["wrong5"] = ["t", "a", "b", "c", "d", "X"], []
++    for r in lo:
++        r["margin_shown"] = 0.5
++    mcnemar.report_margins(_pair(hi, lo, tmp_path))
++    out = capsys.readouterr().out
++    assert "margins 1.0 (default) vs 0.6 (0.5 where the turn already shows a fact) (proposal)" in out
++    assert "gate PASSES" in out
++
++
++def test_two_second_margins_under_one_margin_are_refused(tmp_path):
++    """Rows of two runs that share `margin` and differ in `margin_shown` are not one proposal."""
++    hi, lo = _rescued()
++    for r in lo:
++        r["margin_shown"] = 0.5
++    lo[0]["margin_shown"] = 0.4
++    with pytest.raises(SystemExit, match="margin_shown"):
++        mcnemar.report_margins(_pair(hi, lo, tmp_path))
+diff --git a/tools/mcnemar_gate.py b/tools/mcnemar_gate.py
+index 422675b..34b49f7 100644
+--- a/tools/mcnemar_gate.py
++++ b/tools/mcnemar_gate.py
+@@ -250,6 +250,16 @@ def report_margins(paths: list[str]) -> None:
+     rescue passing p < 0.05 pooled (2026-10-24)."""
+     rows, margins, by, real_keys = _paired(paths, "margin", _HEAD, value=float)
+     lo, hi = margins  # sorted ascending: lo is the proposal (0.6), hi the current default (1.0)
++    # --recall-margin-shown: a run may carry a second margin, for a turn that already shows a fact. One value to a
++    # side (rows written before the stamp existed have none): two of them under one margin are two runs read as one.
++    shown = {m: {r.get("margin_shown") for r in by[m].values()} for m in margins}
++    for m in margins:
++        if len(shown[m]) > 1:
++            raise SystemExit(f"mixed runs — margin {m} with margin_shown={sorted(shown[m], key=str)}: one per side")
++
++    def named(m):
++        second = next(iter(shown[m]))
++        return f"{m}" if second is None else f"{m} ({second} where the turn already shows a fact)"
+ 
+     hit = {m: {k: bool(by[m][k].get("hit5")) for k in real_keys} for m in margins}
+     # b/c of McNemar: b = rescued BY the proposal (miss at the default, hit at the proposal), c = lost
+@@ -272,7 +282,8 @@ def report_margins(paths: list[str]) -> None:
+     conf = {m: sum(1 for k in real_keys if _confused(by[m][k])) for m in margins}
+     hits = {m: sum(hit[m].values()) for m in margins}
+ 
+-    print(f"\n== margins {hi} (default) vs {lo} (proposal) | rows {n} real | git_sha {rows[0].get('git_sha')}")
++    print(f"\n== margins {named(hi)} (default) vs {named(lo)} (proposal) | rows {n} real | "
++          f"git_sha {rows[0].get('git_sha')}")
+     print(f"{'margin':>8} {'hit5':>9} {'noise':>6} {'confused':>9}")
+     for m in (lo, hi):
+         print(f"{m:>8} {hits[m]:4d}/{n} {noise[m]:6d} {conf[m]:9d}")
+diff --git a/tools/provenance_probe.py b/tools/provenance_probe.py
+index e5c1d0c..1c8f4e1 100644
+--- a/tools/provenance_probe.py
++++ b/tools/provenance_probe.py
+@@ -934,6 +934,7 @@ def main(argv):
+     # item 3 for RECALL_MARGIN; ENDPOINT is also --endpoint's default below, so it leaked the same way).
+     saved_endpoint, saved_scale = ENDPOINT, SCALE
+     saved_margin = _holographic_embeddings.RECALL_MARGIN
++    saved_margin_shown = _holographic_embeddings.RECALL_MARGIN_SHOWN
+     saved_embed_text, saved_keywords, saved_db_dir = _holographic_embeddings.EMBED_TEXT, KEYWORDS, DB_DIR
+     ap = argparse.ArgumentParser(description="Provenance probe: the sources of facts in prefetch")
+     ap.add_argument("--set", default="multi",
+@@ -960,6 +961,10 @@ def main(argv):
+     ap.add_argument("--recall-margin", default=None, type=float,
+                     help="override embeddings.RECALL_MARGIN for this run and stamp the value into every row "
+                          "and the file name (the 0.6 gate, PR #17); default: the module's own value")
++    ap.add_argument("--recall-margin-shown", default=None, type=float,
++                    help="set embeddings.RECALL_MARGIN_SHOWN for this run — the margin before a turn that already "
++                         "shows a fact — and stamp it into every row and the file name; default: none, one margin "
++                         "before every turn")
+     ap.add_argument("--embed-text", default=None, choices=list(_holographic_embeddings.EMBED_TEXTS),
+                     help="what fact vectors are made from for this run (issue #95), stamped into every row and the "
+                          "file name; default: the module's own value (content)")
+@@ -973,6 +978,8 @@ def main(argv):
+     try:
+         if args.recall_margin is not None:
+             _holographic_embeddings.RECALL_MARGIN = args.recall_margin
++        if args.recall_margin_shown is not None:
++            _holographic_embeddings.RECALL_MARGIN_SHOWN = args.recall_margin_shown
+         if args.embed_text is not None:
+             _holographic_embeddings.EMBED_TEXT = args.embed_text
+         kw_file, kw_coverage = None, "none"
+@@ -1032,6 +1039,8 @@ def main(argv):
+             label = f"_{args.label}" if args.label else ""
+             # --recall-margin: two margins must not overwrite each other (PR #17 recipe, 2026-10-24)
+             margin_sfx = "" if args.recall_margin is None else f"_m{args.recall_margin!r}"
++            if args.recall_margin_shown is not None:  # the second margin of the same run: _m0.7_s0.5
++                margin_sfx += f"_s{args.recall_margin_shown!r}"
+             # --keywords / --embed-text: the two arms of issue #95 and each coverage get files of their own
+             kw_sfx = "" if not args.keywords else (
+                 "_kwall" if args.kw_coverage == "all" else f"_kwhalf{args.kw_seed}")
+@@ -1043,6 +1052,7 @@ def main(argv):
+                 r["endpoint"] = args.endpoint or "mock"
+                 r["scale"] = SCALE  # which scale was set for the run
+                 r["margin"] = _holographic_embeddings.RECALL_MARGIN  # which RECALL_MARGIN the run used
++                r["margin_shown"] = _holographic_embeddings.RECALL_MARGIN_SHOWN  # None: that one before every turn
+                 r["embed_text"] = _holographic_embeddings.EMBED_TEXT  # what the fact vectors were made from
+                 r["kw_file"], r["kw_coverage"] = kw_file, kw_coverage
+                 r.setdefault("emb_model", None)  # the store's own stamp when embeddings were on (catch_up_vectors)
+@@ -1060,6 +1070,7 @@ def main(argv):
+     finally:
+         ENDPOINT, SCALE = saved_endpoint, saved_scale
+         _holographic_embeddings.RECALL_MARGIN = saved_margin
++        _holographic_embeddings.RECALL_MARGIN_SHOWN = saved_margin_shown
+         _holographic_embeddings.EMBED_TEXT = saved_embed_text
+         if DB_DIR is not None and DB_DIR != saved_db_dir:  # this run's stores, closed by now: nothing left in Temp
+             shutil.rmtree(DB_DIR, ignore_errors=True)

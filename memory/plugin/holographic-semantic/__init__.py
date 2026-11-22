@@ -3,9 +3,9 @@
 Design (update-proof):
 - The original holographic plugin is NOT modified. This provider subclasses it at load time via the
   core loader (plugins.memory.import_provider_module), so upstream plugin updates flow through.
-- prefetch = base prefetch (unchanged) + up to N extra facts from a local embedding sidecar
-  (cos >= tau, trust-filtered, greeting-guarded, repeat-window respected). Any sidecar problem
-  falls back to the base result; recall never blocks on the semantic channel.
+- prefetch adds at most the closest fact above the trust floor from a local embedding sidecar.
+  The fact must reach tau, be absent from the base recall, and pass the base's repeat, recallability,
+  and name checks. Greetings and short messages skip the sidecar. Sidecar failures fall back to base recall.
 - Embedding setup (Desktop): cloud is the base's own embeddings (embedding_url, embedding_model, embedding_key_env),
   saved only after a test call; local deploys one of the pinned models (local_models.py) with an index of its own.
   A job proposes the threshold of the mode in use (semantic_tau or embedding_min_score); the user confirms it.
@@ -32,8 +32,7 @@ Config (plugins.hermes-memory-store, same section as the base provider):
   semantic_enabled: false        # master switch
   semantic_url: http://127.0.0.1:8791
   semantic_tau: 0.55             # cosine threshold (eval-tuned; see memory/eval)
-  semantic_max_extra: 3          # max facts appended beyond the base recall
-  semantic_total_cap: 7          # total injected facts never exceeds this (base max = 5+2)
+  semantic_total_cap: 7          # maximum total after appending a semantic fact
   semantic_timeout_ms: 400       # sidecar HTTP budget; exceed -> lexical only
 """
 from __future__ import annotations
@@ -124,7 +123,6 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
         self._sem_enabled = _orig.is_truthy_value(c.get("semantic_enabled", False))  # bool("false") is on
         self._sem_url = str(c.get("semantic_url", "http://127.0.0.1:8791")).rstrip("/")
         self._sem_tau = float(c.get("semantic_tau", 0.55))
-        self._sem_max_extra = int(c.get("semantic_max_extra", 3))
         self._sem_total_cap = int(c.get("semantic_total_cap", 7))
         self._sem_timeout = float(c.get("semantic_timeout_ms", 400)) / 1000.0
         self._sem_min_trust = float(c.get("min_trust_threshold", 0.3))
@@ -467,7 +465,7 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
         req = urllib.request.Request(
             self._sem_url + "/candidates",
             data=json.dumps({"query": query, "tau": self._sem_tau,
-                             "limit": self._sem_max_extra * 3, "min_trust": self._sem_min_trust}).encode("utf-8"),
+                             "limit": 1, "min_trust": self._sem_min_trust}).encode("utf-8"),
             headers={"Content-Type": "application/json"})
         # localhost must never go through a system/env proxy
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -475,44 +473,35 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
             return json.loads(r.read()).get("candidates", [])
 
     def _add_semantic(self, query: str, base: str, session_id: str) -> str:
-        if _orig_text.is_greeting(query):
+        if _orig_text.is_greeting(query) or not _orig.embeddings.worth_asking(query, before_turn=True):
             return base
-        cands = self._sidecar_candidates(query)
-        if not cands:
+        candidates = self._sidecar_candidates(query)
+        if not candidates:
             return base
         self._sem_warned = False
         have = {int(m) for m in _ID_RE.findall(base)}
-        budget = min(self._sem_max_extra, max(0, self._sem_total_cap - len(have)))
-        if budget <= 0:
+        if len(have) >= self._sem_total_cap:
             return base
+        top = candidates[0]
+        fact_id = top["fact_id"]
+        # The sidecar tests the full cosine against tau, then rounds the returned score to four decimals.
+        if fact_id in have or not top["cos"] >= round(self._sem_tau, 4):
+            return base
+        rows = self._store.read("SELECT fact_id, content, tags, trust_score FROM facts "
+                                "WHERE fact_id = ? AND trust_score >= ?", (fact_id, self._sem_min_trust))
+        if not rows:
+            return base
+        fact = dict(rows[0])
         key = f"{session_id or self._session_id or ''}|{self._scope_key or ''}"
         turn = self._turns.get(key, 0)
-        ids = [c["fact_id"] for c in cands if c["fact_id"] not in have]
-        if not ids:
+        if (not self._not_recent(key, fact, turn) or not self._recallable(fact)
+                or not self._retriever.names_fit(query, fact)):
             return base
-        rows = {r["fact_id"]: dict(r) for r in self._store.read(
-            f"SELECT fact_id, content, trust_score FROM facts WHERE fact_id IN ({','.join('?' * len(ids))})", ids)}
-        added = []
-        for c in cands:
-            f = rows.get(c["fact_id"])
-            if f is None or f["fact_id"] in have:
-                continue
-            if not self._recallable(f) or not self._not_recent(key, f, turn):
-                continue
-            added.append(f)
-            have.add(f["fact_id"])
-            if len(added) >= budget:
-                break
-        if not added:
-            return base
-        for f in added:
-            self._remember(key, f, turn)
-        self._counted(added)
-        self._last_recall = (self._last_recall or 0) + len(added)
-        lines = [f"- #{f['fact_id']} [{f.get('trust_score', 0):.1f}] {_orig._one_line(f.get('content', ''))}"
-                 for f in added]
-        body = "\n".join(lines)
-        return base + "\n" + body if base else _HEADER + "\n" + body
+        self._remember(key, fact, turn)
+        self._counted([fact])
+        self._last_recall = (self._last_recall or 0) + 1
+        line = f"- #{fact_id} [{fact['trust_score']:.1f}] {_orig._one_line(fact['content'])}"
+        return (base or _HEADER) + "\n" + line
 
 
 def register(ctx) -> None:

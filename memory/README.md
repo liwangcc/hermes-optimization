@@ -19,24 +19,22 @@ A local multilingual embedding model (bge-m3) closes most of that gap.
 ## Architecture
 
 ```
-query ──► base holographic prefetch (lexical, unchanged) ──┐
-      └─► sidecar /candidates (bge-m3, cos ≥ tau) ──────────┤
-                                                            ▼
-                          gated union, dedup, trust filter, greeting guard,
-                          repeat-window, total cap ──► injected facts
+query ──► base holographic prefetch ────────────────────┐
+      └─► query gate → sidecar /candidates (limit = 1)   │
+           → admission checks on the top fact ─────────┴─► injected facts
 ```
 
 - **`sidecar/`** — local bge-m3 HTTP service (GPU fp16, offline, cached, fail-safe).
-  Produces vectors; read-only on the fact DB. The 0.5.0 wrapper can also deploy its own
+  Produces vectors and reads the fact DB. The 0.6.0 wrapper can also deploy its own
   profile-managed service (same protocol, pinned weights under
   `$HERMES_HOME/services/memory-embeddings/`); this directory remains the manual / CLI path.
-- **`plugin/holographic-semantic/`** — subclasses the holographic provider *unchanged*
-  and appends up to N semantic facts to `prefetch`. Any sidecar problem falls back to
-  the base result; recall never blocks. One-command rollback. It also owns the Desktop
-  connection wizard, local model deployment, index job and threshold calibration.
+- **`plugin/holographic-semantic/`** — subclasses the holographic provider and checks the
+  single closest fact above the trust floor for `prefetch`. Greetings and short messages skip
+  the sidecar. Sidecar failures fall back to the base result. The wrapper also provides the
+  Desktop connection wizard, local deployment, indexing and calibration.
 - **`eval/`** — a self-contained, synthetic Chinese-heavy eval reproducing the tuning.
 
-## What actually matters: how facts are *admitted* on meaning
+## Earlier evaluations of semantic admission
 
 Holding bge-m3 fixed, two admission rules behave very differently:
 
@@ -69,21 +67,19 @@ Two things to note — and one correction:
   negatives recall nothing — there are **no same-domain hard negatives** in this eval, so
   it does not show that real-world precision is intact.
 
-In production the semantic channel is unioned with the lexical channel (hybrid). On the
-real store the bigger lever is the write-time bilingual + colloquial keywords (lexical
-recall@5 24/39 → 32/39); the sidecar adds fallback + association on top (→ 34/39) at ~3G
-VRAM and falls back to lexical-only when unavailable. The top-level README has the
-real-store three-keyword comparison, the scale experiment, and the limitations.
+In the earlier real-store evaluation, write-time bilingual and colloquial keywords raised
+lexical recall@5 from 24/39 to 32/39. The multi-candidate sidecar raised it to 34/39 at
+about 3 GB of VRAM. The top-level README records the keyword comparison and scale experiment.
 
 ## Tuning knobs
 
 | knob | value | rationale |
 |---|---|---|
 | `semantic_tau` | 0.55 | eval-tuned cosine floor; lower = more recall, more noise |
-| fact text | content + keywords | keywords are curated signal absent from the prose |
-| `semantic_max_extra` / `semantic_total_cap` | 3 / 7 | bound injected context |
+| fact text | `content + " " + tags` | stored tags carry the curated keywords |
+| `semantic_total_cap` | 7 | maximum total after appending a semantic fact |
 | `semantic_timeout_ms` | 400 | fail-open budget; exceed → lexical only |
-| greeting guard | on | no semantic noise on "hi"/"hello" |
+| query gate | before-turn `worth_asking` | skips greetings and short messages |
 
 ## Design constraints
 

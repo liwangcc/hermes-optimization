@@ -1,8 +1,8 @@
 """The Desktop job "Initialize threshold": calibrate the recall threshold of the embedding mode in use on this
 profile's own facts (threshold_calib.py) and propose a value beside its field.
 
-  local  semantic_tau: vectors from the sidecar's /embed, admission as the sidecar and prefetch do it (cosine >= tau
-         among facts above the trust floor, the closest semantic_max_extra).
+  local  semantic_tau: vectors from the sidecar's /embed, admission of just the closest fact above the trust floor
+         when cosine >= tau. Uses prefetch's query-length and greeting checks.
   cloud  embedding_min_score: vectors from the base provider's own client, admission by its own Meaning.standout
          (the floor on top of its z-score bar), walked as its by_meaning and prefetch walk it.
 
@@ -95,12 +95,10 @@ def action(home: str, section: dict, facts: int | None, base) -> dict:
 
 
 def _local_rule(section: dict, rows: list[dict], base) -> dict:
-    """semantic_tau, as the sidecar and _add_semantic admit: a fact above the trust floor whose cosine reaches tau,
-    the closest semantic_max_extra of them. The sidecar's vector text is content and tags."""
+    """Test the closest fact above the trust floor against semantic_tau, using the sidecar's content and tags."""
     is_greeting = importlib.import_module(f"{base.__name__}.text").is_greeting
     url = str(section.get("semantic_url") or settings.DEFAULTS["semantic_url"])
     floor = float(section.get("min_trust_threshold", 0.3))
-    keep = int(section.get("semantic_max_extra", settings.DEFAULTS["semantic_max_extra"]))
     held = [r for r in rows if r["trust_score"] is not None and r["trust_score"] >= floor]
 
     def embed(batch: list[str]) -> list:
@@ -115,10 +113,11 @@ def _local_rule(section: dict, rows: list[dict], base) -> dict:
     return {
         "texts": {r["fact_id"]: (r["content"] or "") + " " + (r["tags"] or "") for r in held},
         "pool": {r["fact_id"]: r["content"] or "" for r in held},
-        "askable": lambda text: bool(text) and not is_greeting(text),
+        "askable": lambda text: bool(text) and not is_greeting(text) and base.embeddings.worth_asking(
+            text, before_turn=True),
         "embed": embed, "batch": _LOCAL_BATCH,
         "scored": calib.ranked,
-        "admit": lambda ranked, tau: [fact_id for fact_id, cosine in ranked[:keep] if cosine >= tau],
+        "admit": lambda ranked, tau: [fact_id for fact_id, cosine in ranked[:1] if cosine >= tau],
         "candidates": calib.GRID,
         "current": float(section.get("semantic_tau", settings.DEFAULTS["semantic_tau"])),
     }

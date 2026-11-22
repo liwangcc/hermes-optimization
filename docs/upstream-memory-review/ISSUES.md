@@ -7,6 +7,9 @@
 | 1 | [C：Holographic 设置面板](issues/C-holographic-settings.md) | 插件库，新 Issue | 接不接这个纯设置补丁，还是对方自己做 | HOLO-1 |
 | 2 | [A：内置文件用量](issues/A-capacity.md) | 主库 #5320 下的一条评论 | 能否审一个只显示两个内置文件「已用字符 / 写入上限」的 PR | PR3 |
 | 3 | [B：提供者的维护任务](issues/B-provider-jobs.md) | 主库，新 Issue | 能否审一个 PR：两个可选方法，加 CLI 和 Desktop 入口 | PR7 |
+| 独立 | [D：语义准入的双档余量](issues/D-recall-margin-shown.md) | 插件库，新 Issue | 肯不肯在门禁上测「纯提升」方案；「取舍最优」和「判别器复核」作为可选项要不要看 | HOLO-4，见 [`RUNBOOK-HOLO-4.md`](RUNBOOK-HOLO-4.md) |
+
+D 是 2026-11-21 新增的另一条线（语义召回的准入规则），只涉及插件库，和上面三条没有依赖，不排进它们的顺序；只要求不和别的帖子同一天发。
 
 ## 为什么是这个顺序
 

@@ -57,6 +57,26 @@ python calib_gate.py export/run
 `--keep 1`（每个探针最多准入几个事实，即插件的 `embedding_prefetch_facts`）、`--rules`、`--margins`、
 `--floor-values`、`--embed-dimensions`（如果你的插件配置里设了 `embedding_dimensions`）。
 
+## 分数导出与离线回放（实验）
+
+`calib_run.py` 只测语义通道。要在完整链路上比较多条准入规则，先导出分数，再离线回放：
+
+```bash
+# 1. 导出：每个探针对每条事实的余弦，四种向量文本各一份（只有 id 和数字，没有文本）
+BGE_MODEL=/path/to/bge-m3 python calib_dump.py --facts F.json --keywords K.json --queries Q.json --out D.json
+#   真实库：--store 库的副本（输出必须在仓库外）；端点方式和 calib_run.py 一样用 EMBED_URL / EMBED_MODEL
+
+# 2. 回放：在词法已展示的内容之上，每条规则最多追加 1 条；每格对 content/zbar（上游默认）判四条件
+python calib_replay.py --dump D.json --lexical rows_ZC.jsonl \
+    --check content/zbar=rows_ZC.jsonl content/floor=rows_FC.jsonl --out summary.json
+```
+
+- 向量文本：`content`、`content+keywords`（上游 `vector_text` 的拼法）、`keywords`（全部关键词一个向量）、
+  `keyword-max`（每个关键词一个向量，事实取最高分）。没有关键词的事实在四种里都用原句。
+- `--lexical` 是 KG-1 某一格的行（`qid, keys, by_meaning, targets`），`keys` 去掉 `by_meaning` 就是词法展示的内容。
+- `--check` 用已测过的格子核对回放：`names_fit` 和重复窗口没有回放，复现率低说明它们在这个库上起作用。
+- 规则和参数写死在 `calib_replay.ARMS`，回放不挑点。输出只有计数，真实库的 summary 可以带出本机，dump 不可以。
+
 ## 探针
 
 - **labelled**：`../eval/queries.json` 的格式（`id, category, query, expected`；`category: negative` 视为 chit），

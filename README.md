@@ -14,7 +14,7 @@
 |---|---|---|
 | Hermes Agent | `40d1e95f` → `eccd37ae`（`v0.23.2+canary` + 6 commits） | [`patches/`](patches/README.md) |
 | Holographic | 0.30.0（`ed73195f` → `4cbd5b7`） | [`patches/`](patches/README.md) |
-| `holographic-semantic` | 0.5.0（16 个源文件，含依赖锁和模型清单） | [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/) |
+| `holographic-semantic` | 0.6.0（16 个源文件，含依赖锁和模型清单） | [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/) |
 
 **模型权重不随仓库分发**：bge-m3 约 2.14 GiB，BGE-small-zh 约 92 MiB，MiniLM 约 463 MiB，由安装程序按固定
 提交下载并逐文件校验 SHA-256。详见 [INSTALL.md §6](INSTALL.md#6-本地向量模型权重不在仓库里)。
@@ -28,7 +28,7 @@
 
 ## 亮点：主杠杆是写入时的关键词，语义侧车是兜底和联想
 
-下面是在**真实个人事实库**（不是合成玩具）上测出的结论，按重要性排。口径：39 条有效查询，recall@5 = 标准答案进前 5 的查询占比。
+下面是早期多候选版本在真实个人事实库上的结果。39 条有效查询中，recall@5 是标准答案进前 5 的查询占比。
 
 1. **写入时的中英双语 + 口语关键词是主杠杆。** 只用词法召回（FTS，无 GPU），把关键词从「原始」换成「双语口语」，recall@5 从 **24/39 → 32/39**。这一步不花显存。
 2. **语义侧车是兜底和联想。** 在双语关键词之上再挂本地 bge-m3 侧车，到 **34/39**，代价约 **3G 显存**。侧车不可用 / 超时 → **自动退回纯词法**，绝不阻塞对话。
@@ -70,7 +70,7 @@
 | [`docs/release-manifest.md`](docs/release-manifest.md) | 本次发布的文件清单、排除项与提交前扫描结果 |
 | [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（受管侧车 / 手工侧车 + wrapper + 评测） |
 | [`memory/sidecar/`](memory/sidecar/README.md) | 手工 bge-m3 HTTP 服务（GPU fp16、离线、缓存、fail-safe） |
-| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` 0.5.0：云端/本地向量、连接向导、目录、阈值初始化、索引任务 |
+| [`memory/plugin/`](memory/plugin/README.md) | `holographic-semantic` 0.6.0：云端/本地向量、连接向导、目录、阈值初始化、索引任务 |
 | [`memory/eval/`](memory/eval/README.md) | 自包含合成中文评测，可复现（`results.json` 为实测输出） |
 | [`memory/threshold-calib/`](memory/threshold-calib/README.md) | 准入阈值校准工具 + 干跑证据（不透明行，可复算） |
 | [`config-patterns/`](config-patterns/README.md) | 配置范式（占位示例，无真值） |

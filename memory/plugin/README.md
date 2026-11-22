@@ -1,6 +1,6 @@
 # holographic-semantic plugin
 
-`holographic-semantic` 0.5.0：一个**不修改 Holographic 本体**的 memory provider 包装层。加载时继承
+`holographic-semantic` 0.6.0 是 Holographic 的 memory provider 包装层。加载时继承
 上游 provider，在它之上加：
 
 - 本地或云端的向量召回通道（侧车失败/超时自动退回词法召回，永不阻塞对话）；
@@ -11,7 +11,7 @@
 
 ## 前置
 
-这套 0.5.0 与下面两个固定版本配套，安装顺序见仓库根目录的 [`INSTALL.md`](../../INSTALL.md)：
+这套 0.6.0 与下面两个固定版本配套，安装顺序见仓库根目录的 [`INSTALL.md`](../../INSTALL.md)：
 
 - Hermes Agent `40d1e95f` + [`patches/hermes-agent-40d1e95f-eccd37ae.patch`](../../patches/README.md)
   （Desktop 设置面板、provider jobs、记忆复查、本地化）；
@@ -60,8 +60,7 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 | `semantic_enabled` | `false` | 本地语义召回总开关 |
 | `semantic_url` | `http://127.0.0.1:8791` | 侧车地址（受管部署会自动填写） |
 | `semantic_tau` | `0.55` | 本地余弦准入阈值（可用「初始化阈值」校准） |
-| `semantic_max_extra` | `3` | max facts appended beyond base recall |
-| `semantic_total_cap` | `7` | hard cap on total injected facts |
+| `semantic_total_cap` | `7` | maximum total after appending a semantic fact |
 | `semantic_timeout_ms` | `400` | sidecar HTTP budget; exceed → lexical only |
 | `embeddings` | `false` | 云端向量通道（Holographic 自带），与本地二选一 |
 | `embedding_url` | `https://api.openai.com/v1` | 云端 OpenAI 兼容端点 |
@@ -78,12 +77,13 @@ Desktop 面板与 `config.yaml` 是同一份设置：面板通过 base provider 
 
 ## Behavior
 
-`prefetch = base prefetch (unchanged) + up to N extra semantic facts`, where extra facts are:
-- cosine ≥ `tau`, trust-filtered, and not already in the base result;
-- skipped for greetings (no semantic noise on "hi");
-- subject to the repeat-window and the total cap;
-- **fail-open**: any sidecar error/timeout returns the base result unchanged. Recall
-  never blocks on the semantic channel.
+Local `prefetch` asks the sidecar for the closest fact above the trust floor. It appends
+that fact only if the cosine reaches `semantic_tau`, the base has yet to show it on this
+turn, and it passes the base's repeat-window, recallability, and name checks within
+`semantic_total_cap`. A rejected candidate ends that turn's semantic lookup.
+
+Greetings and messages that fail the base's before-turn `worth_asking` check skip the
+sidecar. A sidecar error or timeout returns the base result.
 
 ## Write routing (always on)
 
@@ -236,7 +236,7 @@ context each session, and the write routing already keeps fact ids out of MEMORY
 ## Desktop settings and the jobs (with the patched Hermes)
 
 - **Settings.** `config_schema.py` declares the wrapper's own keys (`semantic_enabled`, `semantic_url`,
-  `catalog_enabled`, `semantic_tau`, `semantic_max_extra`, `catalog_max_tokens`, `embedding_min_score`) and the
+  `catalog_enabled`, `semantic_tau`, `catalog_max_tokens`, `embedding_min_score`) and the
   cloud connection fields (`embedding_url`, `embedding_model`, `embedding_api_key`). They are read from and written to
   `plugins.hermes-memory-store` of the profile being configured (`settings.py`), through the base provider's own
   writer, so the panel and `config.yaml` are one setting. The base's keys stay in `config.yaml` and
@@ -249,9 +249,9 @@ context each session, and the write routing already keeps fact ids out of MEMORY
   none is left. Its status comes from `/health`: facts indexed of facts stored, the model and the device. It is
   unavailable when the sidecar does not answer, has not loaded a model, or reports a fact count that disagrees with
   the profile's. Matching counts do not prove store identity: set the sidecar's `SEMANTIC_DB` to this profile's DB.
-- **Threshold job.** "初始化阈值" (`threshold_job.py` + `threshold_calib.py`) draws probes from this profile's own
-  facts, admits by the rule of the mode in use (local cosine `semantic_tau`; cloud `Meaning.standout` +
-  `embedding_min_score`), and proposes one value from two draws. Nothing is written until the user confirms it.
+- **Threshold job.** "初始化阈值" (`threshold_job.py` + `threshold_calib.py`) draws two batches of probes from this
+  profile's facts. Local calibration checks the first candidate against `semantic_tau`. Cloud calibration uses
+  `Meaning.standout` and `embedding_min_score`. Confirm the suggestion to write it to the configuration.
   Fewer than 20 facts, or a model that cannot separate related from unrelated, proposes nothing and says why.
 - **CLI equivalents**: `hermes memory action` lists the jobs; `hermes memory action semantic-setup-local`,
   `semantic-index`, `semantic-threshold` run one to the end.

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import statistics
 import sys
 import tomllib
 import types
@@ -63,10 +64,21 @@ def load(src: Path | str = DEFAULT_SRC) -> types.SimpleNamespace:
             s = self.sims.get(fact_id)
             return s is not None and s >= self.floor
 
+    class RobustMeaning(emb.Meaning):
+        """z on the store's median and MAD (x 1.4826: a normal's sigma) instead of its mean and deviation: the facts
+        close to a message no longer widen the scale they are judged on. Experimental (calib_replay.py)."""
+
+        __slots__ = ()
+
+        def z(self, fact_id):
+            s = self.sims.get(fact_id)
+            mad = 1.4826 * statistics.median(abs(x - self.neutral) for x in self.sims.values()) if self.sims else 0.0
+            return (s - self.neutral) / mad if s is not None and mad > 1e-9 else 0.0
+
     with open(src / "pyproject.toml", "rb") as fh:
         version = tomllib.load(fh)["project"]["version"]
     return types.SimpleNamespace(emb=emb, screen=screen, mcnemar_gate=gate, FloorMeaning=FloorMeaning,
-                                 version=version)
+                                 RobustMeaning=RobustMeaning, version=version)
 
 
 def standout_args(v, rule: str, value: float) -> tuple[float, float | None]:

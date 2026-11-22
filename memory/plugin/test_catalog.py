@@ -1,5 +1,5 @@
-"""Self-check of the write routing, the fact catalog, `fact_store get` and the memory-checkup reads in
-holographic-semantic, against a stub of the base provider (the real one needs a Hermes checkout).
+"""Self-check of the catalog, write routing, settings, and local semantic recall in holographic-semantic,
+against a stub of the base provider (the real one needs a Hermes checkout).
 Run: python memory/plugin/test_catalog.py"""
 import importlib.util
 import json
@@ -13,6 +13,7 @@ import time
 import types
 import unicodedata
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 _BASE_SCHEMA = {"name": "fact_store", "description": "d",
                 "parameters": {"properties": {"action": {"enum": ["search"]}}}}
@@ -73,12 +74,16 @@ def _provider(config, facts):
     holo._recall_problem = lambda t: "a credential" if "password" in t else None
     holo._role_prompt = lambda t: False
     holo._split_tags = _split_tags
+    holo._one_line = lambda t: " ".join(t.split())
     holo._dumps = lambda v: json.dumps(v, ensure_ascii=False)
     holo.tool_error = lambda m: json.dumps({"error": m})
     holo.is_truthy_value = lambda v: v is True or str(v).lower() == "true"
+    holo.embeddings = types.SimpleNamespace(worth_asking=lambda q, *, before_turn: before_turn and q != "short")
+    holo_text = types.ModuleType("fakeholo.text")
+    holo_text.is_greeting = lambda q: q == "Hello"
     memory = types.ModuleType("plugins.memory")
     memory.import_provider_module = lambda name: holo
-    sys.modules.update({"fakeholo": holo, "fakeholo.text": types.ModuleType("fakeholo.text"),
+    sys.modules.update({"fakeholo": holo, "fakeholo.text": holo_text,
                         "plugins": types.ModuleType("plugins"), "plugins.memory": memory})
     package = Path(__file__).parent / "holographic-semantic"
     # as Hermes loads a plugin: a package, so its own modules import relatively
@@ -333,6 +338,96 @@ def test_the_index_job_cannot_start_while_the_sidecar_cannot_do_it():
         _settings_env({"semantic_url": "http://127.0.0.1:9"})  # nothing listens there
         job = next(j for j in p.maintenance_actions(tmp) if j["id"] == "semantic-index")
         assert job["ready"] is False and "not answering" in job["status"]
+
+
+_QUERY = "Where are the database settings?"
+_RANKED = [{"fact_id": 1, "cos": 0.8}, {"fact_id": 2, "cos": 0.7}]
+
+
+def _semantic_provider():
+    p = _provider({"semantic_enabled": True}, FACTS)
+    p._session_id, p._scope_key = "test", ""
+    p._turns, p._last_recall = {"test|": 1}, 0
+    p._not_recent = Mock(return_value=True)
+    p._recallable = Mock(return_value=True)
+    p._retriever = types.SimpleNamespace(names_fit=Mock(return_value=True))
+    p._remember = Mock()
+    p._counted = Mock()
+    return p
+
+
+def _semantic_prefetch(p, *, query=_QUERY, base="", candidates=_RANKED):
+    with patch.object(_Base, "prefetch", return_value=base, create=True), patch("urllib.request.build_opener") as http:
+        response = http.return_value.open.return_value.__enter__.return_value
+        response.read.return_value = json.dumps({"candidates": candidates}).encode("utf-8")
+        result = p.prefetch(query, session_id="test")
+    assert not p._sem_warned
+    return result, http
+
+
+def test_semantic_adds_only_the_closest_fact():
+    p = _semantic_provider()
+    block, http = _semantic_prefetch(p)
+    assert re.findall(r"^- #\d+ .*", block, re.MULTILINE) == ["- #1 [0.5] short"]
+    http.return_value.open.assert_called_once()
+    request = http.return_value.open.call_args.args[0]
+    assert json.loads(request.data) == {"query": _QUERY, "tau": 0.55, "limit": 1, "min_trust": 0.3}
+    fact = {"fact_id": 1, "content": "short", "trust_score": 0.5, "tags": "keywords: brief"}
+    p._retriever.names_fit.assert_called_once_with(_QUERY, fact)
+    p._remember.assert_called_once_with("test|", fact, 1)
+    p._counted.assert_called_once_with([fact])
+    assert p._last_recall == 1
+
+
+def test_semantic_skips_a_top_fact_already_shown():
+    p = _semantic_provider()
+    base = "# Holographic Memory\n- #1 [0.5] short"
+    assert _semantic_prefetch(p, base=base)[0] == base
+    p._remember.assert_not_called()
+
+
+def test_semantic_skips_a_top_fact_rejected_by_any_base_check():
+    p = _semantic_provider()
+    for check in (p._not_recent, p._recallable, p._retriever.names_fit):
+        check.return_value = False
+        assert _semantic_prefetch(p)[0] == ""
+        p._remember.assert_not_called()
+        check.return_value = True
+
+
+def test_semantic_skips_a_top_fact_below_threshold():
+    p = _semantic_provider()
+    assert _semantic_prefetch(p, candidates=[{"fact_id": 1, "cos": 0.54}])[0] == ""
+    p._remember.assert_not_called()
+
+
+def test_semantic_does_not_request_the_sidecar_for_short_messages_or_greetings():
+    p = _semantic_provider()
+    for query in ("short", "Hello"):
+        block, http = _semantic_prefetch(p, query=query)
+        assert block == ""
+        http.assert_not_called()
+
+
+def test_legacy_semantic_max_extra_is_ignored():
+    legacy = {"semantic_max_extra": "unused", "semantic_enabled": True}
+    p = _provider(legacy, FACTS)
+    _, saved = _settings_env(legacy)
+    assert p.read_config_fields("/homes/work")["values"] == {"semantic_enabled": True}
+    p.write_config_fields(legacy, "/homes/work")
+    assert saved == [({"semantic_enabled": True}, "/homes/work")]
+
+
+def test_local_calibration_uses_top_one_and_skips_short_messages():
+    _provider({}, FACTS)
+    from holographic_semantic import threshold_job
+
+    rule = threshold_job._local_rule({}, [], sys.modules["fakeholo"])
+    assert rule["askable"](_QUERY)
+    assert all(not rule["askable"](q) for q in ("", "short", "Hello"))
+    assert rule["admit"]([(1, 0.55), (2, 0.55)], 0.55) == [1]
+    assert rule["admit"]([(1, 0.54), (2, 0.52)], 0.55) == []
+    assert rule["admit"]([], 0.55) == []
 
 
 if __name__ == "__main__":

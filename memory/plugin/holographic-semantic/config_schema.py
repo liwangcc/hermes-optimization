@@ -25,13 +25,9 @@ _ZH = {
         "label": "云端最低相似度",
         "description": "云端向量生效：仅凭语义召回时的余弦相似度下限，范围为 -1 到 1。留空表示不设下限。",
     },
-    "semantic_max_extra": {
-        "label": "额外召回条数",
-        "description": "本地向量生效：每轮在关键词检索之外最多加入多少条事实。",
-    },
     "semantic_enabled": {
         "label": "语义召回",
-        "description": "每轮开始前，由本地向量侧车查找语义相近的事实。数据留在本机。侧车不可用时使用关键词检索，从新会话起生效。",
+        "description": "每轮开始前，本地向量侧车最多补充一条事实。数据留在本机。侧车不可用时使用关键词检索，从新会话起生效。",
     },
     "semantic_url": {
         "label": "本地侧车地址",
@@ -73,11 +69,8 @@ CONFIG_SCHEMA = ProviderConfigSchema(
             description="Cloud embeddings: optional cosine floor (-1 to 1) for a fact recalled on meaning alone; "
                         "blank = none."),
         ProviderField(
-            "semantic_max_extra", "Facts added by meaning", KIND_NUMBER, default="3", inline=True,
-            description="Local embeddings: at most this many facts per turn beyond the word search."),
-        ProviderField(
             "semantic_enabled", "Semantic recall", KIND_BOOL, default="false", inline=True,
-            description="Before a turn, add facts close in meaning to the message from the local embedding sidecar. "
+            description="Before a turn, add at most one fact from the local embedding sidecar. "
                         "Nothing leaves this machine; while the sidecar is down, recall stays by words. "
                         "Applies from the next session."),
         ProviderField(

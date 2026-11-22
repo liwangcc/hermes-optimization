@@ -15,7 +15,6 @@ DEFAULTS: dict[str, Any] = {
     "semantic_enabled": False,
     "semantic_url": "http://127.0.0.1:8791",
     "semantic_tau": 0.55,
-    "semantic_max_extra": 3,
     "embedding_min_score": None,  # the base's own key: unset is no floor
     "catalog_enabled": False,
     "catalog_max_tokens": 3000,
@@ -70,7 +69,7 @@ def to_store(values: dict[str, Any]) -> dict[str, Any]:
     """``write_config_fields`` input as stored values: only our keys; a cleared one (None) goes back to its default,
     since the base's writer merges and cannot delete a key. The panel edits numbers as text."""
     stored = {key: DEFAULTS[key] if value is None else value for key, value in values.items() if key in DEFAULTS}
-    numbers = {"semantic_tau": float, "semantic_max_extra": int, "catalog_max_tokens": int, "embedding_min_score": float}
+    numbers = {"semantic_tau": float, "catalog_max_tokens": int, "embedding_min_score": float}
     for key, parse in numbers.items():
         value = stored.get(key)
         if value is None:
