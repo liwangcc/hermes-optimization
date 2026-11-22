@@ -33,6 +33,15 @@
 **模型权重不随仓库分发**：bge-m3 约 2.14 GiB，BGE-small-zh 约 92 MiB，MiniLM 约 463 MiB，由安装程序按固定
 提交下载并逐文件校验 SHA-256。详见 [INSTALL.md §6](INSTALL.md#6-本地向量模型权重不在仓库里)。
 
+### 使用前清单（日常版）
+
+装好只是第一步。下面四件事漏掉任何一件，召回都会变差，而且对话里看不出来。每一项的做法、检查命令和修法见 **[使用手册](docs/user-guide.md)**。
+
+1. **每条事实都有关键词。** 让你的主模型用 `fact_store enrich` 补齐，直到 `fact_store stats` 里的 `without_keywords` 为 0。关键词是最大的杠杆，批量导入的事实通常没有。→ [做法](docs/user-guide.md#1-每条事实都有关键词)
+2. **开事实目录时，把 MEMORY.md 的内容搬进事实库，再关掉 MEMORY.md。** 先搬再关：关于你本人的进 USER.md，其余存成事实。→ [步骤](docs/user-guide.md#2-事实目录和-memorymd)
+3. **确认语义通道在起作用。** Windows x64 用设置页一键部署并建索引；macOS 和 Linux 要手工启动侧车，并确认词干包在。→ [检查](docs/user-guide.md#3-保证语义通道生效)、[macOS / Linux 的准备](docs/platforms.md)
+4. **跑一遍自检。** 合成库上只走词法是 29/36，带语义追加是 33/36；得到 26/36 说明没装词干包。→ [验证和问题修复](docs/user-guide.md#4-验证方法和问题修复)
+
 ## 这是什么 / 不是什么
 
 - ✅ **是**：一套建立在现有开源项目之上的**集成 + 调优 + 评测**层。旗舰是「本地 bge-m3 语义记忆增强」，配可复现评测。
@@ -80,6 +89,8 @@
 | 路径 | 内容 |
 |---|---|
 | [`INSTALL.md`](INSTALL.md) | **完整安装**：固定基线、补丁顺序、Desktop 构建、模型部署、验证与回滚 |
+| [`docs/user-guide.md`](docs/user-guide.md) | **使用手册**：使用前清单的四件事，每件怎么做、怎么查、出问题怎么修 |
+| [`docs/platforms.md`](docs/platforms.md) | macOS 和 Linux 的事前准备、自检命令、各环境的验证状态 |
 | [`patches/`](patches/README.md) | Hermes 与 Holographic 的日常版补丁、校验和、应用顺序 |
 | [`docs/release-manifest.md`](docs/release-manifest.md) | 本次发布的文件清单、排除项与提交前扫描结果 |
 | [`memory/`](memory/README.md) | **旗舰**：语义记忆增强（受管侧车 / 手工侧车 + wrapper + 评测） |

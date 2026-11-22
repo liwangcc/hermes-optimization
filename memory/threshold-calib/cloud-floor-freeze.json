@@ -4,7 +4,9 @@
   "calib_cloud_floor.py": "51d90e99fd0aadb4a419bc38a21847dd520ec97ccb5a217af52a5d1b48f174ac",
   "calib_cloud_floor.py, with choose_m2": "4880ac9c56578089142c8e48e9d2c2c9c4f5e00ef6b85b567f4a6fafa8bdeb0e",
   "calib_cloud_floor.py, final (floor sweep added after the household runs; events, curve, choose and choose_m2 unchanged)": "ebe2083452f8cebe7dc6268088e60cbe2d8c35fd2b3956a5f85abfdba4c3bb65",
-  "calib_cloud_floor.py, with per-question events in the output (events, curve, choose and choose_m2 unchanged)": "6ff9edc4e12912152acc25f26678a704e2e43c431890fcb99f1d3659661d80a1"
+  "calib_cloud_floor.py, with per-question events in the output (events, curve, choose and choose_m2 unchanged)": "6ff9edc4e12912152acc25f26678a704e2e43c431890fcb99f1d3659661d80a1",
+  "calib_cloud_floor.py, with the wrong_no_answer counts for calib_model_tau": "e14af5d545b194c65c2c2c2b024a40120fa55b790a1cb71cf46dc675a59c2f52",
+  "calib_model_tau.py": "9df56ae8d8f317a9f67cb436fa93568b973d3b3964639876e14770335ccbb33a"
  },
  "rule_M": {
   "probe": "the built-in natural-question bank: issue95-evidence/synthetic, 30 facts with their blind keywords, 48 questions",
@@ -93,5 +95,41 @@
   "reported": "per model: tau, rescued / 210, wrong on no-answer / 183, and the same rate on each of the four sets",
   "seen_when_written": "every bge-m3 curve; for the two small models only BUILTIN's tabulated points; nothing for multilingual-e5-small, which stands in for a model nobody tuned for",
   "note": "the sidecar adds no query or passage prefix, so e5 is used as a user who just plugs it in would use it"
+ },
+ "rule_P10L": {
+  "written": "2026-11-22, after leaving one set out of rule P10 on the four models' cached runs and reading the rule on language subsets of the bank; before any run of calib_model_tau.py on a frozen store",
+  "why_revised": "with the fourth set left out, 14 of 16 cells stayed at or under 12% wrong on no-answer questions; the two that did not were a model on a language missing from the three sets it was picked on (multilingual-e5-small on household zh 47%, bge-small-zh on household ru 61%), and the pooled cap had already left e5 at 30% on zh inside the bank",
+  "bank": "the sets in the languages the user writes in: zh = synthetic + household zh, en = household en, ru = household ru",
+  "choice": "the lowest tau on the 0.05..0.99 grid at which, on every one of those sets, wrong facts appended to no-answer questions are at most 10% of that set's no-answer questions",
+  "verdict": "the model adds nothing when fewer than 5 answerable questions of those sets are rescued at that tau (the count of rule P10, unchanged)",
+  "values_seen_when_written": {
+   "zh": {
+    "bge-m3": 0.59,
+    "multilingual-minilm": 0.54,
+    "multilingual-e5-small": 0.89,
+    "bge-small-zh": "adds nothing (0.61, 0 rescued)"
+   },
+   "zh en ru": {
+    "bge-m3": 0.6,
+    "multilingual-minilm": 0.54,
+    "multilingual-e5-small": 0.89,
+    "bge-small-zh": "adds nothing (0.92, 0 rescued)"
+   }
+  }
+ },
+ "rule_P10L_store_check": {
+  "written": "2026-11-22, before any run of calib_model_tau.py with --store on the frozen real store",
+  "run": "calib_model_tau.py --langs zh --store <frozen copy> --queries <its labels>, once for each of bge-m3, multilingual-minilm, multilingual-e5-small and bge-small-zh; the store is read through calib_cloud_floor.py --suite real with a local model, counts only",
+  "cap_holds": "at the picked tau, wrong facts appended to the store's no-answer questions are at most 10% of its no-answer questions",
+  "verdict_holds": "a model the bank says adds something: at the picked tau the store has at least 1 rescued question and no more wrong facts appended than rescued questions. A model the bank says adds nothing: the store's own labels find no threshold with at least 2 rescued and no more wrong than rescued (choose_m2 is None)",
+  "method_holds": "cap_holds for every model with a picked tau. verdict_holds is reported per model and is not part of it: what a model can add depends on the content",
+  "seen_when_written": "the frozen store through the shipped plugin, from BUILTIN-QUESTIONS-RESULTS.md (rescued / added non-answers): bge-m3 0.52 6/3, 0.55 6/3, 0.58 3/2; bge-small-zh 0.50 5/12, 0.64 1/0; multilingual-minilm 0.52 1/3, 0.58 0/1; nothing for multilingual-e5-small",
+  "expected": "bge-m3 holds both; multilingual-minilm probably fails verdict_holds (about 1 rescued against 1 to 3 wrong); bge-small-zh and multilingual-e5-small not known"
+ },
+ "rule_P10L_vs_pure": {
+  "written": "2026-11-22, after the user relayed the unmodified upstream plugin (76689f9, default margin 1.0) on the frozen store with four local models, and before any run of calib_model_tau.py with --store on it",
+  "pure_on_the_store": "hit@5 of 44, rescued / lost, new non-targets, non-targets shown in all: vectors off 31, -, -, 94; bge-m3 34, 3/0, 6, 93; bge-small-zh 33, 2/0, 8, 93; multilingual-minilm 33, 2/0, 7, 92; multilingual-e5-small 32, 1/0, 4, 93; noise rows 3 and confusion rows 30 in every arm",
+  "decision": "P10L goes into the threshold button for unrecognized local models only if, for at least one of bge-small-zh, multilingual-minilm and multilingual-e5-small, the closest-fact admission at the P10L value rescues more questions on the store than the upstream admission did with that model (2, 2, 1), with no more wrong facts appended than questions rescued. Otherwise an unrecognized model is pointed at the upstream admission, which takes no threshold",
+  "expected": "not met for bge-small-zh (no value, so 0 against 2) and multilingual-minilm (at most 1 against 2 from the points already known); multilingual-e5-small not known"
  }
 }

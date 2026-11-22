@@ -223,13 +223,16 @@ def run(args):
         for mode, walked in (("cloud", official), *((("local", off),) if local else ())):
             found = events(questions, walked)
             points = curve(found)
+            asked_of = [q for q, w in zip(questions, walked) if w["candidate"]]
+            quiet = [cos for (cos, kind), q in zip(found, asked_of) if kind == "wrong" and not q["targets"]]
             out["step3"][mode] = {"candidates": dict(Counter(kind for _, kind in found)), "choice": choose(points),
                                   "choice_m2": choose_m2(points),
                                   # per question, for rates by message mix; a real store gives counts only
                                   "events": [] if args.suite == "real" else [
-                                      [round(cos, 4), kind, bool(q["targets"])] for (cos, kind), q in zip(
-                                          found, (q for q, w in zip(questions, walked) if w["candidate"]))],
-                                  "curve": {f"{k / 100:.2f}": list(rw) for k, rw in points.items()}}
+                                      [round(cos, 4), kind, bool(q["targets"])] for (cos, kind), q in zip(found, asked_of)],
+                                  "curve": {f"{k / 100:.2f}": list(rw) for k, rw in points.items()},
+                                  # wrong facts on no-answer questions, for calib_model_tau's check on a store
+                                  "wrong_no_answer": {f"{k / 100:.2f}": sum(c >= k / 100 for c in quiet) for k in GRID}}
     return out
 
 
