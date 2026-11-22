@@ -13,10 +13,10 @@
 | 版本 | 取舍 | 适合谁 | 在哪 |
 |---|---|---|---|
 | **上游纯净版** | 精度优先。holographic 默认统计离群门（zbar，margin 1.0），噪声极低；小库上按意思召回很少 | 怕噪声、要稳的多数用户 | [holographic 上游](https://github.com/itpartypattaya/hermes-plugin-holographic)，开箱即用 |
-| **纯净增强版（主推）** | 不抬高噪声的前提下提召回：低余量候选经本地小模型复核确认才放行，噪声/混淆不增，官方门禁两个题池全过 | 想要更多召回、又不愿牺牲精度 | 补丁与门禁证据 [`memory/threshold-calib/upstream-check/`](memory/threshold-calib/upstream-check/README.md)，投稿记录 [`docs/upstream-memory-review/`](docs/upstream-memory-review/SUBMISSION.md) |
+| **纯净增强版（主推）** | **已通过官方全部门禁**：不丢目标、噪声不增、混淆不增、McNemar 显著，五集＋七集两个题池端到端实测全过。做法是低余量候选经本地小模型复核确认才放行。**唯一代价：多约 1 GB 显存**（小复核模型），每轮最多一次、约 45 ms | 想要更多召回、又不愿牺牲精度 | 补丁与门禁证据 [`memory/threshold-calib/upstream-check/`](memory/threshold-calib/upstream-check/README.md)，投稿记录 [`docs/upstream-memory-review/`](docs/upstream-memory-review/SUBMISSION.md) |
 | **日常版（自选）** | 召回优先。cos≥0.55 + 双语口语关键词 + 余弦追加，recall 更高，但会带回非目标事实（精度有代价） | 个人日常、更怕漏召回不怕噪声 | 本仓库 [`memory/plugin/holographic-semantic/`](memory/plugin/holographic-semantic/)，安装见 [INSTALL.md](INSTALL.md) |
 
-**主推上游纯净版 / 纯净增强版。** 它们守住上游精度门（噪声、混淆不增），是适合大多数人的默认。纯净增强版目前**正在投稿上游**，补丁、探针记录和门禁输出都在仓库里、可复算；是否合并由上游维护者决定，沉默不算同意。
+**主推上游纯净版 / 纯净增强版。** 纯净版是上游默认的精度门，开箱即用。纯净增强版**已在本地 bge-m3 上端到端通过官方全部门禁**——五集 480→486、七集 565→573，救回 6/8 题、零丢失，噪声与混淆都不增，McNemar 显著——代价只是多约 1 GB 显存挂一个小复核模型。补丁、探针记录和门禁输出都在仓库里、可复算；已投稿上游，是否合并由维护者决定。
 
 **日常版是我自己的取舍，不是给所有人的推荐。** 它把召回拉满，代价是语义通道带回非目标事实（见下方「精度」一节的收回声明）。想直接用我日常这套，从 [INSTALL.md](INSTALL.md) 开始；更怕噪声，就用上游纯净版，或等纯净增强版进上游。
 
