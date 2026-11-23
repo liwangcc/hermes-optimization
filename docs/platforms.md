@@ -52,7 +52,7 @@ python3 -m venv .venv
   --revision 5617a9f61b028005a4858fdac845db406aefb181 --local-dir models/bge-m3
 ```
 
-- 这里的 `python3` 用系统的 Python 3.10 到 3.13，先确认 PyTorch 有对应版本的安装包。
+- 这个环境用 Python 3.10 到 3.13 来建。系统的 `python3` 不在这个范围时，把第一条命令换成 `python3.11 -m venv .venv`：Ubuntu 26.04 自带的是 3.14，WSL2 上实测用的是 3.11，3.14 没有试过。
 - 模型约 2.3 GB。PyTorch 的安装包从几十 MB 到几 GB 不等，取决于平台和是否带 CUDA。
 - Linux 上要用显卡，按 pytorch.org 的说明装和驱动匹配的 CUDA 版本。
 
@@ -70,9 +70,14 @@ curl -s http://127.0.0.1:8791/health
 curl -s -X POST http://127.0.0.1:8791/sync -d '{}'
 ```
 
-- `/health` 里 `ok` 为 `true`，`device` 是 `cpu` 或 `cuda`。
+- `/health` 里 `ok` 为 `true`，`device` 是 `cpu` 或 `cuda`，`facts` 是一个数字。
 - `/sync` 给已有的事实建索引。跑完后 `/health` 里的 `facts_indexed` 应该等于 `facts`。
 - 侧车要一直开着。关掉以后召回退回纯词法，不会报错。
+
+`facts` 是 `null`，或者 `/sync` 返回 `unable to open database file`：侧车没找到事实库文件。这时 `ok` 仍然是 `true`，它只表示模型加载好了。两种原因：
+
+- 启动侧车的那个终端里没有设 `HERMES_HOME`，路径变成了 `/memory_store.db`。设好后重启侧车。
+- 全新安装，事实库还没建。侧车只读库，不会建库；`hermes memory status` 也不会建。插件在第一个会话里初始化时才建库。建好之后侧车不用重启，它每次请求都重新打开库。
 
 ### 4. 打开语义通道
 
@@ -97,11 +102,14 @@ python /path/to/hermes-optimization/memory/threshold-calib/check_daily_install.p
 
 去掉后两个参数就只查词法这一半，不需要侧车和模型。脚本会自己起一个临时的侧车，和第 3 步那个互不影响。
 
+要把结果报给别人，或者核验别人报来的结果，按[测试标准](test-standard.md)做：加 `--out daily-check.json` 交报告文件，收到的人用 `--verify` 核验。
+
 ### 怎么读结果
 
 | 输出里的字段 | 正常值 | 不正常时说明什么 |
 |---|---|---|
 | `stemmer` | `true` | `false`：词干包没装，见上面第 1 步 |
+| `numpy` | `true` 或 `false` 都正常 | 只影响首位命中，见下面的对照表 |
 | `words_only.hit5` | 29（共 36） | 26：词干包没装 |
 | `closest_fact.hit5` | 33（共 36） | 和 `words_only` 一样：侧车没有起作用 |
 | `closest_fact.gave_up` | 0 | 大于 0：侧车答得比插件的预算慢，这些题退回了词法 |
@@ -121,10 +129,22 @@ hermes config set plugins.hermes-memory-store.semantic_timeout_ms 1500
 | 前五命中 | 是什么情形 |
 |---:|---|
 | 33/36 | 日常版正常工作 |
+| 32/36 | 语义追加起作用了，但没装词干包 |
 | 29/36 | 只走了词法：侧车没开、没连上，或者 `semantic_enabled` 没打开 |
 | 26/36 | 只走了词法，而且没装词干包 |
 
+不在表里的数（比如 30、31）：语义追加只在一部分题上起了作用。先看自检输出里的 `gave_up`，大于 0 就是侧车对一部分题答得比预算慢。
+
 每道题要在新的会话里问。同一个会话里连着问，最近展示过的事实不会再展示，命中率会偏低。
+
+只对前五命中，不要对首位命中。首位命中还取决于跑 Hermes 的 Python 里有没有 numpy：有 numpy 时上游插件多用一路结构排序，前五不变，首位差一题。只走词法时的首位命中：
+
+| | 有 numpy | 没有 numpy |
+|---|---:|---:|
+| 有词干包 | 25/36 | 26/36 |
+| 没有词干包 | 22/36 | 23/36 |
+
+Hermes 本身不依赖 numpy，默认安装里没有它。上表在 Windows 上换 12 个哈希种子结果都不变。WSL2 上有 numpy 时跑了 10 遍（5 遍随机种子、5 遍固定种子），都是前五 29、首位 25，和上表一致。
 
 ## 验证状态
 
@@ -132,11 +152,13 @@ hermes config set plugins.hermes-memory-store.semantic_timeout_ms 1500
 |---|---|---:|---:|---|---|
 | Windows 11 x64，CUDA 显卡 | 有 | 29/36 | 33/36 | 30 / 46 毫秒 | 已测 |
 | Windows 11 x64，侧车强制用 CPU | 有 | 29/36 | 33/36 | 69 / 98 毫秒 | 已测 |
-| Windows 11 x64，屏蔽词干包 | 无 | 26/36 | 未跑 | — | 已测 |
+| Windows 11 x64，屏蔽词干包 | 无 | 26/36 | 32/36 | 41 / 67 毫秒 | 已测 |
 | macOS，16 GB | 未知 | 26/36（用户报告） | 未知 | 未知 | 和「没装词干包、侧车没起作用」的数相同；按本页准备后还没有复测 |
-| Linux（WSL2） | 待测 | 待测 | 待测 | 待测 | 待测 |
+| Linux（WSL2） | 有 | 29/36 | 33/36 | 15.9 / 21.8 毫秒 | 已测（Ubuntu 26.04 LTS，cuda），重复一次结果相同 |
 
-CPU 和显卡上的命中数相同，所以 Mac 上准备齐全后预期也是 33/36，这一点还没有实测。
+- CPU 和显卡上的命中数相同，所以 Mac 上准备齐全后预期也是 33/36，这一点还没有实测。
+- Linux 这一行只测了命令行和 CUDA 显卡。没有测的：Desktop 构建、侧车在 CPU 上运行、「事前准备」第 2 步的模型下载命令（测试用的是机器上已有的一份 BGE-M3）。
+- 同一环境里测试套件 132 项全部通过。原始输出在 [wsl2-evidence/](../wsl2-evidence/METRICS.md)。
 
 ## BGE-M3 以外的本地模型
 

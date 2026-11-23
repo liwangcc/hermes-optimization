@@ -105,7 +105,7 @@
 
 - 设置页的索引任务会显示「已索引 N/M 条事实」、模型和设备。N 应该等于 M。
 - 命令行：`hermes memory action` 列出任务，`hermes memory action semantic-index` 运行索引任务。
-- 手工侧车：`curl -s http://127.0.0.1:8791/health`，`ok` 为 `true`，`facts_indexed` 等于 `facts`。
+- 手工侧车：`curl -s http://127.0.0.1:8791/health`，`ok` 为 `true`，`facts_indexed` 等于 `facts`。`facts` 是 `null` 说明侧车没找到事实库文件，这时 `ok` 仍然是 `true`。
 - 日志里出现 `holographic-semantic: sidecar unavailable, lexical-only recall`，说明侧车没连上或超时。这一行在恢复之前只报一次。
 
 **这些情况不补事实是正常的，不是故障：**
@@ -126,13 +126,20 @@ python /path/to/hermes-optimization/memory/threshold-calib/check_daily_install.p
 
 去掉后两个参数只查词法这一半，不需要侧车和模型。
 
+要把结果报给别人，或者核验别人报来的结果，按[测试标准](test-standard.md)做。自己出题或只报一个百分比的结果没法核验。
+
 **前五命中对照**（合成库 36 道有答案的题）：
 
 | 前五命中 | 是什么情形 |
 |---:|---|
 | 33/36 | 日常版正常工作 |
+| 32/36 | 语义追加起作用了，但没装词干包 |
 | 29/36 | 只走了词法：侧车没开、没连上，或者开关没打开 |
 | 26/36 | 只走了词法，而且没装词干包 |
+
+不在表里的数（比如 30、31）：语义追加只在一部分题上起了作用，先看自检输出里的 `gave_up`。
+
+只对前五命中。首位命中会随环境里有没有 numpy 差一题，不作为对照数。
 
 **问题和修法：**
 
@@ -140,6 +147,7 @@ python /path/to/hermes-optimization/memory/threshold-calib/check_daily_install.p
 |---|---|---|
 | 自检的 `words_only` 是 26 | 跑 Hermes 的 Python 里没有 `snowballstemmer` | `python -m pip install snowballstemmer==3.1.1`，或者改用 Hermes 自己的 Python |
 | 自检的 `closest_fact` 和 `words_only` 相同 | 侧车没有起作用 | 按第 3 节逐条查 |
+| 侧车 `/health` 里 `facts` 是 `null`，或 `/sync` 报 `unable to open database file` | 侧车没找到事实库文件：启动它的终端里没设 `HERMES_HOME`，或者全新安装还没建库 | 见 [platforms.md](platforms.md#3-启动侧车) |
 | 自检的 `gave_up` 大于 0 | 侧车回答比预算慢 | `hermes config set plugins.hermes-memory-store.semantic_timeout_ms 1500` |
 | 自检正常，自己的库上还是问不到 | 事实没有关键词，或关键词不是别人会用的说法 | 第 1 节 |
 | 同一个会话里连着问，后面的问题不中 | 最近展示过的事实不会重复展示 | 测试时每道题开一个新会话 |

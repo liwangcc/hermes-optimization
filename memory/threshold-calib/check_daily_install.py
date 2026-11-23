@@ -6,11 +6,13 @@ the reference, 26 means snowballstemmer is missing. With --sidecar-python and --
 the manual sidecar (memory/sidecar/server.py) on the same 30 facts and reports its device, how long it takes
 against the plugin's budget, how often recall gave up on it, and hit@5 with the closest fact appended: 33 of 36 is
 the reference for BGE-M3 at 0.55 on CUDA. Everything runs in a temporary home: the user's store and settings are
-not read. See docs/platforms.md.
+not read. --out writes the report to a file; --verify reads such a report and says whether it counts as a
+standard result and matches the reference. See docs/test-standard.md.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import logging
@@ -37,7 +39,21 @@ WRAPPER = REPO / "memory" / "plugin" / "holographic-semantic"
 SERVER = REPO / "memory" / "sidecar" / "server.py"
 FACT_LINE = re.compile(r"^- #(\d+) \[", re.MULTILINE)
 HTTP = build_opener(ProxyHandler({}))  # a local address never goes through a proxy
-WORDS, WORDS_UNSTEMMED, CLOSEST = 29, 26, 33  # hit@5 of 36: the references in docs/platforms.md
+WORDS, WORDS_UNSTEMMED, CLOSEST = 29, 26, 33  # hit@5 of 36: the references in docs/test-standard.md
+STANDARD = "daily-check-1"  # a new name whenever the facts, the questions or the references below change
+FILES = ("facts.json", "blind_keywords.json", "queries.json", "queries_ext.json")
+REFERENCE = {  # the questions with no target in the first five, by (stemmer, step): the same with or without numpy
+    (True, "words_only"): ["P5", "P7", "P10", "C1", "C5", "C6", "C10"],
+    (False, "words_only"): ["P5", "P7", "P10", "X4", "X5", "X7", "C1", "C5", "C6", "C10"],
+    (True, "closest_fact"): ["P5", "P10", "C6"],
+    (False, "closest_fact"): ["P5", "P10", "X4", "C6"],
+}
+
+
+def data_id() -> str:
+    """The facts, their keywords and the questions as parsed: the same whatever the checkout's line endings."""
+    parsed = [json.loads((SYNTHETIC / name).read_text(encoding="utf-8")) for name in FILES]
+    return hashlib.sha256(json.dumps(parsed, sort_keys=True, ensure_ascii=True).encode()).hexdigest()[:12]
 
 
 def load_wrapper(core: Path, base: Path, home: Path):
@@ -98,9 +114,10 @@ def ask(wrapper, db: Path, home: Path, probes: list[dict], url: str | None = Non
 
 
 def score(probes: list[dict], rows: list[list[int]]) -> dict:
-    answerable = [(set(p["targets"]), got) for p, got in zip(probes, rows) if p["targets"]]
-    return {"hit5": sum(bool(gold & set(got[:5])) for gold, got in answerable),
-            "first": sum(bool(got) and got[0] in gold for gold, got in answerable), "of": len(answerable)}
+    answerable = [(p["qid"], set(p["targets"]), got) for p, got in zip(probes, rows) if p["targets"]]
+    missed = [qid for qid, gold, got in answerable if not gold & set(got[:5])]
+    return {"hit5": len(answerable) - len(missed), "of": len(answerable), "missed": missed,
+            "first": sum(bool(got) and got[0] in gold for _, gold, got in answerable)}
 
 
 def findings(stemmer: bool, words: dict, closest: dict | None) -> list[str]:
@@ -120,6 +137,27 @@ def findings(stemmer: bool, words: dict, closest: dict | None) -> list[str]:
     elif closest["hit5"] <= words["hit5"]:
         out.append("the sidecar answered but added no hit: check the model directory is BGE-M3.")
     return out
+
+
+def verify(report: dict) -> dict:
+    """Whether a report is a standard result that matches the reference for its machine (with or without the
+    stemmer), what keeps it from being one, and what that machine has to fix."""
+    if report.get("standard") != {"name": STANDARD, "data": data_id()}:
+        return {"standard_result": False, "to_fix": [], "problems": [
+            f"not {STANDARD}: made by another version of this script, or on other facts and questions."]}
+    out = []
+    for step in ("words_only", "closest_fact"):
+        got = report[step]
+        if got is None:
+            continue  # findings() says the step was not run
+        if got["of"] != 36 or got["hit5"] + len(got["missed"]) != got["of"]:
+            out.append(f"{step}: the counts do not add up.")
+        want = set(REFERENCE[bool(report["stemmer"]), step])
+        more, fewer = sorted(set(got["missed"]) - want), sorted(want - set(got["missed"]))
+        if more or fewer:
+            out.append(f"{step}: misses {more} that the reference finds, finds {fewer} that the reference misses.")
+    return {"standard_result": not out, "problems": out,
+            "to_fix": findings(report["stemmer"], report["words_only"], report["closest_fact"])}
 
 
 def post(url: str, route: str, body: dict | None = None, timeout: float = 60):
@@ -191,7 +229,10 @@ def run(args, home: Path) -> dict:
                    "requests": len(asked), "ms_median": round(statistics.median(times), 1),
                    "ms_max": round(max(times), 1), "budget_ms": budget, "gave_up": gave_up,
                    "appended": sum(len(after) > len(before) for before, after in zip(rows, got))}
-    return {"platform": platform.platform(), "python": platform.python_version(), "stemmer": stemmer,
+    return {"standard": {"name": STANDARD, "data": data_id()},
+            "platform": platform.platform(), "python": platform.python_version(), "stemmer": stemmer,
+            # with numpy the base plugin also ranks by structure: hit@5 is the same, first place moves by one question
+            "numpy": importlib.util.find_spec("numpy") is not None,
             "wrapper": re.search(r"^version:\s*(\S+)", (WRAPPER / "plugin.yaml").read_text(encoding="utf-8"),
                                  re.MULTILINE).group(1),
             "words_only": words, "closest_fact": closest, "to_fix": findings(stemmer, words, closest)}
@@ -199,11 +240,18 @@ def run(args, home: Path) -> dict:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--core-src", type=Path, required=True, help="the patched Hermes checkout")
-    ap.add_argument("--base-src", type=Path, required=True, help="the Holographic 0.30.0 checkout")
+    ap.add_argument("--core-src", type=Path, help="the patched Hermes checkout")
+    ap.add_argument("--base-src", type=Path, help="the Holographic 0.30.0 checkout")
     ap.add_argument("--sidecar-python", type=Path, help="the Python of the sidecar's environment (it has torch)")
     ap.add_argument("--model-dir", type=Path, help="the local BGE-M3 directory the sidecar loads")
+    ap.add_argument("--out", type=Path, help="also write the report to this file, to send it as it is")
+    ap.add_argument("--verify", type=Path, help="check a report made with --out instead of running anything")
     args = ap.parse_args()
+    if args.verify:
+        print(json.dumps(verify(json.loads(args.verify.read_text(encoding="utf-8"))), indent=1))
+        return
+    if not (args.core_src and args.base_src):
+        ap.error("--core-src and --base-src are required")
     if bool(args.sidecar_python) != bool(args.model_dir):
         ap.error("--sidecar-python and --model-dir go together")
     if args.model_dir:
@@ -211,7 +259,10 @@ def main():
     sys.dont_write_bytecode = True
     logging.disable(logging.CRITICAL)
     with tempfile.TemporaryDirectory(prefix="hermes-daily-check-") as td:
-        print(json.dumps(run(args, Path(td).resolve()), ensure_ascii=True, indent=1))
+        report = json.dumps(run(args, Path(td).resolve()), ensure_ascii=True, indent=1)
+    if args.out:
+        args.out.write_text(report, encoding="utf-8")
+    print(report)
 
 
 if __name__ == "__main__":
