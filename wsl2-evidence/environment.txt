@@ -1,0 +1,53 @@
+=== date ===
+2026-11-22T16:32:52Z
+=== uname -a ===
+Linux wsl2 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 GNU/Linux
+=== os-release ===
+PRETTY_NAME="Ubuntu 26.04 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04 (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+=== nvidia-smi ===
+Sun Nov 22 11:32:52 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 590.52.01              Driver Version: 591.74         CUDA Version: 13.1     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4060 ...    On  |   00000000:01:00.0  On |                  N/A |
+| N/A   51C    P3             17W /  140W |    3279MiB /   8188MiB |     12%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A              26      G   /Xwayland                             N/A      |
++-----------------------------------------------------------------------------------------+
+=== python3 (system) ===
+Python 3.14.4
+/usr/bin/python3
+=== python3.11 ===
+Python 3.11.15
+=== git ===
+git version 2.53.0
+=== memory ===
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       2.5Gi       4.9Gi       1.8Gi       2.2Gi       5.1Gi
+Swap:          2.0Gi          0B       2.0Gi
+=== disk (WSL root fs) ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdd       1007G   27G  930G   3% /

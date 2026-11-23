@@ -1,0 +1,17 @@
+=== HERMES_HOME 全空（memory_store.db 文件不存在）===
+=== /health (before sync; store may not exist yet) ===
+{"ok": true, "model": "bge-m3", "device": "cuda", "facts_indexed": 0, "facts": null, "error": ""}
+=== /sync ===
+{"error": "OperationalError: unable to open database file"}
+=== /health (after sync) ===
+{"ok": true, "model": "bge-m3", "device": "cuda", "facts_indexed": 0, "facts": null, "error": ""}
+=== /health (after memory status; store may now exist) ===
+{"ok": true, "model": "bge-m3", "device": "cuda", "facts_indexed": 0, "facts": null, "error": ""}
+
+=== 空库文件已存在（0 条事实，经 base provider initialize 建立）===
+=== /health (empty store exists) ===
+{"ok": true, "model": "bge-m3", "device": "cuda", "facts_indexed": 0, "facts": 0, "error": ""}
+=== /sync (empty store) ===
+{"embedded": 0, "remaining": 0, "facts": 0, "facts_indexed": 0, "ms": 0.5}
+=== /health (after sync) ===
+{"ok": true, "model": "bge-m3", "device": "cuda", "facts_indexed": 0, "facts": 0, "error": ""}

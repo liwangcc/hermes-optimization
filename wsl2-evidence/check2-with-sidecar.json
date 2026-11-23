@@ -1,0 +1,25 @@
+{
+ "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+ "python": "3.14.9",
+ "stemmer": true,
+ "wrapper": "0.6.1",
+ "words_only": {
+  "hit5": 29,
+  "first": 25,
+  "of": 36
+ },
+ "closest_fact": {
+  "hit5": 33,
+  "first": 28,
+  "of": 36,
+  "device": "cuda",
+  "facts_indexed": 30,
+  "requests": 47,
+  "ms_median": 15.9,
+  "ms_max": 21.8,
+  "budget_ms": 400.0,
+  "gave_up": 0,
+  "appended": 7
+ },
+ "to_fix": []
+}
