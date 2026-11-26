@@ -54,6 +54,7 @@ SEMANTIC_DB=/path/to/memory_store.db python server.py
 | `SEMANTIC_MODEL` | `./models/bge-m3` | local bge-m3 directory |
 | `SEMANTIC_PORT` | `8791` | listen port (bound to 127.0.0.1) |
 | `SEMANTIC_CACHE` | `./cache` | vector cache directory |
+| `SEMANTIC_JUDGE_MODEL` | unset | optional: a local `Qwen/Qwen3-Reranker-0.6B` directory; with it `/judge` is served (needs CUDA in practice: about 0.25 s a message on a laptop GPU, 15 s on a CPU) |
 
 Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 
@@ -65,6 +66,11 @@ Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 | POST | `/sync` | `{limit}` | index new/changed facts now (at most `limit`), drop deleted ones; returns `embedded`, `remaining`, `facts` |
 | POST | `/candidates` | `{query, tau, limit, min_trust}` | ranked cosine candidates above `tau` |
 | POST | `/embed` | `{texts: [...]}` | normalized vectors |
+| POST | `/judge` | `{query, ids, k, min_trust}` | for the facts in `ids` and the `k` closest by cosine: `cos`, `rank` in the store, and the judge's `strict` and `generic` readings of the message with the fact; 404 without a judge model. Used by the wrapper's `semantic_judge` |
+
+When a judge is loaded, the sidecar checks for new or edited facts every two seconds and indexes up to four at a
+time. `/judge` ranks facts by vectors that match their current content and tags. Requested IDs can still be scored
+while their vectors are pending. The response's `embedded` count is zero.
 
 `/candidates` re-syncs the fact cache (embeds new/changed facts, drops deleted ones)
 before scoring, so the index tracks the store without a separate indexing step.

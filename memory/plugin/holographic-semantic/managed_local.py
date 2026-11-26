@@ -114,12 +114,15 @@ def _check_embedding(url: str, model: LocalModel) -> None:
             f"本地服务返回 {len(vector)} 维向量，{model.label} 应为 {model.dim} 维。"))
 
 
-def _launch(root: Path, python: Path, weights: Path, db: Path, port: int, model: LocalModel) -> subprocess.Popen:
+def _launch(root: Path, python: Path, weights: Path, db: Path, port: int, model: LocalModel,
+            judge: str = "") -> subprocess.Popen:
     env = runtime_env(root)
     env.update(SEMANTIC_DB=str(db), SEMANTIC_MODEL=str(weights), SEMANTIC_PORT=str(port),
                SEMANTIC_CACHE=str(index_dir(root, model)), SEMANTIC_STORE_ID=_store_id(db),
                SEMANTIC_MODEL_ID=model.id, SEMANTIC_MODEL_REV=model.rev, SEMANTIC_DIM=str(model.dim),
                HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", OMP_NUM_THREADS="4")
+    if judge and (Path(judge) / "config.json").is_file():  # semantic_judge_model: the service then serves /judge
+        env["SEMANTIC_JUDGE_MODEL"] = judge
     flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
     with (root / "service.log").open("ab") as log:
         return subprocess.Popen([str(python), "-I", "-B", "-u", str(_SERVER)], cwd=root, stdin=subprocess.DEVNULL,
@@ -225,7 +228,7 @@ def _free_port() -> int:
         return client.getsockname()[1]
 
 
-def wake(home: str, db: Path | None, url: str) -> None:
+def wake(home: str, db: Path | None, url: str, judge: str = "") -> None:
     """Start a previously deployed managed service after reboot as a background child."""
     if db is None or not fresh_install_supported() or (port := _port(url)) is None:
         return
@@ -253,7 +256,7 @@ def wake(home: str, db: Path | None, url: str) -> None:
             record = _receipt(root)
             if record.get("url") != url or 0 <= time.monotonic() - float(record.get("spawned", -60)) < 3:
                 return
-            _launch(root, python, weights, db, port, model)
+            _launch(root, python, weights, db, port, model, judge)
             _write_receipt(root, {**receipt, "spawned": time.monotonic()})
     except (OSError, ValueError, TypeError):
         return  # the next turn can still use lexical recall
@@ -308,7 +311,8 @@ def _device(health: dict) -> str:
     return "CUDA" if health.get("device") == "cuda" else "CPU"
 
 
-def deploy(home: str, db: Path, address: str, model: LocalModel, *, save) -> Generator[dict, None, None]:
+def deploy(home: str, db: Path, address: str, model: LocalModel, *, save,
+           judge: str = "") -> Generator[dict, None, None]:
     profile = Path(home).resolve()
     root = _root(profile)
     with setup_lock(home):
@@ -347,7 +351,7 @@ def deploy(home: str, db: Path, address: str, model: LocalModel, *, save) -> Gen
         port = _free_port()
         address = f"http://{_HOST}:{port}"
         yield progress(f"Starting and testing {model.label}…", f"正在启动并试连 {model.label}…")
-        proc = _launch(root, python, weights, db, port, model)
+        proc = _launch(root, python, weights, db, port, model, judge)
         try:
             health = _wait_ready(proc, address, db, profile, model)
             _check_embedding(address, model)

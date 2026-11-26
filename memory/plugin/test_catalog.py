@@ -55,6 +55,9 @@ class _Base:
     def _counted(self, results):
         return results
 
+    def on_turn_start(self, turn_number, message, **kwargs):
+        pass
+
 
 def _approx_tokens(text):  # as the base: ASCII 4 per token, a wide character 1, any other 2 per token
     ascii_n = sum(ch < "\x80" for ch in text)
@@ -132,6 +135,21 @@ def test_get_reads_by_id_and_names_what_is_missing():
     assert "get" in schema["parameters"]["properties"]["action"]["enum"]
     assert "fact_ids" in schema["parameters"]["properties"]
     assert _BASE_SCHEMA["parameters"]["properties"]["action"]["enum"] == ["search"]  # the base's is untouched
+
+
+def test_get_stops_at_its_budget_until_the_next_user_message():
+    p = _provider({"catalog_enabled": True}, FACTS)
+    get = lambda ids: json.loads(p.handle_tool_call("fact_store", {"action": "get", "fact_ids": ids}))  # noqa: E731
+    assert get(list(range(100, 108)))["count"] == 0  # a sweep of ids that do not exist spends the budget too
+    answer = get([1, 2, 5])  # two left
+    assert [f["fact_id"] for f in answer["facts"]] == [1, 2] and answer["not_read"] == [5]
+    spent = get([5])
+    assert spent["facts"] == [] and spent["not_read"] == [5] and "returns no facts" in spent["note"]
+    search = {"action": "search", "query": "x"}
+    assert json.loads(p.handle_tool_call("fact_store", search))["note"] == spent["note"]  # the sweep cannot move on
+    assert p.handle_tool_call("fact_store", {"action": "add", "content": "short"}) == "base"  # writing stays open
+    p.on_turn_start(2, "next question")
+    assert get([5])["count"] == 1 and p.handle_tool_call("fact_store", search) == "base"
 
 
 def test_catalog_off_by_default_adds_no_catalog_and_no_get():
@@ -414,6 +432,112 @@ def test_semantic_does_not_request_the_sidecar_for_short_messages_or_greetings()
         block, http = _semantic_prefetch(p, query=query)
         assert block == ""
         http.assert_not_called()
+
+
+def _layout_prefetch(self, query, *, session_id=""):
+    """The base's shape with rerank off: its layout picks the facts (the wrapper's hook), then it writes them."""
+    lexical = [dict(r) for r in self._store.read("SELECT * FROM facts WHERE fact_id IN (2, 5)")]
+    facts, by_meaning = self._off_layout(query, None, "test|", 1, lexical)
+    return "\n".join(["# Holographic Memory", *(
+        f"- #{f['fact_id']} [{f['trust_score']:.1f}] {f['content']}" + (" (by meaning)" * (f["fact_id"] in by_meaning))
+        for f in facts)]) if facts else ""
+
+
+def _judged_provider():
+    p = _semantic_provider()
+    p._judge, p._min_coverage = True, 0.3
+    p._judge_health = {"ok": True, "judge": True, "device": "cpu"}
+    p._judge_health_until = float("inf")
+    p._retriever.relevant = lambda query, candidates, coverage: candidates[:1]  # the words admitted #2 only
+    return p
+
+
+def _judged_prefetch(p, answers, query=_QUERY):
+    """prefetch over the stub layout; *answers*: what each sidecar call returns (a dict) or raises."""
+    layout = lambda self, query, meaning, key, turn, candidates=None: (candidates, set())  # noqa: E731
+    with patch.object(_Base, "prefetch", _layout_prefetch, create=True), \
+            patch.object(_Base, "_off_layout", layout, create=True), patch("urllib.request.build_opener") as http:
+        opened = http.return_value.open
+        opened.side_effect = [a if isinstance(a, Exception) else Mock(__enter__=Mock(return_value=Mock(
+            read=Mock(return_value=json.dumps(a).encode("utf-8")))), __exit__=Mock(return_value=False))
+            for a in answers]
+        block = p.prefetch(query, session_id="test")
+        bodies = [c.args[0].data for c in opened.call_args_list]
+        return block, [json.loads(body) if body is not None else None for body in bodies]
+
+
+def test_judged_recall_drops_what_is_off_the_message_adds_what_is_confirmed_and_lists_the_close():
+    p = _judged_provider()
+    assert "get" in p.get_tool_schemas()[0]["parameters"]["properties"]["action"]["enum"]  # the pointers' reader
+    rows = [{"fact_id": 2, "cos": 0.5, "rank": 2, "strict": 1.0, "generic": 2.0},   # in the block, by words: stays
+            {"fact_id": 5, "cos": 0.3, "rank": 5, "strict": -8.0, "generic": -9.0},  # in the block, off: dropped
+            {"fact_id": 6, "cos": 0.6, "rank": 0, "strict": 3.0, "generic": 4.0},    # the closest, confirmed: added
+            {"fact_id": 1, "cos": 0.45, "rank": 1, "strict": -6.0, "generic": -2.0}]  # not confirmed: only listed
+    block, sent = _judged_prefetch(p, [{"facts": rows}])
+    assert block.splitlines() == [
+        "# Holographic Memory", "- #6 [0.3] 数据库最终用 PostgreSQL 而不是 MySQL (by meaning)",
+        "- #2 [0.9] a long fact about config",
+        "Close, not recalled (read one in full: fact_store get {fact_ids}):", "#1=short"]
+    assert sent == [{"query": _QUERY, "ids": [2, 5], "k": 10, "min_trust": 0.3}]  # one call a turn, no /candidates
+    p._retriever.names_fit.return_value = False  # the base's name check stands for a fact the block did not hold
+    assert "#6" not in _judged_prefetch(p, [{"facts": rows}])[0].split("Close")[0]
+
+
+def test_judged_recall_falls_back_to_the_unjudged_append_or_to_the_base_block():
+    import urllib.error
+    base = "# Holographic Memory\n- #2 [0.9] a long fact about config\n- #5 [0.4] another long one here"
+    p = _judged_provider()
+    no_judge = urllib.error.HTTPError("http://sidecar/judge", 404, "no judge model", None, None)
+    block, sent = _judged_prefetch(p, [no_judge, {"candidates": _RANKED}])  # a sidecar started without a judge
+    assert block == base + "\n- #1 [0.5] short" and "tau" in sent[1]  # recall as without the switch
+    p = _judged_provider()
+    block, sent = _judged_prefetch(p, [OSError("timed out")])  # asked and not answered: no second call this turn
+    assert block == base and len(sent) == 1 and p._sem_warned
+    block, sent = _judged_prefetch(p, [{"candidates": []}])  # and the judge is left alone for a while after
+    assert block == base and "ids" not in sent[0]
+    p = _judged_provider()
+    p._rescorer = object()  # rerank on: the judge was measured without it
+    assert _judged_prefetch(p, [{"candidates": []}])[0] == base
+
+
+def test_judge_timeout_uses_a_shorter_pause_on_cuda():
+    for device, pause in (("cuda", 12), ("cpu", 60), (None, 60)):
+        p = _judged_provider()
+        p._judge_health["device"] = device
+        with patch("time.monotonic", return_value=100) as clock:
+            _judged_prefetch(p, [TimeoutError("judge timed out")])
+            assert p._judge_paused == 100 + pause
+            clock.return_value = 100 + pause - 1
+            _, sent = _judged_prefetch(p, [{"candidates": []}])
+            assert len(sent) == 1 and "tau" in sent[0]
+            clock.return_value = 100 + pause
+            _, sent = _judged_prefetch(p, [{"facts": [{"fact_id": i, "cos": 0.6, "rank": n,
+                                                    "strict": 2.0, "generic": 2.0}
+                                                   for n, i in enumerate((2, 5))]}])
+            assert len(sent) == 1 and sent[0]["ids"] == [2, 5]
+
+
+def test_judge_uses_the_base_during_startup_and_resumes_on_readiness():
+    import urllib.error
+    p = _judged_provider()
+    p._judge_health_until = 0
+    healthy = {"ok": True, "judge": True, "device": "cuda"}
+    judged = {"facts": [{"fact_id": i, "cos": 0.6, "rank": n, "strict": 2.0, "generic": 2.0}
+                        for n, i in enumerate((2, 5))]}
+    with patch("time.monotonic", return_value=100) as clock:
+        base, sent = _judged_prefetch(p, [urllib.error.URLError(ConnectionRefusedError())])
+        assert sent == [None] and p._judge_paused == 0
+        assert _judged_prefetch(p, []) == (base, [])
+        clock.return_value = 101
+        _, sent = _judged_prefetch(p, [healthy, judged])
+        assert sent[0] is None and sent[1]["ids"] == [2, 5]
+        # A restart can happen while the ready status is still cached.
+        warming = urllib.error.HTTPError("http://sidecar/judge", 503, "model not ready", None, None)
+        assert _judged_prefetch(p, [warming])[0] == base
+        assert _judged_prefetch(p, []) == (base, [])
+        clock.return_value = 102
+        _, sent = _judged_prefetch(p, [healthy, judged])
+        assert sent[0] is None and sent[1]["ids"] == [2, 5] and p._judge_paused == 0
 
 
 def test_legacy_semantic_max_extra_is_ignored():

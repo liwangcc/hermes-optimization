@@ -1,0 +1,1 @@
+Thanks for clarifying the scope. I’ll keep the #119 PR limited to exposing the existing `embeddings` and `embedding_*` settings in Hermes Desktop. It won’t depend on #121, but I’ll check for any overlap with the proposed recall change so the two can coexist if that change lands later.

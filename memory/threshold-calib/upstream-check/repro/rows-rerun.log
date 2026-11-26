@@ -1,0 +1,160 @@
+=== plugin HEAD 31de6eb5af2ae3366f1be32c3b847f338cbf2a7c, 0 tracked files changed
+=== 2026-11-25T13:57:31Z --set multi --langs ar,bn,de,en,es,fr,hi,id,it,ja,ko,nl,pl,pt,ru,th,tr,zh --recall-check-margin off
+  [ar] vectors: 20 of 20
+  [bn] vectors: 20 of 20
+  [de] vectors: 20 of 20
+  [en] vectors: 20 of 20
+  [es] vectors: 20 of 20
+  [fr] vectors: 20 of 20
+  [hi] vectors: 20 of 20
+  [id] vectors: 20 of 20
+  [it] vectors: 20 of 20
+  [ja] vectors: 20 of 20
+  [ko] vectors: 20 of 20
+  [nl] vectors: 20 of 20
+  [pl] vectors: 20 of 20
+  [pt] vectors: 20 of 20
+  [ru] vectors: 20 of 20
+  [th] vectors: 20 of 20
+  [tr] vectors: 20 of 20
+  [zh] vectors: 20 of 20
+
+=== multi emb=on: 450 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_multi_coff_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on     360   359   359     0/90      1      1  1.5 | words:249, entity+words:232, entity:211, meaning:2 | D: вырезан coverage (пул#0):1
+=== 2026-11-25T13:57:59Z --set multi --langs ar,bn,de,en,es,fr,hi,id,it,ja,ko,nl,pl,pt,ru,th,tr,zh --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [ar] vectors: 20 of 20
+  [bn] vectors: 20 of 20
+  [de] vectors: 20 of 20
+  [en] vectors: 20 of 20
+  [es] vectors: 20 of 20
+  [fr] vectors: 20 of 20
+  [hi] vectors: 20 of 20
+  [id] vectors: 20 of 20
+  [it] vectors: 20 of 20
+  [ja] vectors: 20 of 20
+  [ko] vectors: 20 of 20
+  [nl] vectors: 20 of 20
+  [pl] vectors: 20 of 20
+  [pt] vectors: 20 of 20
+  [ru] vectors: 20 of 20
+  [th] vectors: 20 of 20
+  [tr] vectors: 20 of 20
+  [zh] vectors: 20 of 20
+
+=== multi emb=on: 450 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_multi_c0.5_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on     360   360   360     0/90      1      1  1.5 | words:249, entity+words:232, entity:211, meaning:3, entity+meaning:2 | —
+=== 2026-11-25T13:58:29Z --set contrast_en --recall-check-margin off
+  [contrast_en] vectors: 64 of 64
+
+=== contrast_en emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_en_coff_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    23    23    25/45      7      7  2.3 | entity+words:111, entity:40, words:22, entity+meaning:2 | D: вырезан coverage (пул#1):4; D: вырезан coverage (пул#3):1; A: нет в словесном пуле:1; D: вырезан coverage (пул#2):1
+=== 2026-11-25T13:58:33Z --set contrast_en --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [contrast_en] vectors: 64 of 64
+
+=== contrast_en emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_en_c0.5_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    26    26    25/45      7      7  2.4 | entity+words:111, entity:40, words:22, entity+meaning:5 | D: вырезан coverage (пул#1):2; D: вырезан coverage (пул#3):1; A: нет в словесном пуле:1
+=== 2026-11-25T13:58:39Z --set contrast_ru --recall-check-margin off
+  [contrast_ru] vectors: 64 of 64
+
+=== contrast_ru emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_ru_coff_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    27    27    25/45      8      8  2.3 | entity+words:88, entity:53, words:28, entity+meaning:2 | D: вырезан coverage (пул#1):2; A: нет в словесном пуле:1
+=== 2026-11-25T13:58:44Z --set contrast_ru --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [contrast_ru] vectors: 64 of 64
+
+=== contrast_ru emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_ru_c0.5_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    27    27    25/45      8      8  2.3 | entity+words:88, entity:52, words:28, entity+meaning:3 | D: вырезан coverage (пул#1):2; A: нет в словесном пуле:1
+=== 2026-11-25T13:58:48Z --set contrast_zh --recall-check-margin off
+  [contrast_zh] vectors: 69 of 69
+
+=== contrast_zh emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_zh_coff_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    25    25    22/45     12     12  2.5 | entity+words:115, words:36, entity:31, meaning:3 | A: нет в словесном пуле:4; D: вырезан coverage (пул#2):1
+=== 2026-11-25T13:58:54Z --set contrast_zh --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [contrast_zh] vectors: 69 of 69
+
+=== contrast_zh emb=on: 75 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_contrast_zh_c0.5_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      30    26    26    22/45     12     12  2.5 | entity+words:115, words:36, entity:31, meaning:4 | A: нет в словесном пуле:3; D: вырезан coverage (пул#2):1
+=== 2026-11-25T13:58:59Z --set household --split test --recall-check-margin off
+  [household en] vectors: 199 of 199
+  [household ru] vectors: 199 of 199
+  [household zh] vectors: 199 of 199
+
+=== household emb=on: 135 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_household_test_coff_on.jsonl
+
+=== household mode=off emb=on ===
+lang split real hit5  cov% named conf noise  E  A  C othr
+en   test    25   15  58.0    10    1  9/20  0 10  0    3
+ru   test    25   15  58.0     6    2  6/20  0 10  0    3
+zh   test    25   16  62.0    10    3  6/20  0  7  0    5
+total       75   46 hit5=46/75 named=26 confused=6
+=== 2026-11-25T13:59:14Z --set household --split test --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [household en] vectors: 199 of 199
+  [household ru] vectors: 199 of 199
+  [household zh] vectors: 199 of 199
+
+=== household emb=on: 135 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_household_test_c0.5_on.jsonl
+
+=== household mode=off emb=on ===
+lang split real hit5  cov% named conf noise  E  A  C othr
+en   test    25   16  62.0    10    1  9/20  0  9  0    3
+ru   test    25   15  58.0     6    2  6/20  0 10  0    3
+zh   test    25   16  62.0    10    3  6/20  0  7  0    5
+total       75   47 hit5=47/75 named=26 confused=6
+=== 2026-11-25T13:59:30Z --set household --split dev --recall-check-margin off
+  [household en] vectors: 199 of 199
+  [household ru] vectors: 199 of 199
+  [household zh] vectors: 199 of 199
+
+=== household emb=on: 210 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_household_dev_coff_on.jsonl
+
+=== household mode=off emb=on ===
+lang split real hit5  cov% named conf noise  E  A  C othr
+en   dev     33   22  63.6    15    2 20/37  0  7  1    7
+ru   dev     33   26  77.3     8    2 12/37  0  5  0    5
+zh   dev     33   26  75.8    15    3 16/37  0  5  0    4
+total       99   74 hit5=74/99 named=38 confused=7
+=== 2026-11-25T13:59:48Z --set household --split dev --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+  [household en] vectors: 199 of 199
+  [household ru] vectors: 199 of 199
+  [household zh] vectors: 199 of 199
+
+=== household emb=on: 210 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_household_dev_c0.5_on.jsonl
+
+=== household mode=off emb=on ===
+lang split real hit5  cov% named conf noise  E  A  C othr
+en   dev     33   23  66.7    15    2 20/37  0  6  1    7
+ru   dev     33   26  77.3     8    2 12/37  0  5  0    5
+zh   dev     33   27  78.8    15    3 16/37  0  4  0    4
+total       99   76 hit5=76/99 named=38 confused=7
+=== 2026-11-25T14:00:08Z --set synthetic_zh --recall-check-margin off
+synthetic_zh self_check OK: 30 facts, 36 labelled ({'direct': 8, 'paraphrase': 10, 'crosslingual': 8, 'colloquial': 10}), 12 noise ({'negative': 6, 'no_answer': 6})
+  [synthetic_zh] vectors: 30 of 30
+
+=== synthetic_zh emb=on: 48 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_synthetic_zh_coff_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      36    11    11     1/12      5      5  0.4 | words:16, meaning:1 | A: нет в словесном пуле:19; D: вырезан coverage (пул#0):3; D: вырезан coverage (пул#2):1; D: вырезан coverage (пул#1):1; D: вырезан coverage (пул#4):1
+=== 2026-11-25T14:00:11Z --set synthetic_zh --recall-check-margin 0.5 --check-model Qwen/Qwen3-Reranker-0.6B --check-instruction C:/aiprojects/hermes-optimization/memory/threshold-calib/upstream-check/repro/instruction.txt
+synthetic_zh self_check OK: 30 facts, 36 labelled ({'direct': 8, 'paraphrase': 10, 'crosslingual': 8, 'colloquial': 10}), 12 noise ({'negative': 6, 'no_answer': 6})
+  [synthetic_zh] vectors: 30 of 30
+
+=== synthetic_zh emb=on: 48 queries -> C:\aiprojects\hermes-optimization\memory\threshold-calib\upstream-check\repro\rows-rerun\provenance_synthetic_zh_c0.5_on.jsonl
+
+mode           emb   real   hit  hit5 noise wrong wrong5  out | recall sources (dominant) | miss classes
+off            on      36    11    11     1/12      5      5  0.4 | words:16, meaning:1 | A: нет в словесном пуле:19; D: вырезан coverage (пул#0):3; D: вырезан coverage (пул#2):1; D: вырезан coverage (пул#1):1; D: вырезан coverage (пул#4):1
+=== done 2026-11-25T14:00:15Z

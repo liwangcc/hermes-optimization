@@ -1,0 +1,8 @@
+request:  {"model": "Qwen/Qwen3-Reranker-0.6B", "query": "Where is the spare key?", "documents": ["The spare key hangs behind the blue flowerpot on the balcony."], "top_n": 40}
+response: {"model": "Qwen/Qwen3-Reranker-0.6B", "results": [{"index": 0, "relevance_score": 5.25}]}
+recall_check.cross_encoder -> ('yes', 5.25)
+
+request:  {"model": "Qwen/Qwen3-Reranker-0.6B", "query": "Where is the spare key?", "documents": ["The spare bulb lies behind the green bucket in the cellar."], "top_n": 40}
+response: {"model": "Qwen/Qwen3-Reranker-0.6B", "results": [{"index": 0, "relevance_score": -0.9375}]}
+recall_check.cross_encoder -> ('no', -0.9375)
+

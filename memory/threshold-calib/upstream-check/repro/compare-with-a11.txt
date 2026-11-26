@@ -1,0 +1,37 @@
+### off arm: old rows/provenance_*_on.jsonl (A11, 76689f9-dirty) vs repro/rows/provenance_*_coff_on.jsonl (31de6eb)
+multi: 450 rows, 1 differences
+  ('multi', 'hi', '7') out_n: 2 -> 1  (q old 'हम हुआ हिन कब जा रहे हैं?' new 'हम हुआ हिन कब जा रहे हैं?')
+contrast_en: 75 rows, 0 differences
+
+contrast_ru: 75 rows, 0 differences
+
+contrast_zh: 75 rows, 0 differences
+
+household_test: 135 rows, 0 differences
+
+household_dev: 210 rows, 0 differences
+
+synthetic_zh: 48 rows, 0 differences
+
+total differences: 1
+
+### checked arm: old rows/provenance_*_c0.5_on.jsonl vs repro/rows/provenance_*_c0.5_on.jsonl
+multi: 450 rows, 5 differences
+  ('multi', 'hi', '7') out_n: 2 -> 1  (q old 'हम हुआ हिन कब जा रहे हैं?' new 'हम हुआ हिन कब जा रहे हैं?')
+  ('multi', 'it', '14') out_n: 2 -> 3  (q old 'Come devo rispondere ad Anton?' new 'Come devo rispondere ad Leon?')
+  ('multi', 'it', '14') by-meaning positions: [] -> [0]
+  ('multi', 'ko', '14') out_n: 2 -> 3  (q old '안톤에게는 어떻게 답해야 해?' new '레온에게는 어떻게 답해야 해?')
+  ('multi', 'ko', '14') by-meaning positions: [] -> [0]
+contrast_en: 75 rows, 0 differences
+
+contrast_ru: 75 rows, 0 differences
+
+contrast_zh: 75 rows, 0 differences
+
+household_test: 135 rows, 0 differences
+
+household_dev: 210 rows, 0 differences
+
+synthetic_zh: 48 rows, 0 differences
+
+total differences: 5

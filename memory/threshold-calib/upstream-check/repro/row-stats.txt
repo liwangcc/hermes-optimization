@@ -1,0 +1,9 @@
+== arm coff: 1068 turns in 7 set/split files
+   1068 rows stamped git_sha, margin, check_margin, check_model, instruction sha256, endpoint, scale, emb_model = ('31de6eb5af2ae3366f1be32c3b847f338cbf2a7c', 1.0, 'off', None, None, 'http://127.0.0.1:12372/v1/rerank', 'logit', 'http://127.0.0.1:12371/v1/bge-m3')
+   check calls 0 (0 of them on turns that showed nothing), outcomes {}, rows missing the check fields: 0
+   prefetch ms of timed turns: 696 timed, median 49.5, max 80.5
+== arm c0.5: 1068 turns in 7 set/split files
+   1068 rows stamped git_sha, margin, check_margin, check_model, instruction sha256, endpoint, scale, emb_model = ('31de6eb5af2ae3366f1be32c3b847f338cbf2a7c', 1.0, 0.5, 'Qwen/Qwen3-Reranker-0.6B', '5336bc93ae7c30960c4f5940de5a98826fe2ecee05c549a846897344d7b73b72', 'http://127.0.0.1:12372/v1/rerank', 'logit', 'http://127.0.0.1:12371/v1/bge-m3')
+   check calls 46 (22 of them on turns that showed nothing), outcomes {'no': 35, 'yes': 11}, rows missing the check fields: 0
+   check ms: median 101.3, max 171.3
+   prefetch ms of timed turns: 696 timed, median 51.1, max 232.0

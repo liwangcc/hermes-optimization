@@ -7,7 +7,9 @@ import importlib.util
 import os
 import sqlite3
 import tempfile
+import threading
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 TMP = Path(tempfile.mkdtemp(prefix="sidecar-sync-"))
 os.environ["SEMANTIC_DB"] = str(TMP / "memory_store.db")
@@ -84,6 +86,66 @@ def test_a_failed_encode_leaves_the_fact_to_index_again():
         pass
     server.STATE["model"] = FakeModel()
     assert server.sync()[1:] == (1, 0)  # no hash was recorded for a vector never made
+
+
+def test_judge_reads_the_block_and_the_closest_facts_as_text_with_keywords():
+    _reset()
+    _store([(1, "a", "keywords: one, two"), (2, "b", "mine\nkeywords: three"), (3, "c", "mine")])
+    server.sync()
+    read = []
+
+    def fake(query, docs):
+        read.extend(docs)
+        return {"strict": [float(len(d)) for d in docs], "generic": [0.0] * len(docs)}
+
+    with patch.object(server, "judge_scores", fake):
+        rows = server.rank_and_judge("q", [3], 1, 0.3)[0]  # the block's fact #3, then the one closest fact
+        assert [r["fact_id"] for r in rows][0] == 3 and len(rows) in (1, 2)  # the closest may be #3 itself
+        assert sorted(r["rank"] for r in server.rank_and_judge("q", [1, 2, 3], 0, 0.3)[0]) == [0, 1, 2]
+        assert {"a\nKeywords: one, two", "b\nKeywords: three", "c"} == set(read)  # user tags are not keywords
+        assert all(set(r) == {"fact_id", "cos", "rank", "strict", "generic"} for r in rows)
+        assert server.rank_and_judge("q", [99], 0, 0.3)[0] == []  # an id the store does not hold is not judged
+
+
+def test_judge_skips_stale_vectors_until_the_background_job_catches_up():
+    _reset()
+    _store([(1, "old", ""), (2, "deleted", ""), (4, "unchanged", "")])
+    server.sync()
+    server.STATE["model"].encoded.clear()
+    _store([(1, "changed", ""), (3, "new", ""), (4, "unchanged", "")])
+
+    with patch.object(server, "judge_scores", return_value={"strict": [1.0] * 3}) as judge:
+        rows, total = server.rank_and_judge("q", [1, 3], 10, 0.3)
+    assert total == 3 and [r["fact_id"] for r in rows] == [1, 3, 4]
+    assert all(r["cos"] is None and r["rank"] is None for r in rows[:2])
+    assert rows[2]["rank"] == 0
+    judge.assert_called_once_with("q", ["changed", "new", "unchanged"])
+    assert server.STATE["model"].encoded == ["q"]
+
+    stop = Mock()
+    stop.wait.side_effect = [False, True]
+    server.index_in_background(stop)
+    assert server.STATE["model"].encoded == ["q", "changed ", "new "]
+    assert set(server.STATE["vecs"]) == {1, 3, 4}
+    with patch.object(server, "judge_scores", return_value={"strict": [1.0] * 3}):
+        rows, _ = server.rank_and_judge("q", [], 10, 0.3)
+    assert [row["rank"] for row in rows] == [0, 1, 2]
+
+
+def test_background_index_yields_to_the_model_and_uses_small_batches():
+    _reset()
+    _store([(i, f"fact {i}", "") for i in range(6)])
+    attempts = []
+    with server.LOCK:
+        attempt = threading.Thread(target=lambda: attempts.append(server.sync(server._INDEX_BATCH, background=True)))
+        attempt.start()
+        attempt.join(timeout=2)
+        assert not attempt.is_alive()
+    assert attempts[0][1:] == (0, 6)
+    stop = Mock()
+    stop.wait.side_effect = [False, True]
+    server.index_in_background(stop)
+    assert len(server.STATE["model"].encoded) == 4
 
 
 def test_the_cache_goes_where_it_is_told():

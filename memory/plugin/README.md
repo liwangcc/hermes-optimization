@@ -62,6 +62,8 @@ All keys live in `plugins.hermes-memory-store` (the same section as the base pro
 | `semantic_tau` | `0.55` | 本地余弦准入阈值。首次部署和切换模型时使用表中的推荐值 |
 | `semantic_total_cap` | `7` | maximum total after appending a semantic fact |
 | `semantic_timeout_ms` | `400` | sidecar HTTP budget; exceed → lexical only |
+| `semantic_judge` | `false` | 复核召回（实验）：侧车里的交叉编码器逐条判断该展示哪些事实，见下 |
+| `semantic_judge_model` | 空 | 本地 Qwen3-Reranker-0.6B 目录；受管侧车启动时用它加载打分器 |
 | `embeddings` | `false` | 云端向量通道（Holographic 自带），与本地二选一 |
 | `embedding_url` | `https://api.openai.com/v1` | 云端 OpenAI 兼容端点 |
 | `embedding_model` | `text-embedding-3-small` | 云端向量模型 |
@@ -84,6 +86,24 @@ turn, and it passes the base's repeat-window, recallability, and name checks wit
 
 Greetings and messages that fail the base's before-turn `worth_asking` check skip the
 sidecar. A sidecar error or timeout returns the base result.
+
+### 复核召回（实验，默认关闭）
+
+`semantic_judge: true` 时，每条消息改为调一次侧车的 `/judge`：交叉编码器把消息和每条候选事实（基座本轮要展示的，加余弦最近的 10 条）放在一起读。
+
+- 它判为离题的事实不展示，判为相关的候选加入，仍受 `semantic_total_cap` 和基座的人名、可召回、重复窗口检查约束。
+- 没展示但接近的事实最多 4 条，以 `#编号=标签` 列在块后面，模型用 `fact_store get` 读全文。打开这个开关后 `get` 不依赖 `catalog_enabled`。
+- 规则和常量在 `judged_recall.py`，依据是 [第二轮赛马](../recall-race/ROUND2-RESULTS.md)：官方题集留出池上非答案减半，命中不降。
+
+要求和退路：
+
+- 侧车要带打分器启动：环境变量 `SEMANTIC_JUDGE_MODEL` 指向本地 Qwen3-Reranker-0.6B 目录（手动侧车自己设，受管侧车由 `semantic_judge_model` 传入）。`/health` 的 `judge` 为 `true` 表示已加载。
+- 需要 GPU：RTX 4060 笔记本上每条消息约 0.25 秒、多占约 1.3 GB 显存，纯 CPU 约 15 秒。受管部署的运行环境是 CPU 版，要用请配手动的 CUDA 侧车。
+- 侧车启动期间沿用基座召回，就绪后恢复复核。没有打分器、基座开了 `rerank` 或消息超过 500 字时，沿用未复核的召回。
+- 打分器超时的那一轮走基座召回。CUDA 冷却 12 秒后重试，CPU 或设备未知时冷却 60 秒。
+- 侧车在后台分批补齐新增或修改事实的向量。`/judge` 使用已有的有效向量进行排序，基座选中的事实可直接接受评分。
+- 常量是在 BGE-M3 上定的。换别的向量模型没有测过。
+- 桌面设置页没有这个开关，用 `hermes config set plugins.hermes-memory-store.semantic_judge true`。
 
 ## Write routing (always on)
 
@@ -185,7 +205,9 @@ is an impression, not a controlled run.
 - Over `catalog_max_tokens` the lowest-trust facts are left out and the last line says how many.
   At equal trust the newer fact (the higher id) is kept. Once one fact does not fit, every fact
   after it in that order is left out too: a shorter one is never slipped in past it.
-- `fact_store` gains `get {fact_ids: [...]}` (up to 20 ids per call): the agent reads prefetch's
+- `fact_store` gains `get {fact_ids: [...]}` (up to 10 ids per user message, over all its
+  calls; past that it answers `not_read`, search / probe / related / reason / list return no facts until the next
+  user message, and the model is told so; its other tools are not touched): the agent reads prefetch's
   recall and the catalog, then fetches in one call whatever the task still needs. A fact comes
   back with its `origin` (`said` / `confirmed` / `inferred`) when the store knows it, as in `search`.
   An id that was forgotten or merged into another fact is not redirected: it comes back under
