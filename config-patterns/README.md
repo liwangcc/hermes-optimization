@@ -32,7 +32,7 @@ plugins:
     semantic_tau: 0.55
     semantic_total_cap: 7
     semantic_timeout_ms: 400
-    catalog_enabled: true                  # optional: #id=label catalog + fact_store get
+    catalog_enabled: false                 # daily R2: dynamic pointers + get; true adds the full #id=label index
     catalog_max_tokens: 3000
 ```
 

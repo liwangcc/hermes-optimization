@@ -119,11 +119,15 @@ hermes plugins enable holographic-semantic
 
 hermes config set memory.provider holographic-semantic
 hermes config set plugins.hermes-memory-store.semantic_enabled true
-hermes config set plugins.hermes-memory-store.catalog_enabled true   # 可选：事实目录 + fact_store get
+# 日常版默认不开静态目录：每轮动态指针 + fact_store get 已覆盖补查；
+# 需要全量 #id=label 索引时再改为 true。
+hermes config set plugins.hermes-memory-store.catalog_enabled false
 ```
 
 包装插件继承 Holographic 的 provider。本地向量只检查信任线以上余弦最高的一条事实，问候和短消息跳过侧车。
 侧车失败就退回词法召回。回滚时把 `memory.provider` 设回 `holographic`。
+
+日常版默认 `catalog_enabled: false`。第二轮赛马在测试用的大库上：受预算截断的静态目录覆盖 30/38 个未展示答案，每轮 ≤4 条动态指针覆盖 37/38，每轮目录 token 1546→28。所以日常版用动态指针 + `get`，目录只作可选的全量索引。
 
 > `semantic_enabled` 只控制本地向量通道。用云端 embedding 时，改设
 > `plugins.hermes-memory-store.embeddings true`（以及 `embedding_url` / `embedding_model`），

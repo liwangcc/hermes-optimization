@@ -128,7 +128,7 @@ The setup it is written for. All three are settings the user makes; the plugin c
 |---|---|---|
 | built-in `MEMORY.md` | off | one store fewer to choose between: core then removes the `memory` target from the tool |
 | built-in `USER.md` | on | who the user is, and preferences that apply to every reply |
-| `catalog_enabled` | `true` | eligible facts of up to `catalog_label_tokens` can show in full, subject to the total catalog budget |
+| `catalog_enabled` | `false` | daily R2 uses ≤4 dynamic pointers + `get`; `true` adds the full `#id=label` index (subject to `catalog_max_tokens`) |
 
 - **Two homes, one test.** "About the user, and needed in every session" is `USER.md`;
   everything else is a fact. The second half of the test matters: the base block already
@@ -141,7 +141,7 @@ The setup it is written for. All three are settings the user makes; the plugin c
   decide what it takes; the routing does not use it as a fallback. The
   trade-off is in
   [`docs/memory-architecture.md`](../../docs/memory-architecture.md#where-a-new-memory-goes).
-- **Short notes can appear in the catalog.** They are subject to the same trust cutoff and
+- **With the catalog on, short notes can appear in it.** They are subject to the same trust cutoff and
   recall screening as other facts (checked against holographic 0.27.0). The catalog also has
   a total budget, `catalog_max_tokens`; it is not a guaranteed always-on notes layer.
 - **It follows Hermes core and must not contradict it.** Core's memory guidance keeps the
@@ -188,6 +188,11 @@ is an impression, not a controlled run.
 #12=配置修改, 设置变更, 改 yaml, config change, edit settings…
 #40=数据库用 PostgreSQL
 ```
+
+The daily R2 setup leaves this off. On the round-2 probe pool, the budget-truncated catalog listed 30
+of the 38 missing answers, while ≤4 dynamic pointers listed 37 and cost 28 tokens a turn
+(`../recall-race/ROUND2-RESULTS.md`); `get` stays available with the judge on, so the catalog is an
+optional full index rather than a requirement.
 
 - **Generated from the store** when the system prompt is built: nothing is kept by hand, an id
   that was forgotten or merged away is simply not listed, and a changed fact shows its new label.

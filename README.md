@@ -38,7 +38,7 @@
 装好只是第一步。下面四件事漏掉任何一件，召回都会变差，而且对话里看不出来。每一项的做法、检查命令和修法见 **[使用手册](docs/user-guide.md)**。
 
 1. **每条事实都有关键词。** 让你的主模型用 `fact_store enrich` 补齐，直到 `fact_store stats` 里的 `without_keywords` 为 0。关键词是最大的杠杆，批量导入的事实通常没有。→ [做法](docs/user-guide.md#1-每条事实都有关键词)
-2. **开事实目录时，把 MEMORY.md 的内容搬进事实库，再关掉 MEMORY.md。** 先搬再关：关于你本人的进 USER.md，其余存成事实。→ [步骤](docs/user-guide.md#2-事实目录和-memorymd)
+2. **把 MEMORY.md 的内容搬进事实库，再关掉 MEMORY.md。** 先搬再关：关于你本人的进 USER.md，其余存成事实。→ [步骤](docs/user-guide.md#2-事实目录和-memorymd)
 3. **确认语义通道在起作用。** Windows x64 用设置页一键部署并建索引；macOS 和 Linux 要手工启动侧车，并确认词干包在。→ [检查](docs/user-guide.md#3-保证语义通道生效)、[macOS / Linux 的准备](docs/platforms.md)
 4. **跑一遍自检。** 合成库上只走词法是 29/36，带语义追加是 33/36；得到 26/36 说明没装词干包。→ [验证和问题修复](docs/user-guide.md#4-验证方法和问题修复)、[测试标准](docs/test-standard.md)
 
@@ -149,7 +149,7 @@ hermes config set memory.provider holographic
 - **wrap 不 fork**：增强层在加载时继承上游 provider，上游更新自动继承，回滚是改配置不是改代码。
 - **fail-open**：侧车挂了/超时 → 退回词法召回，绝不阻塞对话。
 - **三不动**：常驻 USER/MEMORY 层不向量化、专有名词硬锚点保留、trust/feedback 与矛盾检测保留。
-- **生成目录供主动查询**：可选事实目录由库自动生成 `#id=label` 放进系统提示，给模型一张「有什么」的地图，想到相关词时能主动 `fact_store get`，不必等自动召回命中；它是生成的读索引，不是手写指针（手写 `fact#N` 会随事实合并/遗忘悬空）。详见 [memory-architecture.md](docs/memory-architecture.md)。
+- **动态指针按需读，不常驻全量目录**：日常版每轮最多列 4 条 `#id=label` 指针，模型用 `fact_store get` 读全文；第二轮赛马在测试大库上，受预算截断的静态目录覆盖 30/38 个未展示答案，动态指针覆盖 37/38，每轮 token 1546→28。可选事实目录（`catalog_enabled`）仍保留，给需要全量索引的场景。详见 [memory-architecture.md](docs/memory-architecture.md)。
 
 详见 [`docs/methodology.md`](docs/methodology.md)。
 
