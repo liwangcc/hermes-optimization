@@ -483,6 +483,28 @@ def test_judged_recall_drops_what_is_off_the_message_adds_what_is_confirmed_and_
     assert "#6" not in _judged_prefetch(p, [{"facts": rows}])[0].split("Close")[0]
 
 
+def test_judged_recall_lists_every_pointer_by_cosine_when_the_sidecar_sends_no_generic_reading():
+    _judged_provider()  # loads the package
+    decide = sys.modules["holographic_semantic"].judged_recall.decide
+    rows = [{"fact_id": n, "cos": 0.9 - n / 10, "rank": n, "strict": -9.0, "generic": g}  # none is shown in full
+            for n, g in enumerate([-9.0, -9.0, -9.0, 3.0, 2.0, -9.0])]
+    # a CUDA sidecar: the generic reading's best two, then the two closest of the rest
+    assert decide(rows, [], set(), True, 0.55, 7, lambda fact_id: True) == ([], [3, 4, 0, 1])
+    strict_only = [{k: v for k, v in f.items() if k != "generic"} for f in rows]
+    assert decide(strict_only, [], set(), True, 0.55, 7, lambda fact_id: True) == ([], [0, 1, 2, 3])
+    # off CUDA the judge reads the block (#5 here) and the closest fact: the others come with their cosine only
+    read = [{"fact_id": 5, "cos": 0.4, "rank": 5, "strict": 4.0}, {"fact_id": 0, "cos": 0.9, "rank": 0, "strict": 9.0},
+            *({"fact_id": n, "cos": 0.9 - n / 10, "rank": n} for n in range(1, 5))]
+    assert decide(read, [5], set(), True, 0.55, 7, lambda fact_id: True) == ([0, 5], [])  # #0 is a sure answer
+    read[1]["strict"] = -9.0
+    assert decide(read, [5], set(), True, 0.55, 7, lambda fact_id: True) == ([5], [0, 1, 2, 3])
+    try:  # a block fact the judge did not read is not the protocol: the caller falls back to the base's block
+        decide([{"fact_id": 5, "cos": 0.4, "rank": 5}], [5], set(), True, 0.55, 7, lambda fact_id: True)
+        raise AssertionError("an unread block fact was decided")
+    except KeyError:
+        pass
+
+
 def test_judged_recall_falls_back_to_the_unjudged_append_or_to_the_base_block():
     import urllib.error
     base = "# Holographic Memory\n- #2 [0.9] a long fact about config\n- #5 [0.4] another long one here"

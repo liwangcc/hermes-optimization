@@ -107,6 +107,21 @@ def test_judge_reads_the_block_and_the_closest_facts_as_text_with_keywords():
         assert server.rank_and_judge("q", [99], 0, 0.3)[0] == []  # an id the store does not hold is not judged
 
 
+def test_off_cuda_the_judge_reads_the_block_and_the_closest_fact_only():
+    _reset()
+    _store([(i, f"fact {i}", "") for i in range(1, 8)])
+    server.sync()
+    scores = lambda query, docs: {"strict": [1.0] * len(docs)}  # noqa: E731
+    with patch.object(server, "judge_scores", scores):
+        with patch.dict(server.STATE, device="cuda"):
+            everywhere = server.rank_and_judge("q", [1], 4, 0.3)[0]
+        rows = server.rank_and_judge("q", [1], 4, 0.3)[0]  # the fake model's device is the CPU
+    assert all("strict" in r for r in everywhere)  # CUDA reads the block and the four closest
+    assert [r["fact_id"] for r in rows] == [r["fact_id"] for r in everywhere]  # the same facts go out either way
+    assert {r["fact_id"] for r in rows if "strict" in r} == {1} | {r["fact_id"] for r in rows if r["rank"] == 0}
+    assert all(r["cos"] is not None and r["rank"] is not None for r in rows)  # the others still serve as pointers
+
+
 def test_judge_skips_stale_vectors_until_the_background_job_catches_up():
     _reset()
     _store([(1, "old", ""), (2, "deleted", ""), (4, "unchanged", "")])
@@ -146,6 +161,26 @@ def test_background_index_yields_to_the_model_and_uses_small_batches():
     stop.wait.side_effect = [False, True]
     server.index_in_background(stop)
     assert len(server.STATE["model"].encoded) == 4
+
+
+def test_the_shared_reading_scores_as_the_whole_one():
+    """The real judge only: set SEMANTIC_JUDGE_MODEL. Runs on SEMANTIC_DEVICE when set, else on the CPU."""
+    if not server.JUDGE:
+        return print("   skipped, SEMANTIC_JUDGE_MODEL is not set:")
+    with patch.object(server, "DEVICE", server.DEVICE or "cpu"):
+        server.load_judge()
+    assert server.STATE["judge"] is not None  # its warmup already went through the reading this device uses
+    if server.STATE["judge"][4] == "cuda":
+        return print("   skipped, CUDA reads every pair whole:")
+    docs = ["short", "a longer note about the deploy script\nKeywords: deploy, release, ship", "部署脚本在 scripts/deploy.sh"]
+    texts = [f"{server._JUDGE_HEAD}<Instruct>: x\n<Query>: how do we deploy?\n<Document>: {d}{server._JUDGE_TAIL}"
+             for d in docs]
+    shared, whole = server._judge_shared(texts), server._judge_whole(texts)
+    import torch
+    # half precision (mps) rounds the two readings apart: 0.04 at most over 480 pairs, float32 0.0001
+    limit = 1e-2 if server.STATE["judge"][1].dtype == torch.float32 else 0.1
+    assert max(abs(a - b) for a, b in zip(shared, whole)) < limit, (shared, whole)
+    assert set(server.judge_scores("how do we deploy?", docs)) == {"strict"}  # off CUDA: no generic reading
 
 
 def test_the_cache_goes_where_it_is_told():

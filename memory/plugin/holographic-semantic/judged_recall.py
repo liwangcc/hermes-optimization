@@ -33,13 +33,18 @@ def probability(strict: float, words: bool, closest: bool) -> float:
 def decide(facts: list, base: list, words: set, ask: bool, tau: float, cap: int, addable) -> tuple[list, list]:
     """(fact ids shown in full, best first; fact ids listed as pointers).
 
-    *facts*: /judge rows (fact_id, cos, rank, strict, generic) of the base's block and the closest facts, in that
-    order; *base*: the block's ids; *words*: the ids the word stream admitted; *ask*: the message is worth a
-    semantic look; *addable(fact_id)*: the base's checks for a fact it did not show (asked only when needed)."""
+    *facts*: /judge rows (fact_id, cos, rank; strict where the judge read the fact; generic from a CUDA sidecar)
+    of the base's block and the closest facts, in that order; *base*: the block's ids; *words*: the ids the word stream admitted; *ask*: the
+    message is worth a semantic look; *addable(fact_id)*: the base's checks for a fact it did not show (asked only
+    when needed)."""
     block, room = set(base), len(base) < cap
-    scored = [(probability(f["strict"], f["fact_id"] in words, f.get("rank") == 0), f) for f in facts]
     shown = []
-    for p, f in scored:
+    for f in facts:
+        # A sidecar off CUDA has its judge read the block and the closest fact only (round 2's rows: a quarter of
+        # the pairs, the recall within a few facts of reading all ten): the other close facts are pointers at most.
+        if "strict" not in f and f["fact_id"] not in block:
+            continue
+        p = probability(f["strict"], f["fact_id"] in words, f.get("rank") == 0)
         if f["fact_id"] in block:
             keep = p >= KEEP
         else:
@@ -52,9 +57,13 @@ def decide(facts: list, base: list, words: set, ask: bool, tau: float, cap: int,
     ids = [fact_id for _, fact_id in shown]
     if not ask or (shown and shown[0][0] >= ANSWERED):
         return ids, []
-    rest = [f for _, f in scored if f["fact_id"] not in ids]
-    listed = [f for f in sorted(rest, key=lambda f: -f["generic"]) if f["generic"] >= POINTER_JUDGE[1]]
-    listed = listed[:POINTER_JUDGE[0]]
+    rest = [f for f in facts if f["fact_id"] not in ids]
+    listed, by_cosine = [], POINTER_JUDGE[0] + POINTER_COS[0]
+    # A sidecar off CUDA sends no generic reading (it is half the judge's time): every pointer is then by cosine.
+    # Measured on round 2's rows: the same missed answers listed (37 of 38), 0.4 more lines a turn.
+    if all("generic" in f for f in rest):
+        listed = [f for f in sorted(rest, key=lambda f: -f["generic"]) if f["generic"] >= POINTER_JUDGE[1]]
+        listed, by_cosine = listed[:POINTER_JUDGE[0]], POINTER_COS[0]
     close = [f for f in sorted(rest, key=lambda f: -(f.get("cos") or -1.0))
              if (f.get("cos") or -1.0) >= POINTER_COS[1] and f not in listed]
-    return ids, [f["fact_id"] for f in listed + close[:POINTER_COS[0]]]
+    return ids, [f["fact_id"] for f in listed + close[:by_cosine]]

@@ -98,7 +98,7 @@ sidecar. A sidecar error or timeout returns the base result.
 要求和退路：
 
 - 侧车要带打分器启动：环境变量 `SEMANTIC_JUDGE_MODEL` 指向本地 Qwen3-Reranker-0.6B 目录（手动侧车自己设，受管侧车由 `semantic_judge_model` 传入）。`/health` 的 `judge` 为 `true` 表示已加载。
-- 需要 GPU：RTX 4060 笔记本上每条消息约 0.25 秒、多占约 1.3 GB 显存，纯 CPU 约 15 秒。受管部署的运行环境是 CPU 版，要用请配手动的 CUDA 侧车。
+- 设备：有 CUDA 时最快，RTX 4060 笔记本上每条消息约 0.25 秒、多占约 1.3 GB 显存。没有 CUDA 的侧车做了精简：只读块内事实和余弦最近的一条，只跑严格读法，指针改为余弦最近的 4 条；规则和常量不变，在第二轮的题上命中和降噪与读 10 条基本相同。纯 CPU 每条消息中位 1.1 秒、P95 2.7 秒，要把 `semantic_timeout_ms` 调到 3000。数字和苹果芯片见 [platforms.md](../../docs/platforms.md#复核召回在没有-cuda-的机器上)。受管部署的运行环境是 CPU 版，按纯 CPU 的数算；要快请配手动的 CUDA 侧车。
 - 侧车启动期间沿用基座召回，就绪后恢复复核。没有打分器、基座开了 `rerank` 或消息超过 500 字时，沿用未复核的召回。
 - 打分器超时的那一轮走基座召回。CUDA 冷却 12 秒后重试，CPU 或设备未知时冷却 60 秒。
 - 侧车在后台分批补齐新增或修改事实的向量。`/judge` 使用已有的有效向量进行排序，基座选中的事实可直接接受评分。

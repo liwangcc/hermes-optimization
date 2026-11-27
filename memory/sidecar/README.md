@@ -54,7 +54,8 @@ SEMANTIC_DB=/path/to/memory_store.db python server.py
 | `SEMANTIC_MODEL` | `./models/bge-m3` | local bge-m3 directory |
 | `SEMANTIC_PORT` | `8791` | listen port (bound to 127.0.0.1) |
 | `SEMANTIC_CACHE` | `./cache` | vector cache directory |
-| `SEMANTIC_JUDGE_MODEL` | unset | optional: a local `Qwen/Qwen3-Reranker-0.6B` directory; with it `/judge` is served (needs CUDA in practice: about 0.25 s a message on a laptop GPU, 15 s on a CPU) |
+| `SEMANTIC_JUDGE_MODEL` | unset | optional: a local `Qwen/Qwen3-Reranker-0.6B` directory; with it `/judge` is served (about 0.25 s a message on a laptop GPU; on a CPU 1 to 3 s, which needs the wrapper's `semantic_timeout_ms` raised) |
+| `SEMANTIC_DEVICE` | CUDA when present, else CPU | `cuda`, `mps` or `cpu`. Apple's GPU is used only when asked for: `mps` has run on one Mac (an M5), where the judge takes about 2 s a message in float16 |
 
 Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 
@@ -66,7 +67,7 @@ Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 | POST | `/sync` | `{limit}` | index new/changed facts now (at most `limit`), drop deleted ones; returns `embedded`, `remaining`, `facts` |
 | POST | `/candidates` | `{query, tau, limit, min_trust}` | ranked cosine candidates above `tau` |
 | POST | `/embed` | `{texts: [...]}` | normalized vectors |
-| POST | `/judge` | `{query, ids, k, min_trust}` | for the facts in `ids` and the `k` closest by cosine: `cos`, `rank` in the store, and the judge's `strict` and `generic` readings of the message with the fact; 404 without a judge model. Used by the wrapper's `semantic_judge` |
+| POST | `/judge` | `{query, ids, k, min_trust}` | for the facts in `ids` and the `k` closest by cosine: `cos`, `rank` in the store, and the judge's readings of the message with the fact. On CUDA every one of them is read, `strict` and `generic`. Off CUDA the judge reads the facts in `ids` and the closest one, `strict` only; the rest carry `cos` and `rank` for the wrapper's pointers; 404 without a judge model. Used by the wrapper's `semantic_judge` |
 
 When a judge is loaded, the sidecar checks for new or edited facts every two seconds and indexes up to four at a
 time. `/judge` ranks facts by vectors that match their current content and tags. Requested IDs can still be scored

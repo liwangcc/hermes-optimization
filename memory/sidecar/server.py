@@ -13,6 +13,7 @@ Environment overrides:
     SEMANTIC_PORT   listen port (default: 8791)
     SEMANTIC_CACHE  vector cache directory (default: ./cache)
     SEMANTIC_JUDGE_MODEL   optional: a local Qwen3-Reranker directory; with it /judge is served
+    SEMANTIC_DEVICE cuda, mps or cpu (default: CUDA when present, else CPU; Apple's GPU only when asked for)
 
 Endpoints:
     GET  /health                 readiness, device, indexed fact count, the store's fact count
@@ -38,6 +39,8 @@ MODEL = Path(os.environ.get("SEMANTIC_MODEL", str(SVC / "models" / "bge-m3")))
 CACHE = Path(os.environ.get("SEMANTIC_CACHE", str(SVC / "cache")))
 PORT = int(os.environ.get("SEMANTIC_PORT", "8791"))
 JUDGE = os.environ.get("SEMANTIC_JUDGE_MODEL", "")
+# shortcut: mps is asked for, never picked: one Mac (an M5) has run it; pick it by default once more have
+DEVICE = os.environ.get("SEMANTIC_DEVICE", "")
 # The judge block below is the managed service's (memory/plugin/holographic-semantic/managed_server.py), kept the
 # same text for text: the wrapper's constants were measured with these two readings.
 _JUDGE_HEAD = ('<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the '
@@ -65,7 +68,7 @@ def load_model():
     import numpy as np
     import torch
     from sentence_transformers import SentenceTransformer
-    dev = "cuda" if torch.cuda.is_available() else "cpu"
+    dev = DEVICE or ("cuda" if torch.cuda.is_available() else "cpu")
     kw = {"torch_dtype": torch.float16} if dev == "cuda" else {}
     t0 = time.time()
     m = SentenceTransformer(str(MODEL), device=dev, model_kwargs=kw)
@@ -91,29 +94,64 @@ def load_judge():
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
         t0 = time.time()
-        dev = "cuda" if torch.cuda.is_available() else "cpu"
-        dtype = torch.bfloat16 if dev == "cuda" and torch.cuda.is_bf16_supported() else torch.float32
+        dev = DEVICE or ("cuda" if torch.cuda.is_available() else "cpu")
+        # mps: float32 was no faster than the CPU of the M5 it ran on; float16 took 2.1 s for 5.0 s and scores
+        # within 0.03 of float32 (CUDA's bfloat16, which the wrapper's constants were fitted on, is 0.4 off)
+        dtype = (torch.bfloat16 if dev == "cuda" and torch.cuda.is_bf16_supported()
+                 else torch.float16 if dev == "mps" else torch.float32)
         tok = AutoTokenizer.from_pretrained(JUDGE, local_files_only=True, padding_side="left")
         model = AutoModelForCausalLM.from_pretrained(JUDGE, local_files_only=True, dtype=dtype).to(dev).eval()
         yes, no = tok.convert_tokens_to_ids(["yes", "no"])
         STATE["judge"] = (tok, model, yes, no, dev)
-        judge_scores("warmup", ["warmup"])
+        judge_scores("warmup", ["warmup"] * 2)  # two: the reading this device will use
         log(f"judge loaded on {dev} in {time.time()-t0:.1f}s")
     except Exception as e:
         STATE["judge"] = None
         log(f"judge not loaded, /judge is off: {type(e).__name__}: {e}")
 
 def judge_scores(query, docs):
-    """{reading: [yes-minus-no logit per doc]}: both readings of every (query, doc) in one batch."""
+    """{reading: [yes-minus-no logit per doc]}. CUDA gives both readings of every (query, doc). Any other device
+    gives the strict one only: the generic one is half the time, and the wrapper's pointers by cosine alone list
+    the same missed answers (round 2's rows: 37 of 38 either way, 0.4 more lines a turn)."""
+    n, cuda = len(docs), STATE["judge"][4] == "cuda"
+    readings = _JUDGE_READINGS if cuda else _JUDGE_READINGS[:1]
+    texts = [f"{_JUDGE_HEAD}<Instruct>: {text}\n<Query>: {query}\n<Document>: {d}{_JUDGE_TAIL}"
+             for _, text in readings for d in docs]
+    # CUDA is quickest with every pair in one call. Elsewhere the tokens are the cost (a CPU: 34 pairs 19 s -> 8.6 s).
+    if cuda or n < 2:
+        flat = _judge_whole(texts)
+    else:
+        flat = [score for i in range(0, len(texts), n) for score in _judge_shared(texts[i:i + n])]
+    return {name: flat[i * n:(i + 1) * n] for i, (name, _) in enumerate(readings)}
+
+def _judge_whole(texts):
+    """The yes-minus-no logit of each text, every text read whole in one batch."""
     import torch
     tok, model, yes, no, dev = STATE["judge"]
-    texts = [f"{_JUDGE_HEAD}<Instruct>: {text}\n<Query>: {query}\n<Document>: {d}{_JUDGE_TAIL}"
-             for _, text in _JUDGE_READINGS for d in docs]
     enc = tok(texts, return_tensors="pt", padding=True, add_special_tokens=False).to(dev)
     with torch.inference_mode():  # logits_to_keep: the vocabulary head on the last position only
         logits = model(**enc, use_cache=False, logits_to_keep=1).logits[:, -1].float()
-    flat = (logits[:, yes] - logits[:, no]).tolist()
-    return {name: flat[i * len(docs):(i + 1) * len(docs)] for i, (name, _) in enumerate(_JUDGE_READINGS)}
+    return (logits[:, yes] - logits[:, no]).tolist()
+
+def _judge_shared(texts):
+    """The same logits (in float32 equal to 1e-5), with the tokens every text starts with read once: the pairs of
+    one reading share the instruction and the message, about two thirds of each text."""
+    import torch
+    tok, model, yes, no, dev = STATE["judge"]
+    rows = tok(texts, add_special_tokens=False)["input_ids"]
+    shortest = min(map(len, rows))
+    shared = next((i for i in range(shortest - 1) if any(r[i] != rows[0][i] for r in rows)), shortest - 1)
+    ends = [len(r) - shared for r in rows]
+    rest = torch.full((len(rows), max(ends)), tok.pad_token_id)  # padded on the right: no real token reads a pad
+    for at, r in enumerate(rows):
+        rest[at, :ends[at]] = torch.tensor(r[shared:])
+    with torch.inference_mode():
+        past = model(torch.tensor([rows[0][:shared]], device=dev), use_cache=True).past_key_values
+        past.batch_repeat_interleave(len(rows))
+        hidden = model.model(rest.to(dev), past_key_values=past, use_cache=False).last_hidden_state
+        last = hidden[torch.arange(len(rows), device=dev), torch.tensor(ends, device=dev) - 1]
+        logits = model.lm_head(last).float()
+    return (logits[:, yes] - logits[:, no]).tolist()
 
 def judge_doc(content, tags):
     """The fact as the judge reads it: its text, then its keywords (the other ways someone asks for it)."""
@@ -209,8 +247,9 @@ def sync_and_candidates(query, tau, limit, min_trust):
         return out[:limit], embedded, len(facts)
 
 def rank_and_judge(query, ids, k, min_trust):
-    """The facts in *ids* and the *k* closest by cosine, each with its cosine, its rank among the store's trusted
-    facts (0 = closest) and the judge's readings. A fact without a vector yet has no cosine and no rank."""
+    """The facts in *ids* and the *k* closest by cosine, each with its cosine and its rank among the store's trusted
+    facts (0 = closest); the ones the judge read also with its readings. A fact without a vector yet has no cosine
+    and no rank."""
     import numpy as np
     facts = read_facts()
     with LOCK:
@@ -229,9 +268,14 @@ def rank_and_judge(query, ids, k, min_trust):
         order = sorted(cos, key=cos.get, reverse=True)
         rank = {fid: n for n, fid in enumerate(order)}
         picked = list(dict.fromkeys([i for i in ids if i in rows] + order[:k]))
-        scores = judge_scores(query, [judge_doc(rows[i]["content"], rows[i]["tags"]) for i in picked]) if picked else {}
+        # Off CUDA the judge reads the block and the closest fact only; the other close facts go out with their
+        # cosine, for the wrapper's pointers. Round 2's rows: a quarter of the pairs, the recall within a few facts
+        # of reading all ten (hit@5 433 both ways, non-answers shown 549 against 564).
+        read = picked if STATE["device"] == "cuda" else [i for i in picked if i in ids or i in order[:1]]
+        scores = judge_scores(query, [judge_doc(rows[i]["content"], rows[i]["tags"]) for i in read]) if read else {}
+        at = {fid: n for n, fid in enumerate(read)}
         out = [{"fact_id": fid, "cos": cos.get(fid), "rank": rank.get(fid),
-                **{name: values[n] for name, values in scores.items()}} for n, fid in enumerate(picked)]
+                **({name: values[at[fid]] for name, values in scores.items()} if fid in at else {})} for fid in picked]
         return out, len(facts)
 
 class Handler(BaseHTTPRequestHandler):

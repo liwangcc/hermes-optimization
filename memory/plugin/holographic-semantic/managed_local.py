@@ -308,7 +308,7 @@ def action(home: str, db: Path | None, url: str) -> dict:
 
 
 def _device(health: dict) -> str:
-    return "CUDA" if health.get("device") == "cuda" else "CPU"
+    return {"cuda": "CUDA", "mps": "MPS"}.get(health.get("device"), "CPU")
 
 
 def deploy(home: str, db: Path, address: str, model: LocalModel, *, save,
