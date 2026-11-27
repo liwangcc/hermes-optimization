@@ -55,7 +55,7 @@ SEMANTIC_DB=/path/to/memory_store.db python server.py
 | `SEMANTIC_PORT` | `8791` | listen port (bound to 127.0.0.1) |
 | `SEMANTIC_CACHE` | `./cache` | vector cache directory |
 | `SEMANTIC_JUDGE_MODEL` | unset | optional: a local `Qwen/Qwen3-Reranker-0.6B` directory; with it `/judge` is served (about 0.25 s a message on a laptop GPU; on a CPU 1 to 3 s, which needs the wrapper's `semantic_timeout_ms` raised) |
-| `SEMANTIC_DEVICE` | CUDA when present, else CPU | `cuda`, `mps` or `cpu`. Apple's GPU is used only when asked for: `mps` has run on one Mac (an M5), where the judge takes about 2 s a message in float16 |
+| `SEMANTIC_DEVICE` | CUDA when present, else CPU | `cuda`, `mps` or `cpu`. Apple's GPU is used only when asked for: `mps` has run on one Mac (an M5), where a warm `/judge` call takes 0.08–0.33 s (a message's local recall, 0.18–0.27 s) |
 
 Example launch scripts: `run.example.sh` (POSIX) / `run.example.cmd` (Windows).
 

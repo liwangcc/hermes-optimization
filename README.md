@@ -81,7 +81,7 @@
 
 **日常版 R2（复核精挑）另有的代价**（数字见 [`memory/recall-race/ROUND2-RESULTS.md`](memory/recall-race/ROUND2-RESULTS.md)，与上面 39 条早期实验是不同题集，不互减）：
 
-- **有 CUDA 显卡最快**：复核模型 Qwen3-Reranker-0.6B 约 +1.3 GB 显存、每条消息 +0.2 s（RTX 4060 笔记本）；没有 CUDA 时复核只读块内事实和最近的一条，纯 CPU 约 1～3 s/条（中位 1.1 s，要把 `semantic_timeout_ms` 调到 3000）；苹果芯片精简后还没有复测，见 [platforms.md](docs/platforms.md#复核召回在没有-cuda-的机器上)。
+- **有 CUDA 显卡最快**：复核模型 Qwen3-Reranker-0.6B 约 +1.3 GB 显存、每条消息 +0.2 s（RTX 4060 笔记本）；没有 CUDA 时复核只读块内事实和最近的一条，纯 CPU 约 1～3 s/条（中位 1.1 s，要把 `semantic_timeout_ms` 调到 3000）；苹果芯片上一台 M5 的整轮本地召回 0.18–0.27 秒、热好的 `/judge` 0.08–0.33 秒，见 [platforms.md](docs/platforms.md#复核召回在没有-cuda-的机器上)。
 - **会丢少数基座原有答案**：test 池救回 4 题、丢 1 题；全题集救回 10、丢 2（p=0.039），丢了 4 个 D0 原有答案（其中 3 个是「孩子们/父母」这类一问多人的第二个答案）。**没有通过上游完整四条门禁**（零丢失门没过）。只加不删的变体不丢答案（p=0.002），但噪声行与混淆行各多 1 行。
 - 规则在 dev 池定好后冻结、test 池只判一次；**真实个人库、多轮对话、第二模型尚未验证**。
 
