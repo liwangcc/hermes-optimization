@@ -47,10 +47,15 @@ def _port(url: str) -> int | None:
     return None
 
 
+def client_header() -> dict:
+    """The header that tells a sidecar which Hermes process is using it: it stops once all of them have exited."""
+    return {"X-Hermes-Pid": str(os.getpid())}
+
+
 def _request(url: str, route: str, body: dict | None = None, timeout: float = 1.0) -> dict:
     client = build_opener(_NoRedirect(), ProxyHandler({}))
     request = Request(url.rstrip("/") + route, None if body is None else json.dumps(body).encode(),
-                      {"Content-Type": "application/json"})
+                      {"Content-Type": "application/json", **client_header()})
     with client.open(request, timeout=timeout) as response:
         parsed = json.loads(response.read(262_145))
     return parsed if isinstance(parsed, dict) else {}
@@ -120,7 +125,8 @@ def _launch(root: Path, python: Path, weights: Path, db: Path, port: int, model:
     env.update(SEMANTIC_DB=str(db), SEMANTIC_MODEL=str(weights), SEMANTIC_PORT=str(port),
                SEMANTIC_CACHE=str(index_dir(root, model)), SEMANTIC_STORE_ID=_store_id(db),
                SEMANTIC_MODEL_ID=model.id, SEMANTIC_MODEL_REV=model.rev, SEMANTIC_DIM=str(model.dim),
-               HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", OMP_NUM_THREADS="4")
+               HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", OMP_NUM_THREADS="4",
+               SEMANTIC_CLIENT_PID=str(os.getpid()))  # this Hermes process is its first client
     if judge and (Path(judge) / "config.json").is_file():  # semantic_judge_model: the service then serves /judge
         env["SEMANTIC_JUDGE_MODEL"] = judge
     flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP

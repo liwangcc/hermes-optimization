@@ -527,7 +527,7 @@ class SemanticHolographicProvider(_orig.HolographicMemoryProvider):
             raise ConnectionRefusedError("the managed sidecar is unavailable")
         data = None if body is None else json.dumps(body).encode("utf-8")
         req = urllib.request.Request(self._sem_url + route, data=data,
-                                     headers={"Content-Type": "application/json"})
+                                     headers={"Content-Type": "application/json", **managed_local.client_header()})
         # localhost must never go through a system/env proxy
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         with opener.open(req, timeout=timeout) as r:

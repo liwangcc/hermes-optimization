@@ -78,6 +78,91 @@ _INDEX_INTERVAL = 2.0
 STATE = {"model": None, "device": "cpu", "dim": 0, "vecs": {}, "hashes": {}, "ready": False, "error": "",
          "judge": None}
 
+_TRIM_ABOVE = 512 << 20  # bytes resident before Windows is told to take pages back: serving needs about 150 MB
+
+def release():
+    """Give back what is held but not used, after loading and after every request: PyTorch's cached GPU blocks,
+    and on Windows the resident pages once they pass _TRIM_ABOVE. Loading leaves 2.8 GB of them that no request
+    touches again; so does a spell beside a program that filled the card, when Windows keeps this service's
+    weights in RAM. With both models on an 8 GB laptop: RAM in use 2.85 -> 0.15 GB, card 2.78 -> 2.40 GB, a
+    message 317 ms before and after (taking the pages back after every request made it 335 ms)."""
+    try:
+        if STATE["device"] == "cuda":
+            import torch
+            torch.cuda.empty_cache()
+        if os.name == "nt":
+            import ctypes
+            k = ctypes.windll.kernel32
+            k.GetCurrentProcess.restype = ctypes.c_void_p
+            me = ctypes.c_void_p(k.GetCurrentProcess())
+            info = (ctypes.c_size_t * 9)(72)  # PROCESS_MEMORY_COUNTERS, 72 bytes: [0] its size, [2] the working set
+            if k.K32GetProcessMemoryInfo(me, info, 72) and info[2] > _TRIM_ABOVE:
+                k.K32EmptyWorkingSet(me)
+    except Exception as e:  # housekeeping never fails a request
+        log(f"release failed: {type(e).__name__}: {e}")
+
+CLIENTS = {}  # pid -> its process handle on Windows (else None): the Hermes processes that have used this service
+_CLIENTS_LOCK = threading.Lock()
+_CLIENT_POLL, _CLIENT_GRACE = 5.0, 60.0  # seconds; the grace keeps the models through a restart of Hermes
+
+def note_client(pid):
+    """Remember a Hermes process that uses this service: the one that launched it (SEMANTIC_CLIENT_PID), then
+    every X-Hermes-Pid a request carries. A gateway is one of them."""
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return
+    with _CLIENTS_LOCK:
+        if pid <= 0 or pid in CLIENTS:
+            return
+        handle = None
+        if os.name == "nt":  # the handle, not the number: Windows gives a dead process's pid to the next one
+            import ctypes
+            k = ctypes.windll.kernel32
+            k.OpenProcess.restype = ctypes.c_void_p
+            handle = k.OpenProcess(0x00100000, False, pid)  # SYNCHRONIZE
+            if not handle:
+                return
+        CLIENTS[pid] = handle
+        STATE["served"] = True
+
+def _running(pid, handle):
+    if os.name == "nt":
+        import ctypes
+        return ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_void_p(handle), 0) == 0x102  # WAIT_TIMEOUT
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except OSError:
+        pass  # it runs, as someone else
+    return True
+
+def clients_gone():
+    """True once the service has had clients and none of them still runs. One nobody has used yet was started by
+    hand and stays."""
+    with _CLIENTS_LOCK:
+        for pid in [p for p, h in CLIENTS.items() if not _running(p, h)]:
+            handle = CLIENTS.pop(pid)
+            if handle:
+                import ctypes
+                ctypes.windll.kernel32.CloseHandle(ctypes.c_void_p(handle))
+        return bool(STATE.get("served")) and not CLIENTS
+
+def leave_with_clients(srv):
+    """Stop the service once every Hermes process that used it has been gone for _CLIENT_GRACE, so the models do
+    not stay loaded with nobody to serve. The next session starts it again; until it is ready recall is lexical."""
+    empty_since = None
+    while True:
+        time.sleep(_CLIENT_POLL)
+        if not clients_gone():
+            empty_since = None
+        elif empty_since is None:
+            empty_since = time.monotonic()
+        elif time.monotonic() - empty_since >= _CLIENT_GRACE:
+            log("every Hermes process that used this service has exited: stopping")
+            return srv.shutdown()
+
 def load_model():
     import numpy as np
     import torch
@@ -321,6 +406,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        note_client(self.headers.get("X-Hermes-Pid"))
         if self.path == "/health":
             try:
                 facts = fact_count()
@@ -333,6 +419,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        note_client(self.headers.get("X-Hermes-Pid"))
         try:
             n = int(self.headers.get("Content-Length", 0))
             if not 0 <= n <= 1_048_576:
@@ -376,6 +463,8 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             log(f"request error: {type(e).__name__}: {e}")
             self._send(500, {"error": f"{type(e).__name__}: {e}"})
+        finally:
+            release()
 
     def log_message(self, fmt, *args):
         pass
@@ -385,6 +474,9 @@ if __name__ == "__main__":
     with ThreadingHTTPServer(("127.0.0.1", PORT), Handler) as srv:
         load_model()
         load_judge()
+        release()
+        note_client(os.environ.get("SEMANTIC_CLIENT_PID"))
+        threading.Thread(target=leave_with_clients, args=(srv,), daemon=True).start()
         stop_index = threading.Event()
         if STATE["ready"] and STATE["judge"] is not None:
             threading.Thread(target=index_in_background, args=(stop_index,), daemon=True).start()

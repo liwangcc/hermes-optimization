@@ -6,6 +6,8 @@ import hashlib
 import importlib.util
 import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -181,6 +183,30 @@ def test_the_shared_reading_scores_as_the_whole_one():
     limit = 1e-2 if server.STATE["judge"][1].dtype == torch.float32 else 0.1
     assert max(abs(a - b) for a, b in zip(shared, whole)) < limit, (shared, whole)
     assert set(server.judge_scores("how do we deploy?", docs)) == {"strict"}  # off CUDA: no generic reading
+
+
+def test_clients_are_gone_only_after_one_was_seen_and_has_exited():
+    server.CLIENTS.clear()
+    server.STATE["served"] = False
+    assert not server.clients_gone()  # nobody has used it: it was started by hand and stays
+    client = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    try:
+        server.note_client(str(client.pid))
+        server.note_client("not a pid")
+        assert list(server.CLIENTS) == [client.pid] and not server.clients_gone()
+    finally:
+        client.kill()
+        client.wait()
+    assert server.clients_gone() and not server.CLIENTS
+
+
+def test_the_service_stops_once_its_clients_have_been_gone_for_the_grace():
+    server.CLIENTS.clear()
+    server.STATE["served"] = True
+    srv = Mock()
+    with patch.object(server, "_CLIENT_POLL", 0.01), patch.object(server, "_CLIENT_GRACE", 0.05):
+        server.leave_with_clients(srv)  # returns once it has asked the server to stop
+    srv.shutdown.assert_called_once()
 
 
 def test_the_cache_goes_where_it_is_told():

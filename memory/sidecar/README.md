@@ -18,6 +18,20 @@ semantic recall: the wrapper decides *how* to use vectors; this service produces
 - **Fail-safe.** Any error returns HTTP 5xx and the wrapper falls back to lexical recall.
 - **Cached.** Fact vectors are cached in `cache/vectors.npz`, keyed by a content+tags
   hash, so a restart does not re-embed unchanged facts.
+- **Light while resident.** After a request it returns PyTorch's cached GPU blocks, and
+  after loading it lets Windows take back the pages loading left behind. With both
+  models on an 8 GB laptop: 0.15 GB of RAM in use (2.85 GB before), 2.4 GB of the card
+  (2.8 GB before), the same 0.32 s a message. It does not move off the card for other
+  programs: Windows already keeps an idle process's GPU memory in RAM when a busy one
+  fills the card (a program taking 6.6 GB ran as fast beside the service as alone).
+  Messages are then slow or time out, the wrapper recalls without the service for
+  those turns, and it is back to 0.34 s once the card is free.
+- **Leaves with Hermes.** The wrapper names its process on every request
+  (`X-Hermes-Pid`). Once every Hermes process that used the service has been gone for a
+  minute, a gateway included, it exits with code 0 and frees the card; the next session
+  of a managed install starts it again (about 15 s, lexical recall meanwhile). A service
+  nobody has used yet stays. A launcher or watchdog of your own must not restart it
+  after exit code 0, or the models are simply loaded again.
 
 ## 1. Get the model
 
