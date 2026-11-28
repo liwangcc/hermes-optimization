@@ -1,0 +1,16 @@
+{
+ "name": "judge+words+top1",
+ "variant": "memory/ck",
+ "features": [
+  "j",
+  "words",
+  "top1"
+ ],
+ "coef": [
+  0.5708,
+  0.2575,
+  1.9824
+ ],
+ "intercept": -1.2923,
+ "fitted_on": "dev pool, scores of qwen3-reranker-0.6b-ft"
+}

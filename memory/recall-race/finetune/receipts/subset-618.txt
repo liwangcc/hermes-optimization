@@ -1,0 +1,4 @@
+subset rows 618
+stock judge, frozen coefs          hit5 273/300  shown  822  nontarget  524  noise 129  confused  31  b/c 30/1  p=0.0000  lost 4
+fine-tuned judge, refit coefs      hit5 276/300  shown  673  nontarget  365  noise 122  confused  31  b/c 32/0  p=0.0000  lost 1
+fine-tuned judge, frozen coefs     hit5 272/300  shown  565  nontarget  263  noise 113  confused  23  b/c 30/2  p=0.0000  lost 3

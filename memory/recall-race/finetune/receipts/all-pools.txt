@@ -1,0 +1,63 @@
+coefficients [0.5708, 0.2575, 1.9824] -1.2923  frozen: [0.5502, 0.5578, 2.3547] -2.1772
+[dev] judge alone, AUC on 2713 pairs: stock 0.9690  fine-tuned 0.9799
+[dev] stock judge (R2_main)        hit5 126/135  found 143/156 (D0 138)  shown 296 (D0 514)  nontarget 153 (D0 376)  prec 0.483  noise rows 41 (D0 64)  confused 7 (D0 19)  b/c 6/1 p=0.125  lost 2  tok/row 30.1  
+    answers not shown 13, listed as pointers 12; 500 pointer lines on 162 rows; D0's answers lost: ['household|ru|q019 -> sonia_swim', 'synthetic_zh|zh|C5 -> 5']
+[dev] fine-tuned judge             hit5 127/135  found 145/156 (D0 138)  shown 243 (D0 514)  nontarget 98 (D0 376)  prec 0.597  noise rows 35 (D0 64)  confused 8 (D0 19)  b/c 6/0 p=0.0312  lost 0  tok/row 26.4  GATE PASS cleaner
+    answers not shown 11, listed as pointers 9; 416 pointer lines on 145 rows; D0's answers lost: []
+[dev] fine-tuned, frozen coefs     hit5 124/135  found 142/156 (D0 138)  shown 218 (D0 514)  nontarget 76 (D0 376)  prec 0.651  noise rows 32 (D0 64)  confused 8 (D0 19)  b/c 5/2 p=0.4531  lost 2  tok/row 24.2  
+    answers not shown 14, listed as pointers 13; 424 pointer lines on 147 rows; D0's answers lost: ['household|ru|q037 -> andrey_run', 'synthetic_zh|zh|C5 -> 5']
+[test] judge alone, AUC on 5676 pairs: stock 0.9828  fine-tuned 0.9892
+[test] stock judge (R2_main)        hit5 307/325  found 322/347 (D0 321)  shown 733 (D0 1181)  nontarget 411 (D0 860)  prec 0.439  noise rows 88 (D0 130)  confused 24 (D0 34)  b/c 4/1 p=0.375  lost 2  tok/row 33.7  
+    answers not shown 25, listed as pointers 25; 631 pointer lines on 231 rows; D0's answers lost: ['household|en|q054 -> andrey_workdays', 'household|zh|q053 -> sonia_bd']
+[test] fine-tuned judge             hit5 309/325  found 330/347 (D0 321)  shown 621 (D0 1181)  nontarget 291 (D0 860)  prec 0.531  noise rows 87 (D0 130)  confused 23 (D0 34)  b/c 6/1 p=0.125  lost 1  tok/row 30.8  
+    answers not shown 17, listed as pointers 17; 597 pointer lines on 225 rows; D0's answers lost: ['household|ru|q067 -> irina_walk']
+[test] fine-tuned, frozen coefs     hit5 308/325  found 327/347 (D0 321)  shown 526 (D0 1181)  nontarget 199 (D0 860)  prec 0.622  noise rows 81 (D0 130)  confused 15 (D0 34)  b/c 5/1 p=0.2188  lost 1  tok/row 27.8  
+    answers not shown 20, listed as pointers 20; 632 pointer lines on 236 rows; D0's answers lost: ['household|ru|q067 -> irina_walk']
+[all7] judge alone, AUC on 8389 pairs: stock 0.9787  fine-tuned 0.9864
+[all7] stock judge (R2_main)        hit5 433/460  found 465/503 (D0 459)  shown 1029 (D0 1695)  nontarget 564 (D0 1236)  prec 0.452  noise rows 129 (D0 194)  confused 31 (D0 53)  b/c 10/2 p=0.0386  lost 4  tok/row 32.6  
+    answers not shown 38, listed as pointers 37; 1131 pointer lines on 393 rows; D0's answers lost: ['household|en|q054 -> andrey_workdays', 'household|ru|q019 -> sonia_swim', 'household|zh|q053 -> sonia_bd', 'synthetic_zh|zh|C5 -> 5']
+[all7] fine-tuned judge             hit5 436/460  found 475/503 (D0 459)  shown 864 (D0 1695)  nontarget 389 (D0 1236)  prec 0.55  noise rows 122 (D0 194)  confused 31 (D0 53)  b/c 12/1 p=0.0034  lost 1  tok/row 29.4  
+    answers not shown 28, listed as pointers 26; 1013 pointer lines on 370 rows; D0's answers lost: ['household|ru|q067 -> irina_walk']
+[all7] fine-tuned, frozen coefs     hit5 432/460  found 469/503 (D0 459)  shown 744 (D0 1695)  nontarget 275 (D0 1236)  prec 0.63  noise rows 113 (D0 194)  confused 23 (D0 53)  b/c 10/3 p=0.0923  lost 3  tok/row 26.7  
+    answers not shown 34, listed as pointers 33; 1056 pointer lines on 383 rows; D0's answers lost: ['household|ru|q037 -> andrey_run', 'household|ru|q067 -> irina_walk', 'synthetic_zh|zh|C5 -> 5']
+Loading weights:   0%|          | 0/391 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/391 [00:01<01:32,  4.18it/s]Loading weights: 100%|██████████| 391/391 [00:01<00:00, 322.56it/s]
+Loading weights:   0%|          | 0/310 [00:00<?, ?it/s]Loading weights: 100%|██████████| 310/310 [00:00<00:00, 3218.53it/s]
+id   D0: must/ok/other  R2: must/ok/other (+must as pointer)   message
+T01  0/1 0 0            0/1 0 0                                帮我给用户表加一个手机号字段
+T02  0/1 0 0            1/1 0 0                                写一个上传头像的接口
+T03  0/1 0 0            1/1 0 0                                下单接口库存不够的时候该怎么报错，帮我写一下
+T04  1/1 0 1            1/1 0 1                                把第三方支付的 API key 加到项目里
+T05  0/1 0 1            0/1 0 0  (+1 ptr)                      登录接口老被人撞库，加个保护
+T06  0/1 0 1            1/1 0 1                                写个注册接口，把用户的密码存起来
+T07  1/2 0 0            1/2 0 0  (+1 ptr)                      明天要把新版本发到生产，帮我列一下步骤
+T08  0/1 1 0            0/1 0 0                                加一个每天汇总销售报表的任务
+T09  0/1 0 1            0/1 0 0  (+1 ptr)                      这个模块出了问题很难排查，帮我加点日志
+T10  1/1 0 0            1/1 0 0                                给新写的订单模块补一下测试
+T11  0/1 0 1            1/1 0 1                                前端调接口被浏览器拦了，帮我修一下
+T12  1/1 0 0            1/1 0 0                                给商品列表加一个按名称查找的功能
+T13  0/1 0 0            0/1 0 0                                用户注册成功后要发一封欢迎邮件，别卡住接口
+T14  0/1 0 0            0/1 0 0                                集群老是把还没启动好的实例加进来，帮我处理一下
+T15  0/1 0 0            1/1 0 0                                新加的几个接口要给对接方看，帮我整理一下
+T16  0/1 0 0            0/1 0 0                                我想看最近一周接口响应时间的趋势
+T17  1/1 0 0            1/1 0 0                                首页的图片加载太慢了，优化一下
+T18  1/1 0 0            1/1 0 0                                订单接口的返回结构要改，老客户端会不兼容
+T19  0/1 0 0            0/1 0 0  (+1 ptr)                      有人把生产库的一张表删了，能找回来吗
+T20  0/1 0 1            0/1 0 0  (+1 ptr)                      需要保存用户的身份证号
+T21  1/1 0 0            1/1 0 0                                用户反映登录一会儿就要重新登，查一下
+T22  0/1 0 1            0/1 0 1                                这个请求经过了好几个服务，慢在哪一段
+T23  1/1 0 0            1/1 0 0                                新功能想先让一小部分用户用上
+T24  0/1 0 0            0/1 0 0  (+1 ptr)                      提交代码之后怎么知道有没有把别的东西改坏
+Z01  0/0 0 0            0/0 0 0                                把这段英文翻译成中文
+Z02  0/0 0 0            0/0 0 0                                写一个快速排序
+Z03  0/0 0 0            0/0 0 0                                解释一下什么是闭包
+Z04  0/0 0 0            0/0 0 0                                帮我给这个项目起个名字
+Z05  0/0 0 0            0/0 0 0                                写个正则匹配邮箱地址
+Z06  0/0 0 0            0/0 0 0                                IndexError: list index out of range 是什么意思
+Z07  0/0 0 0            0/0 0 0                                帮我写一份周报
+Z08  0/0 0 0            0/0 0 0                                这段代码的时间复杂度是多少
+Z09  0/0 0 0            0/0 0 0                                把变量名改成驼峰命名
+Z10  0/0 0 0            0/0 0 0                                谢谢，先这样吧
+Z11  0/0 0 1            0/0 0 0                                git 怎么撤销上一次提交
+Z12  0/0 0 0            0/0 0 0                                帮我算一下 37 乘以 49
+D0: needed conventions shown 8/25; tasks with every needed one 7/24; related-and-fine shown 1; unrelated shown 8; no-need messages with output 1/12 (1 facts)
+R2_main: needed conventions shown 13/25, further 6 as pointers (2.88 pointer lines per task, 20 on the 12 no-need messages); tasks with every needed one 12/24; related-and-fine shown 0; unrelated shown 4; no-need messages with output 0/12 (0 facts)
